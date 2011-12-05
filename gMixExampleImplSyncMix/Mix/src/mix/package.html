@@ -1,0 +1,48 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html>
+<head>
+<!-- by Karl-Peter Fuchs -->
+</head>
+<body bgcolor="white">
+
+Coordinates the components of this mix. Each component (offering methods) 
+has its own (architecture) interface (see package <code>architectureInterfaces
+</code>) and a controller class (named <code>"ComponentName"Controller</code>),
+implementing the according interface.
+Therefore, the implementation of each component can change, without changes to 
+any other component (interface and implementing (controller) class remain the 
+same).
+<p>
+General information: A mix is some kind of proxy that attempts to hide the 
+correspondence between its incoming and outgoing messages, as proposed by David 
+Chaum in 1981. 
+<p>
+This mix implements the following functions (and others):
+<ul>
+<li> collecting messages (batch strategy with timeout)
+<li> recoding messages (hybrid cryptography)
+<li> sorting messages (recursive divide and conquer)
+<li> detecting replays (based on timestamps and hash tables, constant time)
+<li> validating integrity (using MACs)
+<li> padding messages
+<li> channels
+<li> duplex communication
+<li> clock synchronization (SNTP)
+<li> dynamic reply length (depending on traffic situation)
+<li> generating log files
+<li> exchange of certain types of information with communication partners
+<li> parallel message processing (e. g. recoding)
+<li> non-blocking I/O between clients and mix
+<li> multiplexing between mixes
+</ul>
+<p>
+A test environment is found in the package <code>testEnvironment</code>.
+
+<!--
+
+@see mix.Mix
+
+ -->
+
+</body>
+</html>

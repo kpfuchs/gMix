@@ -1,0 +1,61 @@
+#-------------------------------------------------------------------------------
+# Property file for "testEnvironment".
+#-------------------------------------------------------------------------------
+#
+# The following properties have the following form: "KEY=VALUE".
+# Note: Changing a KEY will result in runtime errors.
+#
+#-------------------------------------------------------------------------------
+#
+# NUMBER_OF_MIXES_IN_CASCADE
+# The number of mixes to be simulated.
+# Default value: 3
+NUMBER_OF_MIXES_IN_CASCADE = 3
+#
+#
+# START_PORT_OF_PORT_RANGE
+# Port, the first mix of the cascade (specified above) shall have. The 
+# following mixes will respectively use the next higher port of their 
+# predecessor.
+# Default value: 23301
+START_PORT_OF_PORT_RANGE = 23301
+#
+#
+# INFO_START_PORT_OF_PORT_RANGE
+# Port, the cascade's first mix' "ExternalInformationPort" shall be accessible 
+# on. The following mixes will respectively use the next higher port of their 
+# predecessor.
+# Default value: 23351
+INFO_START_PORT_OF_PORT_RANGE = 23351
+#
+#
+# X, Y, Z
+# Start "logic" for the simulated clients:
+# "Start X clients every Y ms until Z clients are started!"
+# Note:	- Use "RANDOM-UpperBound" (e. g. "RANDOM-1000") for random values 
+#		  between 0 (inclusive) and "UpperBound" (inclusive).
+#		- A random value is chosen any time its variable (e. g. "X") is used
+#		  (Therefore, "X" will have a different random value for any client "Z" 
+#		  in the previous example).
+#		- Starting many clients at the same time will cause heavy CPU-load on 
+# 		  mixes and ClientSimulator since ChannelEstablishMessages use 
+#		  asymmetric cryptography (Therefore, a mix can hold much more 
+#		  connections than it can accept at once).
+X = 1
+Y = 10
+Z = 5
+#
+#
+# K, L, M
+# The simulated clients will behave in the following manner:
+# "Send K bytes of data with a delay of L ms between sending, M times."
+# Note:	- Use "RANDOM-UpperBound" (e. g. "RANDOM-1000") for random values 
+#		  between 0 (inclusive) and "UpperBound" (inclusive).
+#		- A random value is chosen any time its variable (e. g. "L") is used
+#		  (Therefore, "K" will have a different random value for any send
+#		  event "M" in the previous example).
+K = 5000
+L = 1000
+M = 2
+#
+#-------------------------------------------------------------------------------
