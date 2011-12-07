@@ -20,6 +20,7 @@ package outputStrategy;
 
 import inputOutputHandler.InputOutputHandlerController;
 
+import java.util.Arrays;
 import java.util.HashMap;
 
 import message.Message;
@@ -69,6 +70,7 @@ public class DLPAOutputSlot {
 		int normalMessages;
 		int dummyCounter = 0;
 		synchronized (Message.identifiers) { // TODO: remove
+			
 			normalMessages = messagesToSend.size();
 			for (String identifier: Message.identifiers) {
 				
@@ -85,8 +87,11 @@ public class DLPAOutputSlot {
 		
 		System.out.println("putting out slot (" +dummyCounter +" dummies and " +normalMessages +" normal messages)"); // TODO: remove 
 		
+		Message[] messages = messagesToSend.values().toArray(new Message[0]);
+		Arrays.sort(messages);
+		
 		// send messages
-		for (Message m:messagesToSend.values()) {
+		for (Message m:messages) {
 			
 			if (isRequestSlot)
 				ioh.addRequest((Request)m);

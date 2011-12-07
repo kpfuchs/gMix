@@ -18,6 +18,7 @@
 
 package outputStrategy;
 
+import java.util.Collections;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.Vector;
@@ -107,6 +108,8 @@ public class ThresholdOrTimedBatch extends Implementation implements OutputStrat
 		public void putOutMessages() {
 			
 			synchronized (collectedMessages) {
+				
+				Collections.sort(collectedMessages);
 				
 				for (Message m:collectedMessages)
 					if (isRequestBatch)

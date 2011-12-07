@@ -18,6 +18,7 @@
 
 package outputStrategy;
 
+import java.util.Collections;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.Vector;
@@ -115,6 +116,8 @@ public class BatchWithTimeout extends Implementation implements OutputStrategyIn
 		public void putOutMessages() {
 			
 			synchronized (collectedMessages) {
+				
+				Collections.sort(collectedMessages);
 				
 				if (isRequestBatch)
 					for (Message m:collectedMessages)

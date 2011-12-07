@@ -18,6 +18,8 @@
 
 package outputStrategy;
 
+import java.util.Arrays;
+
 import message.Message;
 import message.Reply;
 import message.Request;
@@ -86,7 +88,9 @@ public class BasicBatch extends Implementation implements OutputStrategyInterfac
 			
 			if (nextFreeSlot == batchSize) {
 				
-				System.out.println("putting out batch"); // TODO: remove  
+				System.out.println("putting out batch"); // TODO: remove 
+				Arrays.sort(collectedMessages);
+				
 				for (Message m: collectedMessages)
 					if (isRequestBatch)
 						controller.getInputOutputHandler().addRequest((Request)m);

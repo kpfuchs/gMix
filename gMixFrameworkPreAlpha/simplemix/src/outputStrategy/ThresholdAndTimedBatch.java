@@ -18,6 +18,7 @@
 
 package outputStrategy;
 
+import java.util.Collections;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.Vector;
@@ -104,11 +105,13 @@ public class ThresholdAndTimedBatch extends Implementation implements OutputStra
 			
 			synchronized (collectedMessages) {
 				
-				if (collectedMessages.size() >= batchSize)
+				if (collectedMessages.size() <= batchSize)
 					return;
 				
 				if (isRequestBatch)
 					System.out.println("putting out " +collectedMessages.size() +" messages"); // TODO: remove
+				
+				Collections.sort(collectedMessages);
 				
 				if (isRequestBatch)
 					for (Message m:collectedMessages)
