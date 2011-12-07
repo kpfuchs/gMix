@@ -62,7 +62,7 @@ public class ThresholdPool extends Implementation implements OutputStrategyInter
 
 	
 	@Override
-	public void addRequest(Request request) {
+	public void addRequest(Request request) { 
 		requestPool.addMessage((Message) request);
 	}
 
@@ -95,7 +95,7 @@ public class ThresholdPool extends Implementation implements OutputStrategyInter
 			
 			collectedMessages.add(message);
 			
-			if (collectedMessages.size() == threshold)
+			if (collectedMessages.size() == threshold) 
 				putOutMessages();
 
 		}
@@ -114,6 +114,8 @@ public class ThresholdPool extends Implementation implements OutputStrategyInter
 
 			}
 	
+			collectedMessages.clear();
+			
 		}
 		
 	}

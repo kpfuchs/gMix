@@ -47,9 +47,10 @@ public class CottrellRandomDelay extends Implementation implements OutputStrateg
 
 	@Override
 	public void initialize() {
+		
 	}
-	
 
+	
 	@Override
 	public void begin() {
 		// no need to do anything

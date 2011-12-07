@@ -115,6 +115,8 @@ public class ThresholdPool extends OutputStrategy {
 
 			}
 	
+			collectedMessages.clear();
+			
 		}
 		
 	}

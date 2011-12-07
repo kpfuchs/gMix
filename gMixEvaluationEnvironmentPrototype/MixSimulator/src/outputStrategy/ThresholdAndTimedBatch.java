@@ -105,7 +105,7 @@ public class ThresholdAndTimedBatch extends OutputStrategy {
 		
 		public void putOutMessages() {
 			
-			if (collectedMessages.size() != batchSize)
+			if (collectedMessages.size() >= batchSize)
 				return;
 				
 			if (isRequestBatch)

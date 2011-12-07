@@ -35,8 +35,8 @@ import framework.Implementation;
 //DLP Algorithm (2008: Wei Wang, Mehul Motani, Vikram Srinivasan: Dependent Link Padding Algorithms for Low Latency Anonymity Systems)
 public class DLPABasic extends Implementation implements OutputStrategyInterface {
 
-	private int maxRequestDelay;
-	private int maxReplyDelay;
+	private int maxRequestDelay = 1000; // TODO
+	private int maxReplyDelay = 1000; // TODO
 	public Vector<DLPAOutputSlot> requestOutputSlots = new Vector<DLPAOutputSlot>(); // TODO: private
 	public Vector<DLPAOutputSlot> replyOutputSlots = new Vector<DLPAOutputSlot>(); // TODO: private
 	private NetworkClockController nwclock;
@@ -131,7 +131,7 @@ public class DLPABasic extends Implementation implements OutputStrategyInterface
 			DLPAOutputSlot outputSlot = getUnusedOutputSlot((Message)reply);
 			
 			if (outputSlot == null) { // generate new OutputSlot if necessary
-				outputSlot = new DLPAOutputSlot(true, maxReplyDelay, mix);
+				outputSlot = new DLPAOutputSlot(false, maxReplyDelay, mix);
 				replyOutputSlots.add(outputSlot);
 				timer.schedule(new DLPAPutOutSlotTask(outputSlot, false), maxReplyDelay);
 			}

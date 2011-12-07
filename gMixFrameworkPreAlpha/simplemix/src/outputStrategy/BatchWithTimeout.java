@@ -42,7 +42,7 @@ public class BatchWithTimeout extends Implementation implements OutputStrategyIn
 	
 	@Override
 	public void constructor() {
-		int timeout = 1000; // TODO: property file!
+		int timeout = 10; // TODO: property file!
 		int batchSize = 100; // TODO: property file!
 		this.requestBatch = new SimplexBatchWithTimeout(true, timeout, batchSize);
 		this.replyBatch = new SimplexBatchWithTimeout(false, timeout, batchSize);
@@ -80,12 +80,13 @@ public class BatchWithTimeout extends Implementation implements OutputStrategyIn
 		private int timeout;
 		private int batchSize;
 		private volatile long lastOutput;
-		private Timer timer = new Timer();
+		private Timer timer;
 		
 		
 		public SimplexBatchWithTimeout(boolean isRequestBatch, int timeout, int batchSize) {
 			
 			this.collectedMessages = new Vector<Message>(batchSize);
+			System.out.println(collectedMessages.size()); 
 			this.isRequestBatch = isRequestBatch;
 			this.batchSize = batchSize;
 			
@@ -95,12 +96,15 @@ public class BatchWithTimeout extends Implementation implements OutputStrategyIn
 		public void addMessage(Message mixMessage) {
 			
 			synchronized (collectedMessages) {
-
+				
 				collectedMessages.add(mixMessage);
 				
-				if (collectedMessages.size() == 0)
-					this.timer.schedule(new TimeoutTask(this), timeout);
-				else if (collectedMessages.size() == batchSize)
+				if (collectedMessages.size() == 1) {
+					
+					timer = new Timer();
+					timer.schedule(new TimeoutTask(this), timeout);
+					
+				} else if (collectedMessages.size() == batchSize)
 					putOutMessages();
 				
 			}
@@ -119,8 +123,11 @@ public class BatchWithTimeout extends Implementation implements OutputStrategyIn
 					for (Message m:collectedMessages)
 						controller.getInputOutputHandler().addReply((Reply)m);
 				
-				this.collectedMessages = new Vector<Message>(batchSize);	
-				this.timer.cancel();
+				this.collectedMessages = new Vector<Message>(batchSize);
+				
+				if (timer != null)
+					timer.cancel();
+				
 				this.lastOutput = mix.getNetworkClock().getTime();
 				
 				
@@ -147,8 +154,10 @@ public class BatchWithTimeout extends Implementation implements OutputStrategyIn
 			
 			@Override 
 			public void run() {
-				if (mix.getNetworkClock().getTime() - lastOutput >= timeout)
+				if (mix.getNetworkClock().getTime() - lastOutput >= timeout) {
+					System.out.println("timeout"); // TODO remove 
 					linkedBatch.putOutMessages();
+				}
 			}
 			
 		}

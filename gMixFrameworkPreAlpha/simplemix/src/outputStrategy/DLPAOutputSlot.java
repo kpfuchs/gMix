@@ -66,16 +66,24 @@ public class DLPAOutputSlot {
 	public void putOutMessages() {
 
 		// create dummies if needed
-		for (String identifier: Message.identifiers) {
-			
-			Message mixMessage = messagesToSend.get(identifier);
-			if (mixMessage == null)
-				mixMessage = createDummyMessage(identifier, isRequestSlot);
+		int normalMessages;
+		int dummyCounter = 0;
+		synchronized (Message.identifiers) { // TODO: remove
+			normalMessages = messagesToSend.size();
+			for (String identifier: Message.identifiers) {
+				
+				Message mixMessage = messagesToSend.get(identifier);
+				if (mixMessage == null) {
+					mixMessage = createDummyMessage(identifier, isRequestSlot);
+					dummyCounter++; 
+				}
+				
+				messagesToSend.put(identifier, mixMessage);
 
-			
-			messagesToSend.put(identifier, mixMessage);
-
+			}
 		}
+		
+		System.out.println("putting out slot (" +dummyCounter +" dummies and " +normalMessages +" normal messages)"); // TODO: remove 
 		
 		// send messages
 		for (Message m:messagesToSend.values()) {

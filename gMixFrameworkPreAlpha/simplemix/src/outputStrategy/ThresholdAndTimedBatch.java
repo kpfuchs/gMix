@@ -104,9 +104,12 @@ public class ThresholdAndTimedBatch extends Implementation implements OutputStra
 			
 			synchronized (collectedMessages) {
 				
-				if (collectedMessages.size() != batchSize)
+				if (collectedMessages.size() >= batchSize)
 					return;
-					
+				
+				if (isRequestBatch)
+					System.out.println("putting out " +collectedMessages.size() +" messages"); // TODO: remove
+				
 				if (isRequestBatch)
 					for (Message m:collectedMessages)
 						controller.getInputOutputHandler().addRequest((Request)m);
