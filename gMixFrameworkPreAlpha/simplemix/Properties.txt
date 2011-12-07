@@ -1,5 +1,23 @@
+#	BasicBatch.java
+#	BasicPool.java
+#	BatchWithTimeout.java
+#	BinomialPool.java
+#	CottrellPool.java
+#	CottrellRandomDelay.java
+#	CottrellTimedPool.java
+#	DLPABasic.java
+#	DLPAOutputSlot.java
+#	NoDelay.java
+#	OutputStrategyController.java
+#	StopAndGo.java
+#	ThresholdAndTimedBatch.java
+#	ThresholdOrTimedBatch.java
+#	ThresholdPool.java
+#	TimedBatch.java
+#	TimedDynamicPool.java
+OUTPUT_STRATEGY = DLPABasic.java
+#
 EXTERNAL_INFORMATION_PORT = BasicExternalInformationPort.java
-OUTPUT_STRATEGY = BasicBatch.java
 INPUT_OUTPUT_HANDLER = BasicInputOutputHandler.java
 KEY_GENERATOR = BasicKeyGenerator.java
 MESSAGE_PROCESSOR = BasicMessageProcessor.java
