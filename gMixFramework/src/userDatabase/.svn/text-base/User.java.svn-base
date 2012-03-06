@@ -1,0 +1,22 @@
+package userDatabase;
+
+/**
+ * Data structure used to store user-specific data (for example identifiers, 
+ * session keys or buffers).
+ * 
+ * @author Karl-Peter Fuchs
+ *
+ */
+public final class User {
+
+	public int getIdentifier() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+	// TODO
+
+	public int getIdentifierForNextMix() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+}

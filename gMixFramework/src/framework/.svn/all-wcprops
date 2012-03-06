@@ -1,0 +1,65 @@
+K 25
+svn:wc:ra_dav:version-url
+V 46
+/svn/simplemix/!svn/ver/34/trunk/src/framework
+END
+Logger.java
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/simplemix/!svn/ver/42/trunk/src/framework/Logger.java
+END
+Settings.java
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/simplemix/!svn/ver/31/trunk/src/framework/Settings.java
+END
+Controller.java
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/simplemix/!svn/ver/29/trunk/src/framework/Controller.java
+END
+DuplicatePrintStream.java
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/simplemix/!svn/ver/33/trunk/src/framework/DuplicatePrintStream.java
+END
+ComponentReferences.java
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/simplemix/!svn/ver/28/trunk/src/framework/ComponentReferences.java
+END
+Implementation.java
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/simplemix/!svn/ver/42/trunk/src/framework/Implementation.java
+END
+LocalClassLoader.java
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/simplemix/!svn/ver/49/trunk/src/framework/LocalClassLoader.java
+END
+Mix.java
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/simplemix/!svn/ver/42/trunk/src/framework/Mix.java
+END
+Util.java
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/simplemix/!svn/ver/21/trunk/src/framework/Util.java
+END
+Framework.java
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/simplemix/!svn/ver/42/trunk/src/framework/Framework.java
+END

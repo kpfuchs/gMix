@@ -1,0 +1,12 @@
+# specify which experiments shall be performed when the simulator is run
+# a seperate property file must exist for each experiment
+# specify the filenames of the property files here
+# (property files must be in folder "experimentDefinitions")
+# example: EXPERIMENTS_TO_PERFORM = example_badewannenkurve.txt,example_dlpa_paper_fig7_m10.txt
+# default_settings.txt, example_badewannenkurve.txt, example_dlpa_paper_fig7_m10.txt, example_sync.txt
+EXPERIMENTS_TO_PERFORM = example_badewannenkurve.txt
+#
+# GNUPLOT_FOLDER
+GNUPLOT_FOLDER = /opt/local/bin/
+#
+# TODO: LOAD_EXPERIMENT_DESCRIPTIONS_FROM -> "PROPERTY_FILE", "E-MAIL", "FOLDER", "COMMAND_LINE"

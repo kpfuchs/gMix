@@ -1,0 +1,47 @@
+K 25
+svn:wc:ra_dav:version-url
+V 44
+/svn/simplemix/!svn/ver/36/trunk/src/message
+END
+Message.java
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/simplemix/!svn/ver/36/trunk/src/message/Message.java
+END
+BasicMessage.java
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/simplemix/!svn/ver/36/trunk/src/message/BasicMessage.java
+END
+ExternalMessage.java
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/simplemix/!svn/ver/11/trunk/src/message/ExternalMessage.java
+END
+Request.java
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/simplemix/!svn/ver/11/trunk/src/message/Request.java
+END
+TestRequest.java
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/simplemix/!svn/ver/35/trunk/src/message/TestRequest.java
+END
+Reply.java
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/simplemix/!svn/ver/13/trunk/src/message/Reply.java
+END
+TestReply.java
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/simplemix/!svn/ver/35/trunk/src/message/TestReply.java
+END

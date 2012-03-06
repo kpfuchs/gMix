@@ -1,0 +1,40 @@
+package outputStrategy;
+
+import message.Reply;
+import message.Request;
+import architectureInterface.OutputStrategy;
+import framework.Controller;
+import framework.LocalClassLoader;
+import framework.Mix;
+
+
+public class OutputStrategyController extends Controller implements OutputStrategyInterface {
+
+	
+	public OutputStrategyController(Mix mix) {
+		super(mix);
+	}
+
+
+	private OutputStrategyInterface outputStrategyImplementation;
+
+	
+	@Override
+	public void addRequest(Request request) {
+		outputStrategyImplementation.addRequest(request);
+	}
+
+
+	@Override
+	public void addReply(Reply reply) {
+		outputStrategyImplementation.addReply(reply);
+	}
+
+
+	@Override
+	public void instantiateSubclass() {
+		this.outputStrategyImplementation = LocalClassLoader.instantiateOutputStrategyImplementation(this);
+	}
+		
+	
+}

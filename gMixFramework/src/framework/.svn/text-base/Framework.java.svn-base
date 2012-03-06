@@ -1,0 +1,32 @@
+package framework;
+
+
+public class Framework {
+
+	
+	static {
+		
+		Logger.init("output/" + System.currentTimeMillis() +"-consoleOutput.txt");
+		Settings.initialize("Properties.txt");
+
+	}
+	
+	
+	/**
+	 * Comment
+	 *
+	 * @param args Not used.
+	 */
+	public static
+	void main(String[] args) {
+		//if (single mix)
+		//	new Mix();
+		//else if (simulate several mixes locally)
+		//	beginSimulation();
+		
+		// TODO: alte simulationsumgebung wieder einbauen...
+		new Mix();
+		
+	} 
+	
+}

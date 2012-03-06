@@ -1,0 +1,144 @@
+package framework;
+
+import java.util.logging.Logger;
+
+import networkClock.NetworkClockController;
+import keyGenerator.KeyGeneratorController;
+import externalInformationPort.ExternalInformationPortController;
+import inputOutputHandler.InputOutputHandlerController;
+import messageProcessor.MessageProcessorController;
+import outputStrategy.OutputStrategyController;
+import userDatabase.UserDatabaseController;
+
+
+public abstract class Controller implements ComponentReferences {
+	
+	protected InputOutputHandlerController inputOutputHandler;
+	protected OutputStrategyController outputStrategy;
+	protected KeyGeneratorController keyGenerator;
+	protected MessageProcessorController messageProcessor;
+	protected ExternalInformationPortController externalInformationPort;
+	protected NetworkClockController networkClock;
+	protected UserDatabaseController userDatabase;
+	protected Logger logger;
+	protected Settings settings;
+	protected Implementation implementation; // konkrete Implementierung, die durch den ClassLoader geladen wird
+	protected Mix mix;
+	
+	
+	public Controller(Mix mix) {
+		
+		this.mix = mix;
+		mix.registerComponent(this);
+		
+	}
+	
+	public void setComponentReferences(
+			InputOutputHandlerController inputOutputHandler,
+			OutputStrategyController outputStrategy,
+			KeyGeneratorController keyGenerator,
+			MessageProcessorController messageProcessor,
+			ExternalInformationPortController externalInformationPort,
+			NetworkClockController networkClock,
+			UserDatabaseController userDatabase,
+			Logger logger,
+			Settings settings
+			) {
+		
+		this.inputOutputHandler = inputOutputHandler;
+		this.outputStrategy = outputStrategy;
+		this.keyGenerator = keyGenerator;
+		this.messageProcessor = messageProcessor;
+		this.externalInformationPort = externalInformationPort;
+		this.networkClock = networkClock;
+		this.userDatabase = userDatabase;
+		this.logger = logger;
+		this.settings = settings;
+		
+	}
+
+	
+	public void initialize() {
+		this.implementation.initialize();
+	}
+
+
+	public void begin() {
+		this.implementation.begin();
+	}
+	
+	
+	//overrides aus der Schnittstelle
+	@Override
+	public InputOutputHandlerController getInputOutputHandler() {
+		return this.inputOutputHandler;
+	}
+
+	
+	@Override
+	public OutputStrategyController getOutputStrategy() {
+		return this.outputStrategy;
+	}
+
+	
+	@Override
+	public KeyGeneratorController getKeyGenerator() {
+		return this.keyGenerator;
+	}
+
+	
+	@Override
+	public MessageProcessorController getMessageProcessor() {
+		return this.messageProcessor;
+	}
+	
+	
+	@Override
+	public ExternalInformationPortController getExternalInformationPort() {
+		return this.externalInformationPort;
+	}
+	
+	
+	@Override
+	public NetworkClockController getNetworkClock() {
+		return networkClock;
+	}
+	
+	
+	@Override
+	public UserDatabaseController getUserDatabase() {
+		return userDatabase;
+	}
+	
+	
+	@Override
+	public Logger getLogger() {
+		return logger;
+	}
+	
+	
+	@Override
+	public Settings getSettings() {
+		return settings;
+	}
+	
+	
+	@Override
+	public Mix getMix() {
+		return mix;
+	}
+
+	
+	//Getter und Setter für die konkrete Implementierung
+	public void setImplementation(Implementation implementation) {
+		this.implementation = implementation;
+	}
+	
+	
+	public Implementation getImplementation() {
+		return implementation;
+	}
+	
+	//abstrakte Methode, jeder Controller muss eine andere Schnittstelle implementieren
+	public abstract void instantiateSubclass();
+}
