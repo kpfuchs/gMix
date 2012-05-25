@@ -1,9 +1,0 @@
-package message;
-
-public class TestReply extends Message implements Reply, ExternalMessage {
-
-	public TestReply() {
-		super(null);
-	}
-	
-}

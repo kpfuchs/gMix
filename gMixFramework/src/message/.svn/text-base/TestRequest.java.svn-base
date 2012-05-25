@@ -1,9 +1,0 @@
-package message;
-
-public class TestRequest extends Message implements Request, ExternalMessage {
-
-	public TestRequest() {
-		super(null);
-	}
-	
-}

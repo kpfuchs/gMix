@@ -46,11 +46,6 @@ VALIDATION_RUNS = 2
 #--- General Settings ----------------------------------------------------------
 #
 #
-# DEBUG_OUTPUT
-# possible values: OFF, ON
-# Default value: OFF
-DEBUG_OUTPUT = OFF
-#
 # NAME_OF_PLOT_SCRIPT
 # Default value: defaultPlotScript.txt
 NAME_OF_PLOT_SCRIPT = defaultPlotScript.txt
@@ -110,15 +105,15 @@ NUMBER_OF_CLIENTS_TO_SIMULATE = 10
 		PULSE_LENGTH = 1000
 #
 #		REQUEST_SIZE in byte
-#		Default value for DNS-Traffic: 68 // TODO: "NORMAL_DISTRIBUTION_75" o.Š.
+#		Default value for DNS-Traffic: 68 // TODO: "NORMAL_DISTRIBUTION_75" o.ï¿½.
 		REQUEST_SIZE = 68
 #
 #		REPLY_SIZE in byte
-#		Default value for DNS-Traffic: 68 // TODO: "NORMAL_DISTRIBUTION_75" o.Š.
+#		Default value for DNS-Traffic: 68 // TODO: "NORMAL_DISTRIBUTION_75" o.ï¿½.
 		REPLY_SIZE = 68
 #	
 #		RESOLVE_TIME in ms
-#		Default value: 10 // TODO: "NORMAL_DISTRIBUTION_75" o. Š.
+#		Default value: 10 // TODO: "NORMAL_DISTRIBUTION_75" o. ï¿½.
 		RESOLVE_TIME = 10
 #
 #   Logfile Reader Settings:
