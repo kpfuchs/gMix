@@ -1,0 +1,42 @@
+### Settings for plugIns.layer1network.cascade_UDP
+# global capabilities
+TOPOLOGY_CLIENT = ROUTING
+TOPOLOGY_MIX = ROUTING
+DUPLEX_CLIENT = FALSE
+DUPLEX_MIX = FALSE
+#
+# compatible plug-ins (see plugIns.layerX.*)
+COMPATIBLE_CLIENT_PLUG_INS = nameOfPluginB
+COMPATIBLE_MIX_PLUG_INS = nameOfPluginB
+#
+# static function requirements (see staticFunctions.layerX.*)
+SAME_LAYER_REQUIREMENTS = nameOfStaticFunctionA/SomeClassUsefulForSeveralPlugIns.java
+LAYER_1_CLIENT_REQUIREMENTS = 
+LAYER_2_CLIENT_REQUIREMENTS = 
+LAYER_3_CLIENT_REQUIREMENTS = 
+LAYER_4_CLIENT_REQUIREMENTS = 
+LAYER_5_CLIENT_REQUIREMENTS = 
+LAYER_1_MIX_REQUIREMENTS = 
+LAYER_2_MIX_REQUIREMENTS = 
+LAYER_3_MIX_REQUIREMENTS = 
+LAYER_4_MIX_REQUIREMENTS = 
+LAYER_5_MIX_REQUIREMENTS = 
+#
+# static function capabilities (see staticFunctions.capabilities.*)
+CAPABILITIES_CLIENT = 
+CAPABILITIES_MIX = 
+#
+# parameters
+# available:
+#  CLIENT_CONNECTION_HANDLER: ClientHandler_UDP_FCFS.java
+#  PREVIOUS_MIX_CONNECTION_HANLDER: PrevMixHandler_UDP_multiplexed.java
+#  NEXT_MIX_CONNECTION_HANLDER: NextMixHandler_UDP_multiplexed.java
+CLIENT_CONNECTION_HANDLER = ClientHandler_UDP_FCFS.java
+PREVIOUS_MIX_CONNECTION_HANLDER = PrevMixHandler_UDP_multiplexed.java
+NEXT_MIX_CONNECTION_HANLDER = NextMixHandler_UDP_multiplexed.java
+MAX_REQUEST_LENGTH = 4096
+QUEUE_BLOCK_SIZE = 8
+MAX_CONNECTIONS = 1000
+# client-side:
+MAX_REQUEST_LENGTH = 4096
+QUEUE_BLOCK_SIZE = 8

@@ -1,0 +1,4 @@
+This folder ("./inputOutput/") contains input and output files required by 
+components of the framework. For example the simulator will store the diagrams 
+it creates here and load experiment files (definitions of the experiments to 
+perform) from here.

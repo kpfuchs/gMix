@@ -1,0 +1,11 @@
+# form: RULE_NAME=[CHOICE_1],[CHOICE_2],...[CHOICE_n]
+# with [CHOICE_x] = CHOICE_NAME:REQUIREMENTS_FILE
+# example: TOPOLOGY=FIXED_ROUTE:topology_fixedRoute.txt,FREE_ROUTE:topology_freeRoute.txt
+#
+# 
+TOPOLOGY = FIXED_ROUTE:topology_fixedRoute.txt,FREE_ROUTE:topology_freeRoute.txt
+# description: "TOPOLOGY" means that...
+#
+DUPLEX = TRUE:duplex_true.txt,FALSE:duplex_false.txt
+# description: "DUPLEX" means that...
+

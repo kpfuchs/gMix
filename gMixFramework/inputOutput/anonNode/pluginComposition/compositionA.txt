@@ -1,0 +1,15 @@
+#
+LAYER_1_PLUG-IN_MIX = nameOfPluginA
+LAYER_1_PLUG-IN_CLIENT = nameOfPluginA
+#
+LAYER_2_PLUG-IN_MIX = nameOfPluginA
+LAYER_2_PLUG-IN_CLIENT = nameOfPluginA
+#
+LAYER_3_PLUG-IN_MIX = nameOfPluginA
+LAYER_3_PLUG-IN_CLIENT = nameOfPluginA
+#
+LAYER_4_PLUG-IN_MIX = nameOfPluginA
+LAYER_4_PLUG-IN_CLIENT = nameOfPluginA
+#
+LAYER_5_PLUG-IN_MIX = nameOfPluginA
+LAYER_5_PLUG-IN_CLIENT = nameOfPluginA

@@ -1,0 +1,3 @@
+# currently no properties to set up here
+# ./inputOutput/mix/generalConfig.txt contains some joint settings of the
+# info service and the mixes/clients (e.g. the info service ip address etc.)
