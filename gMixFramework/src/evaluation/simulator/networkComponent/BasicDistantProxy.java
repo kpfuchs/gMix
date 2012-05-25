@@ -1,6 +1,6 @@
 /*
  * gMix open source project - https://svs.informatik.uni-hamburg.de/gmix/
- * Copyright (C) 2011  Karl-Peter Fuchs
+ * Copyright (C) 2012  Karl-Peter Fuchs
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,7 +15,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 package evaluation.simulator.networkComponent;
 
 import evaluation.simulator.core.Simulator;

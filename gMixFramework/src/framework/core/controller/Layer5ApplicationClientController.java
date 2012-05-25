@@ -1,6 +1,6 @@
 /*
-t * gMix open source project - https://svs.informatik.uni-hamburg.de/gmix/
- * Copyright (C) 2011  Karl-Peter Fuchs
+ * gMix open source project - https://svs.informatik.uni-hamburg.de/gmix/
+ * Copyright (C) 2012  Karl-Peter Fuchs
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

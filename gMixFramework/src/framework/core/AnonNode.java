@@ -1,6 +1,6 @@
 /*
  * gMix open source project - https://svs.informatik.uni-hamburg.de/gmix/
- * Copyright (C) 2011  Karl-Peter Fuchs
+ * Copyright (C) 2012  Karl-Peter Fuchs
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,10 +23,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Vector;
 import java.util.concurrent.ArrayBlockingQueue;
-
-import zzLayers.Layer1ControllerClient;
-import zzLayers.Layer2ControllerClient;
-import zzLayers.Layer3ControllerClient;
 
 import framework.core.clock.Clock;
 import framework.core.config.MatchingMechanism;
@@ -54,7 +50,6 @@ import framework.core.socket.connectedDatagram.ConnectedDatagramAnonSocketClient
 import framework.core.socket.datagram.DatagramAnonServerSocketImpl;
 import framework.core.socket.datagram.DatagramAnonSocketClientImpl;
 import framework.core.socket.socketInterfaces.AdaptiveAnonServerSocket;
-import framework.core.socket.socketInterfaces.AdaptiveAnonSocket;
 import framework.core.socket.socketInterfaces.AnonServerSocket;
 import framework.core.socket.socketInterfaces.ConnectedDatagramAnonServerSocket;
 import framework.core.socket.socketInterfaces.ConnectedDatagramAnonSocket;
@@ -477,23 +472,6 @@ public class AnonNode extends GMixTool {
 				isOrderPreserving,
 				isFreeRoute
 				);
-	}
-	
-	
-	
-	public Layer2ControllerClient createLayer2ClientPlugIn() {
-		return new Layer2ControllerClient();
-	}
-
-
-	public Layer1ControllerClient createLayer1ClientPlugIn(AdaptiveAnonSocket linkedSocket) {
-		return new Layer1ControllerClient(linkedSocket);
-	}
-
-
-	public Layer3ControllerClient createLayer3ClientPlugIn(
-			Layer1ControllerClient layer1, Layer2ControllerClient layer2) {
-		return new Layer3ControllerClient(layer1, layer2);
 	}
 
 	
