@@ -52,8 +52,7 @@ public class EncryptedMessage {
 		this.alpBetaGam = new byte[3][];
 		int pointer = 0;
 		alpBetaGam[0] = Arrays.copyOfRange(message, pointer, pointer += config.ALPHA_SIZE);
-		int lengthOfBeta = 16 + (config.ROUTE_LENGTH * 32);
-		alpBetaGam[1] = Arrays.copyOfRange(message, pointer, pointer += lengthOfBeta);
+		alpBetaGam[1] = Arrays.copyOfRange(message, pointer, pointer += config.BETA_SIZE);
 		alpBetaGam[2] = Arrays.copyOfRange(message, pointer, pointer += 16);
 		delta = Arrays.copyOfRange(message, pointer, message.length);
 	}

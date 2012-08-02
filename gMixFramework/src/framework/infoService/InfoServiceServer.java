@@ -29,7 +29,6 @@ import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import framework.core.config.Paths;
 import framework.core.config.Settings;
 import framework.core.launcher.CommandLineParameters;
 import framework.core.util.Util;
@@ -52,10 +51,11 @@ public class InfoServiceServer {
 	private AtomicInteger mixIdCounter = new AtomicInteger(0);
 	private AtomicInteger clientIdCounter = new AtomicInteger(0);
 	private AtomicInteger mixPort = new AtomicInteger(23301);
+	private AtomicBoolean addressExchangePhaseFinished = new AtomicBoolean(false);
 	private AtomicBoolean registrationPhaseFinished = new AtomicBoolean(false);
 	private AtomicBoolean initPhaseFinished = new AtomicBoolean(false);
 	private AtomicBoolean beginPhaseFinished = new AtomicBoolean(false);
-	private AtomicBoolean cascadeIsUp = new AtomicBoolean(false);
+	private int addressesReceived = 0;
 	private int registeredMixes = 0;
 	private int initializedMixes = 0;
 	private int readyMixes = 0;
@@ -64,20 +64,11 @@ public class InfoServiceServer {
 	private HashMap<Integer, HashMap<String, byte[]>> mixData = new HashMap<Integer, HashMap<String, byte[]>>();
 	private HashMap<Integer, HashMap<String, byte[]>> clientData = new HashMap<Integer, HashMap<String, byte[]>>();
 	private HashMap<String, byte[]> anonData = new HashMap<String, byte[]>();
-	public Settings settings;
+	private Settings settings;
 	
 	
 	public InfoServiceServer(CommandLineParameters commandLineParameters) {
-		if (commandLineParameters.globalConfigFile != null) {
-			settings = new Settings(commandLineParameters.globalConfigFile);
-			settings.setProperty("GLOBAL_CONFIG_MODE_ON", "TRUE");
-		} else {
-			settings = new Settings(Paths.PATH_TO_PATH_CONFIG_FILE);
-			settings.addProperties(Paths.GENERAL_CONFIG_PROPERTY_FILE_PATH);
-			settings.setProperty("GLOBAL_CONFIG_MODE_ON", "FALSE");
-		}
-		if (commandLineParameters.overwriteParameters != null)
-			Settings.overwriteSettings(settings.getPropertiesObject(), commandLineParameters.overwriteParameters);
+		settings = commandLineParameters.generateSettingsObject();
 		
 		ProtocolPrimitives.DEBUG = settings.getPropertyAsBoolean("IS_DISPLAY_TRANSACTIONS");
 		this.LOCAL_MODE_ON = settings.getPropertyAsBoolean("GLOBAL_LOCAL_MODE_ON");
@@ -132,7 +123,7 @@ public class InfoServiceServer {
 
 	
 	private void acceptConnections() {
-		System.out.println("Information Server up on " +serverSocket.getLocalSocketAddress()); 
+		System.out.println("Information Service up on " +serverSocket.getLocalSocketAddress()); 
 		while(true) {
 			try {
 				Socket connectionSocket = serverSocket.accept();
@@ -205,6 +196,8 @@ public class InfoServiceServer {
 						LOCAL_MODE_ON(outputStream);
 					else if (command.equals("DUPLEX_ON"))
 						DUPLEX_ON(outputStream);
+					else if (command.equals("WAIT_FOR_END_OF_ADDRESS_EXCHANGE_PHASE"))
+						WAIT_FOR_END_OF_ADDRESS_EXCHANGE_PHASE(outputStream, inputStream);
 					else if (command.equals("WAIT_FOR_END_OF_REGISTRATION_PHASE"))
 						WAIT_FOR_END_OF_REGISTRATION_PHASE(outputStream, inputStream);  
 					else if (command.equals("WAIT_FOR_END_OF_INITIALIZATION_PHASE"))
@@ -645,12 +638,53 @@ public class InfoServiceServer {
 	}
 	
 	
+	public static void client_WAIT_FOR_END_OF_ADDRESS_EXCHANGE_PHASE(OutputStream outputStream, InputStream inputStream) throws UnsupportedEncodingException, IOException {
+		if (ProtocolPrimitives.DEBUG)
+			System.out.println("void client_WAIT_FOR_END_OF_ADDRESS_EXCHANGE_PHASE()");
+		ProtocolPrimitives.sendString(outputStream, "WAIT_FOR_END_OF_ADDRESS_EXCHANGE_PHASE");
+		String result = ProtocolPrimitives.receiveString(inputStream);
+		if (!result.equals("ADDRESS_EXCHANGE_PHASE_DONE"))
+			throw new RuntimeException("received wrong result!");
+	}
+	
+	
+	public void WAIT_FOR_END_OF_ADDRESS_EXCHANGE_PHASE(OutputStream outputStream, InputStream inputStream) throws Exception {
+		if (ProtocolPrimitives.DEBUG)
+			System.out.println("server: WAIT_FOR_END_OF_ADDRESS_EXCHANGE_PHASE()");
+		synchronized(addressExchangePhaseFinished) {
+			addressesReceived++;
+			if (addressesReceived >= NUMBER_OF_MIXES) {
+				System.out.println("InfoService: address exchange phase finished"); 
+				addressExchangePhaseFinished.set(true);
+				addressExchangePhaseFinished.notifyAll();
+				/*synchronized (eventListeners) { // TODO
+					for (EipEventListener eipel:eventListeners)
+						eipel.registrationPhaseFinished();
+				}*/
+				
+			} else {
+				while (addressExchangePhaseFinished.get() == false) {
+					try { 
+						addressExchangePhaseFinished.wait();
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+						continue;	
+					}	
+				}
+			}
+		}
+		ProtocolPrimitives.sendString(outputStream, "ADDRESS_EXCHANGE_PHASE_DONE");
+		outputStream.flush();
+	}
+	
+	
 	public void WAIT_FOR_END_OF_REGISTRATION_PHASE(OutputStream outputStream, InputStream inputStream) throws Exception {
 		if (ProtocolPrimitives.DEBUG)
 			System.out.println("server: WAIT_FOR_END_OF_REGISTRATION_PHASE()");
 		synchronized(registrationPhaseFinished) {
 			registeredMixes++;
-			if (registeredMixes == NUMBER_OF_MIXES) {
+			if (registeredMixes >= NUMBER_OF_MIXES) {
+				System.out.println("InfoService: registration phase finished"); 
 				registrationPhaseFinished.set(true);
 				registrationPhaseFinished.notifyAll();
 				/*synchronized (eventListeners) { // TODO
@@ -689,7 +723,8 @@ public class InfoServiceServer {
 			System.out.println("server: WAIT_FOR_END_OF_INITIALIZATION_PHASE()");
 		synchronized(initPhaseFinished) {
 			initializedMixes++;
-			if (initializedMixes == NUMBER_OF_MIXES) {
+			if (initializedMixes >= NUMBER_OF_MIXES) {
+				System.out.println("InfoService: initialization phase finished"); 
 				initPhaseFinished.set(true);
 				initPhaseFinished.notifyAll();
 				/*synchronized (eventListeners) { // TODO
@@ -728,12 +763,10 @@ public class InfoServiceServer {
 			System.out.println("server: WAIT_FOR_END_OF_BEGIN_PHASE()");
 		synchronized(beginPhaseFinished) {
 			readyMixes++;
-			if (readyMixes == NUMBER_OF_MIXES) {
+			if (readyMixes >= NUMBER_OF_MIXES) {
+				System.out.println("InfoService: cascade is up (begin phase finished)"); 
 				beginPhaseFinished.set(true);
 				beginPhaseFinished.notifyAll();
-				synchronized (cascadeIsUp) {
-					cascadeIsUp.notifyAll();
-				}
 				/*synchronized (eventListeners) { // TODO
 					for (EipEventListener eipel:eventListeners)
 						eipel.registrationPhaseFinished();
@@ -750,6 +783,7 @@ public class InfoServiceServer {
 				}
 			}
 		}
+		
 		ProtocolPrimitives.sendString(outputStream, "BEGIN_PHASE_DONE");
 		outputStream.flush();
 	}
@@ -769,17 +803,16 @@ public class InfoServiceServer {
 		if (ProtocolPrimitives.DEBUG)
 			System.out.println("server: WAIT_TILL_CASCADE_IS_UP()");
 		synchronized(beginPhaseFinished) {
-			synchronized(cascadeIsUp) {
-				while (cascadeIsUp.get() == false) {
-					try {
-						cascadeIsUp.wait();
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-						continue;	
-					}	
-				}
+			while (beginPhaseFinished.get() == false) {
+				try {
+					beginPhaseFinished.wait();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+					continue;	
+				}	
 			}
 		}
+		
 		ProtocolPrimitives.sendString(outputStream, "CASCADE_IS_UP");
 		outputStream.flush();
 	}
@@ -795,16 +828,18 @@ public class InfoServiceServer {
 	}
 	
 	
-	/*private void localWaitTillCascadeIsUp() throws IOException {
-		synchronized(cascadeIsUp) {
-			while (cascadeIsUp.get() == false) {
+	public void localWaitTillCascadeIsUp() throws IOException {
+		if (ProtocolPrimitives.DEBUG)
+			System.out.println("server: localWaitTillCascadeIsUp()");
+		synchronized(beginPhaseFinished) {
+			while (beginPhaseFinished.get() == false) {
 				try {
-					cascadeIsUp.wait();
+					beginPhaseFinished.wait();
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 					continue;	
 				}	
 			}
 		}
-	}*/
+	}
 }

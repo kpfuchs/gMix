@@ -99,7 +99,7 @@ public class ClientHandler_TCP_RR_sync extends SubImplementation {
 		
 		@Override
 		public void run() {
-			new Thread(// TODO: remove
+			/*new Thread(// TODO: remove
 					new Runnable() {
 						public void run() {
 							while (true) {
@@ -113,7 +113,7 @@ public class ClientHandler_TCP_RR_sync extends SubImplementation {
 							}
 						}
 					}
-				).start(); 
+				).start(); */
 			int counter = 0;
 			while (true) {
 				try {
@@ -158,7 +158,7 @@ public class ClientHandler_TCP_RR_sync extends SubImplementation {
 		@Override
 		public void run() {
 			int maxReadsPerChannelInARow = settings.getPropertyAsInt("MAX_READS_IN_A_ROW");
-			int maxMessageBlockSize = settings.getPropertyAsInt("MAX_MESSAGE_BLOCK_SIZE");
+			int maxMessageBlockSize = anonNode.QUEUE_BLOCK_SIZE;
 			
 			while (true) {
 				synchronized (acceptorThread) { // handle new connections
@@ -292,15 +292,17 @@ public class ClientHandler_TCP_RR_sync extends SubImplementation {
 						assert reply.getOwner().channeldata != null;
 						assert reply.getOwner().channeldata.outputStream != null;
 						
+						//System.out.println("sende auf layer 0 fuer " +reply.getOwner().toString() +": " +Util.md5(reply.getByteMessage())); 
+						
 						reply.getOwner().channeldata.outputStream.write(Util.intToByteArray(reply.getByteMessage().length));
-						reply.getOwner().channeldata.outputStream.write(reply.getByteMessage().length);
+						reply.getOwner().channeldata.outputStream.write(reply.getByteMessage());
 						reply.getOwner().channeldata.outputStream.flush();
 					} catch (IOException e) {
 						System.err.println("warning: connection to " +reply.getOwner() +" lost");
 						e.printStackTrace();
+						System.exit(0);
 						// TODO: disconeect etc
 					}
-					
 				}
 			}
 		}

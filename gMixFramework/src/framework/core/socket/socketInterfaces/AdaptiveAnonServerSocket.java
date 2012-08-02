@@ -26,8 +26,6 @@ import framework.core.message.Request;
 import framework.core.util.Util;
 
 
-
-
 //ServerSocket can be used to accept connections (generate "normal" socket on connection attempt)
 //or to receive datagrams directly
 public abstract class AdaptiveAnonServerSocket implements AnonServerSocket, AnonSocketOptions, ServerSocketAddressData{
@@ -50,6 +48,7 @@ public abstract class AdaptiveAnonServerSocket implements AnonServerSocket, Anon
 	
 	protected ArrayBlockingQueue<Request> receivedRequests = null;
 	protected Layer3OutputStrategyMixController layer3;
+	
 	
 	// try to generate a socket 
 	public AdaptiveAnonServerSocket(	AnonNode owner,
@@ -101,6 +100,7 @@ public abstract class AdaptiveAnonServerSocket implements AnonServerSocket, Anon
 			incomingRequest(request);
 		}
 	}
+	
 	
 	// may block
 	protected Request getNextRequest() {

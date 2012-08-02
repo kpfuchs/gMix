@@ -22,4 +22,6 @@ public interface StreamAnonServerSocket extends AnonServerSocket, AnonSocketOpti
 
 	public StreamAnonSocketMix accept();
 	
+	public AdaptiveAnonServerSocket getImplementation();
+	
 }

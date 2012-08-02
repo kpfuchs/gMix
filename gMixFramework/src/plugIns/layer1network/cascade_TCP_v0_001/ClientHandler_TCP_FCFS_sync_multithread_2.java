@@ -21,14 +21,12 @@ package plugIns.layer1network.cascade_TCP_v0_001;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
 import framework.core.controller.SubImplementation;
 import framework.core.message.MixMessage;
-import framework.core.message.Reply;
 import framework.core.message.Request;
 import framework.core.userDatabase.User;
 import framework.core.util.Util;
@@ -49,6 +47,8 @@ public class ClientHandler_TCP_FCFS_sync_multithread_2 extends SubImplementation
 	
 	@Override
 	public void constructor() {
+		if (anonNode.IS_DUPLEX)
+			throw new RuntimeException("not supported"); 
 		this.bindAddress = settings.getPropertyAsInetAddress("GLOBAL_MIX_BIND_ADDRESS");
 		this.port = settings.getPropertyAsInt("GLOBAL_MIX_BIND_PORT");
 		this.backlog = settings.getPropertyAsInt("BACKLOG");
@@ -108,8 +108,6 @@ public class ClientHandler_TCP_FCFS_sync_multithread_2 extends SubImplementation
 					User user = userDatabase.generateUser();
 					userDatabase.addUser(user);
 					new RequestThread(user, client.getInputStream()).start();
-					if (anonNode.IS_DUPLEX)
-						new ReplyThread(user, client.getOutputStream()).start();
 				} catch (IOException e) {
 					e.printStackTrace();
 					continue;
@@ -147,32 +145,4 @@ public class ClientHandler_TCP_FCFS_sync_multithread_2 extends SubImplementation
 		}
 	}
 	
-	
-	private class ReplyThread extends Thread {
-		
-		private User user;
-		private OutputStream outputStream;
-		
-		public ReplyThread(User user, OutputStream outputStream) {
-			this.user = user;
-			this.outputStream = outputStream;
-		}
-
-		@Override
-		public void run() {
-			try {
-				while (true) {
-					Reply[] replies = anonNode.getFromReplyOutputQueue();
-					for (Reply reply: replies) {
-						outputStream.write(Util.intToByteArray(reply.getByteMessage().length));
-						outputStream.write(reply.getByteMessage());
-						outputStream.flush();
-					}
-				}
-			} catch (IOException e) {
-				System.err.println("warning: connection to " +user +" lost");
-				e.printStackTrace();
-			}
-		}
-	}
 }

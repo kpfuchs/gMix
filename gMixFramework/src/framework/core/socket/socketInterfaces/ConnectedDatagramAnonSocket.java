@@ -18,7 +18,6 @@
 package framework.core.socket.socketInterfaces;
 
 
-
 public interface ConnectedDatagramAnonSocket extends AnonSocket {
 
 	public void connect(int destinationPort); // only available if fixed route socket
@@ -31,4 +30,5 @@ public interface ConnectedDatagramAnonSocket extends AnonSocket {
 	public int getMaxSizeForNextMessageSend();
 	public int getMaxSizeForNextMessageReceive(); // may be not available if the implementing socket is simplex
 
+	public AdaptiveAnonSocket getImplementation();
 }

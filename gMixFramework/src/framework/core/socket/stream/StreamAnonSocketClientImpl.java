@@ -114,4 +114,16 @@ public class StreamAnonSocketClientImpl extends AdaptiveAnonSocket implements St
 		return this.inputStream;
 	}
 
+
+	@Override
+	public int getMTU() {
+		return outputStream.getMaxSizeForNextMessageSend();
+	}
+
+
+	@Override
+	public AdaptiveAnonSocket getImplementation() {
+		return this;
+	}
+
 }

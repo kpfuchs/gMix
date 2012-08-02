@@ -73,7 +73,7 @@ public class NextMixHandler_TCP_multiplexed_sync extends SubImplementation imple
 	
 	@Override
 	public void initialize() {
-		MixList mixList = infoService.getMixList();
+		MixList mixList = anonNode.mixList;
 		if (anonNode.PUBLIC_PSEUDONYM+1 < mixList.numberOfMixes) { // TODO
 			this.nextMixAddress = mixList.addresses[anonNode.PUBLIC_PSEUDONYM+1];
 			this.nextMixPort = mixList.ports[anonNode.PUBLIC_PSEUDONYM+1];

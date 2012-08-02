@@ -111,4 +111,10 @@ public class StreamAnonServerSocketImpl extends AdaptiveAnonServerSocket impleme
 		sockets.remove(endToEndPseudonym);
 	}
 
+
+	@Override
+	public AdaptiveAnonServerSocket getImplementation() {
+		return this;
+	}
+
 }

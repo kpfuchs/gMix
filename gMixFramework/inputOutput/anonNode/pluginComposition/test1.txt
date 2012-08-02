@@ -11,6 +11,6 @@ LAYER_3_PLUG-IN_CLIENT = sendImmediately_v0_001
 LAYER_4_PLUG-IN_MIX = 
 LAYER_4_PLUG-IN_CLIENT = 
 #
-LAYER_5_PLUG-IN_MIX = StreamSocketTest_v0_001
-LAYER_5_PLUG-IN_CLIENT = StreamSocketTest_v0_001
+LAYER_5_PLUG-IN_MIX = StatisticsPlugInStreamSocket_v0_001
+LAYER_5_PLUG-IN_CLIENT = StatisticsPlugInStreamSocket_v0_001
 #

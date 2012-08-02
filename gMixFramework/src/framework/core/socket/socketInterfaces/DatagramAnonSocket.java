@@ -26,5 +26,8 @@ public interface DatagramAnonSocket extends AnonSocket {
 	public int getMaxSizeForNextMessageSend();
 	public AnonMessage receiveMessage(); // may be not available if the implementing socket is simplex
 	public int getMaxSizeForNextMessageReceive();
+	public int availableReplies(); // returns the number of replies available (needed to determine the number of possible "receiveMessage()" calls without blocking)
+	
+	public AdaptiveAnonSocket getImplementation();
 	
 }

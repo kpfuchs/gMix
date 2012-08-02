@@ -52,15 +52,16 @@ public class DatagramAnonSocketClientImpl extends AdaptiveAnonSocket implements 
 				);
 		if (isDuplex)
 			this.pseudonymToDestAddress = new HashMap<Integer, Integer>(100);
+		if (!owner.IS_FREE_ROUTE)
+			layer1.connect();
 	}
 
 	
 	@Override
 	public void sendMessage(int destPort, byte[] payload) {
-		if (!isFreeRoute)
+		if (isFreeRoute)
 			throw new RuntimeException("no destination address specified; use \"sendMessage(destinationPseudonym, destPort, payload\" instead"); 
-
-		payload = Util.concatArrays(Util.shortToByteArray(destinationPort), payload); // add destination port (= which layer 5 service/ServerSocket shall be addressed)
+		payload = Util.concatArrays(Util.shortToByteArray(destPort), payload); // add destination port (= which layer 5 service/ServerSocket shall be addressed)
 		Request request = MixMessage.getInstanceRequest(payload);
 		layer3.sendMessage(request);
 	}
@@ -70,7 +71,6 @@ public class DatagramAnonSocketClientImpl extends AdaptiveAnonSocket implements 
 	public void sendMessage(int destinationPseudonym, int destinationPort, byte[] payload) {
 		if (!isFreeRoute)
 			throw new RuntimeException("this is a fixed route socket; you cannot specify a destination address; use \"sendMessage(destPort, payload\" instead"); 
-		
 		if (isDuplex) { // add a pseudonym so the receiver's reply can be identified (the receiver will include this pseudonym in his reply)
 			int endToEndPseudonym = new Random().nextInt(); // TODO
 			pseudonymToDestAddress.put(endToEndPseudonym, destinationPseudonym);
@@ -95,7 +95,7 @@ public class DatagramAnonSocketClientImpl extends AdaptiveAnonSocket implements 
 		result.setByteMessage(Arrays.copyOfRange(reply.getByteMessage(), 2, reply.getByteMessage().length));
 		result.setSourcePort(sourcePort);
 				
-		if (!isFreeRoute) {
+		if (isFreeRoute) {
 			int endToEndPseudonym = Util.byteArrayToInt(Arrays.copyOf(result.getByteMessage(), 4));
 			result.setByteMessage(Arrays.copyOfRange(result.getByteMessage(), 4, result.getByteMessage().length));
 			Integer sourcePseudonym = pseudonymToDestAddress.remove(endToEndPseudonym);
@@ -111,7 +111,10 @@ public class DatagramAnonSocketClientImpl extends AdaptiveAnonSocket implements 
 	
 	@Override
 	public int getMaxSizeForNextMessageSend() {
-		return layer3.getMaxSizeOfNextRequest() -6; // -2 for port; -4 for pseudonym; see sendMessage()
+		if (isFreeRoute)
+			return layer3.getMaxSizeOfNextRequest() -6; // -2 for port; -4 for pseudonym; see sendMessage()
+		else
+			return layer3.getMaxSizeOfNextRequest() -2; // -2 for port; see sendMessage()
 	}
 
 	
@@ -124,4 +127,17 @@ public class DatagramAnonSocketClientImpl extends AdaptiveAnonSocket implements 
 			maxSize -= 4; // pseudonym
 		return maxSize;
 	}
+
+
+	@Override
+	public AdaptiveAnonSocket getImplementation() {
+		return this;
+	}
+
+
+	@Override
+	public int availableReplies() {
+		return layer3.availableReplies();
+	}
+	
 }

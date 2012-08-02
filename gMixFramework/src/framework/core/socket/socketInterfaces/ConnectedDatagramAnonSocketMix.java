@@ -19,6 +19,8 @@ package framework.core.socket.socketInterfaces;
 
 import java.io.IOException;
 
+import framework.core.userDatabase.User;
+
 
 public interface ConnectedDatagramAnonSocketMix extends AnonSocket {
 	
@@ -30,4 +32,7 @@ public interface ConnectedDatagramAnonSocketMix extends AnonSocket {
 	public int getMaxSizeForNextMessageSend() throws IOException;
 	public int getMaxSizeForNextMessageReceive() throws IOException; // may be not available if the implementing socket is simplex
 
+	public User getUser();
+	
+	public AdaptiveAnonSocket getImplementation();
 }

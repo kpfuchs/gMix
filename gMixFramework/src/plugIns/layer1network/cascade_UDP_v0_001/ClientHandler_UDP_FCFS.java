@@ -76,7 +76,7 @@ public class ClientHandler_UDP_FCFS extends SubImplementation {
 		
 		@Override
 		public void run() {
-			new Thread(// TODO: remove
+			/*new Thread(// TODO: remove
 					new Runnable() {
 						public void run() {
 							while (true) {
@@ -90,7 +90,7 @@ public class ClientHandler_UDP_FCFS extends SubImplementation {
 							}
 						}
 					}
-				).start(); 
+				).start(); */
 			
 			try {
 				int ctr = 0;

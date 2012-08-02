@@ -1,0 +1,4 @@
+This folder ("./dist/") contains portable distributions of the framework 
+(normally zip files with the required folder structure, config files and the 
+framework jar).
+see "./buildPortableDist.ant"

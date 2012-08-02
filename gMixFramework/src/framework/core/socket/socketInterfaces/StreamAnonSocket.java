@@ -33,4 +33,7 @@ public interface StreamAnonSocket extends AnonSocket {
 	public OutputStream getOutputStream() throws IOException ;
 	public InputStream getInputStream() throws IOException ; // may be not available if the implementing socket is simplex
 	
+	public int getMTU();
+	
+	public AdaptiveAnonSocket getImplementation();
 }

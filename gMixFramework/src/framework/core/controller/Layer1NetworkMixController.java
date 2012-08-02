@@ -37,9 +37,6 @@ public class Layer1NetworkMixController extends Controller implements Layer1Netw
 	
 	@Override
 	public void instantiateSubclass() {
-		settings.addProperties("./src/plugIns/layer1network/" 
-				+settings.getProperty("LAYER_1_PLUG-IN_MIX") 
-				+"/PlugInSettings.txt");
 		LocalClassLoader.instantiateImplementation(
 				"plugIns.layer1network." +settings.getProperty("LAYER_1_PLUG-IN_MIX"), 
 				"MixPlugIn.java",

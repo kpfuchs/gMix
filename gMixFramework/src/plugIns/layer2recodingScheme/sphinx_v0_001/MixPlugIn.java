@@ -17,8 +17,6 @@
  */
 package plugIns.layer2recodingScheme.sphinx_v0_001;
 
-import java.util.Arrays;
-
 import framework.core.controller.Implementation;
 import framework.core.interfaces.Layer2RecodingSchemeMix;
 import framework.core.message.MixMessage;
@@ -31,7 +29,6 @@ public class MixPlugIn extends Implementation implements Layer2RecodingSchemeMix
 
 	private Sphinx_Config config;
 	private RequestThread[] requestThreads;
-	// private ReplyThread[] replyThreads;
 	private Sphinx messageCreator;
 	
 	
@@ -56,16 +53,14 @@ public class MixPlugIn extends Implementation implements Layer2RecodingSchemeMix
 	@Override
 	public void initialize() {
 		assert !anonNode.IS_FREE_ROUTE;
-		config.loadPlubicKeysOfMixes();
-		if (!anonNode.IS_LAST_MIX) {
+		config.loadPlubicKeysOfMixes(anonNode);
+		/*if (!anonNode.IS_LAST_MIX) {
 			config.publicKeysOfMixes = Arrays.copyOfRange(config.publicKeysOfMixes, (anonNode.PUBLIC_PSEUDONYM +1), config.publicKeysOfMixes.length); // TODO
 			config.mixIdsSphinx = Arrays.copyOfRange(config.mixIdsSphinx, (anonNode.PUBLIC_PSEUDONYM +1), config.mixIdsSphinx.length); // TODO
 		}
-		config.NUMBER_OF_MIXES = config.publicKeysOfMixes.length;
+		config.NUMBER_OF_MIXES = config.publicKeysOfMixes.length;*/
 		for (int i=0; i<requestThreads.length; i++) {
 			requestThreads[i].recodingScheme.initAsRecoder();
-			//if (anonNode.IS_DUPLEX)
-			//	replyThreads[i].recodingScheme.initAsRecoder();
 		}
 	}
 	

@@ -42,9 +42,6 @@ public class Layer2RecodingSchemeMixController extends Controller implements Lay
 	
 	@Override
 	public void instantiateSubclass() {
-		settings.addProperties("./src/plugIns/layer2recodingScheme/" 
-				+settings.getProperty("LAYER_2_PLUG-IN_MIX") 
-				+"/PlugInSettings.txt");
 		this.implementation = LocalClassLoader.instantiateImplementation(
 				"plugIns.layer2recodingScheme." +settings.getProperty("LAYER_2_PLUG-IN_MIX"), 
 				"MixPlugIn.java",

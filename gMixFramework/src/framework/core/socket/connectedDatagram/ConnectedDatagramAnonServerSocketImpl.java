@@ -113,4 +113,11 @@ public class ConnectedDatagramAnonServerSocketImpl extends AdaptiveAnonServerSoc
 	public void disconnect(int endToEndPseudonym) {
 		sockets.remove(endToEndPseudonym);
 	}
+
+
+	@Override
+	public AdaptiveAnonServerSocket getImplementation() {
+		return this;
+	}
+
 }

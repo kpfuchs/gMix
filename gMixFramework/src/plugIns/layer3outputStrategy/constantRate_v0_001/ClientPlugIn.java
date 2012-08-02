@@ -17,6 +17,7 @@
  */
 package plugIns.layer3outputStrategy.constantRate_v0_001;
 
+import java.util.Vector;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -45,6 +46,8 @@ public class ClientPlugIn extends Implementation implements Layer3OutputStrategy
 	private ScheduledFuture<?> currentTimer;
 	private ArrayBlockingQueue<Request> requestQueue;
 	private static OutputCap warning;
+	private Vector<Reply> replyCache;
+	private int availableReplyPayload = 0;
 	
 	
 	@Override
@@ -58,7 +61,8 @@ public class ClientPlugIn extends Implementation implements Layer3OutputStrategy
 	
 	@Override
 	public void initialize() {
-		
+		if (anonNode.IS_DUPLEX)
+			this.replyCache = new Vector<Reply>();
 	}
 
 	
@@ -155,8 +159,14 @@ public class ClientPlugIn extends Implementation implements Layer3OutputStrategy
 	
 	@Override
 	public Reply receiveReply() {
-		Reply reply = layer1.receiveReply();
-		return layer2.extractPayload(reply);
+		if (replyCache.size() > 0) {
+			Reply result = replyCache.remove(0);
+			availableReplyPayload -= result.getByteMessage().length;
+			return result;
+		} else {
+			Reply reply = layer1.receiveReply();
+			return layer2.extractPayload(reply);
+		}
 	}
 
 
@@ -169,5 +179,27 @@ public class ClientPlugIn extends Implementation implements Layer3OutputStrategy
 	@Override
 	public int getMaxSizeOfNextReply() {
 		return layer2.getMaxPayloadForNextReply();
+	}
+
+
+	@Override
+	public int availableReplies() {
+		for (int i=0; i<layer1.availableReplies(); i++) {
+			Reply reply = layer1.receiveReply();
+			replyCache.add(layer2.extractPayload(reply));
+			availableReplyPayload += reply.getByteMessage().length;
+		} 
+		return replyCache.size();
+	}
+
+
+	@Override
+	public int availableReplyPayload() {
+		for (int i=0; i<layer1.availableReplies(); i++) {
+			Reply reply = layer1.receiveReply();
+			replyCache.add(layer2.extractPayload(reply));
+			availableReplyPayload += reply.getByteMessage().length;
+		} 
+		return availableReplyPayload;
 	}
 }

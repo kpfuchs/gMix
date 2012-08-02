@@ -46,13 +46,4 @@ PRNG_ALGORITHM = SHA1PRNG
 PRNG_SEED_LENGTH = 32
 PSEUDONYM_LENGTH = 16
 ADDRESS_LENGTH = 16
-# NUMBER_OF_THREADS
-# The number of Threads to perform the mixing process in parallel. Can increase 
-# mix performance on multi-core/multi-CPU systems. Should be set to the number 
-# of available cores/CPUs, or slightly lower (Note: A higher value will 
-# decrease performance).
-# Note: "-1" means automatic detection (Sets "NUMBER_OF_THREADS" to the number 
-# of processors available to the JVM running this mix).
-# Default value: -1		
-NUMBER_OF_THREADS = 1
 RS_THREAD_QUEUE_LENGTH = 10

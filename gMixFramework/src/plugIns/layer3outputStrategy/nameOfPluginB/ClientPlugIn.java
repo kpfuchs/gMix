@@ -96,5 +96,17 @@ public class ClientPlugIn extends Implementation implements Layer3OutputStrategy
 		return 0;
 	}
 
+	@Override
+	public int availableReplies() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public int availableReplyPayload() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
 	
 }

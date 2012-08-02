@@ -24,9 +24,9 @@ import java.util.HashMap;
 import java.util.Vector;
 import java.util.concurrent.ArrayBlockingQueue;
 
+import staticFunctions.layer5application.statisticsRecorder_v0_001.StatisticsRecorder;
+
 import framework.core.clock.Clock;
-import framework.core.config.MatchingMechanism;
-import framework.core.config.Paths;
 import framework.core.config.Settings;
 import framework.core.controller.Controller;
 import framework.core.controller.Layer1NetworkClientController;
@@ -129,52 +129,50 @@ public class AnonNode extends GMixTool {
 	private ArrayBlockingQueue<Reply[]> replyInputQueue;
 	private ArrayBlockingQueue<Reply[]> replyOutputQueue;
 	public MixList mixList;
+	public ToolName gMixTool;
 	
 	
 	public AnonNode(CommandLineParameters commandLineParameters) {
-		System.out.println("AnonNode started (" +commandLineParameters.gMixTool +")");
+		System.out.println("AnonNode initializing... (" +commandLineParameters.gMixTool +")");
 		
 		initAndRegisterAtInfoService(commandLineParameters);
 		generateComponents();
 		setReferencesBetweenComponents();
-		
-		// TODO loadPlugin-composition-file
-		this.settings.addProperties("./inputOutput/anonNode/pluginComposition/" + settings.getProperty("PLUG_IN_COMPOSITION"));
-		//this.settings.addProperties("./inputOutput/anonNode/pluginComposition/defaultComposition.txt");
-		
-		// TODO load plug-in parameters
-		// static example:
-		settings.addProperties("./src/plugIns/layer2recodingScheme/nameOfPluginA/PlugInSettings.txt");
-		
-		// TODO validate composition
-		boolean validateConfig = settings.getPropertyAsBoolean("VALIDATE_CONFIG");
-		if (validateConfig && !MatchingMechanism.isConfigValid(settings))
-			throw new RuntimeException("invalid plug-in composition"); 
-		
 		loadImplementations(); // loads the plug-ins
-		callConstructors();
-		infoService.waitForEndOfRegistrationPhase();
+		
+		if (IS_MIX)
+			infoService.waitForEndOfAddressExchangePhase();
 		
 		this.mixList = infoService.getMixList();
 		//if (!this.IS_FREE_ROUTE)
-			
+		
+		callConstructors();
+		if (IS_MIX)
+			infoService.waitForEndOfRegistrationPhase();
+		
 		initializeComponents(); // calls "initialize()" for each implementation
-		infoService.waitForEndOfInitializationPhase();
+		if (IS_MIX)
+			infoService.waitForEndOfInitializationPhase();
+		else
+			infoService.waitTillCascadeIsUp();
 		
 		// TODO write config to disk
 		
 		beginMixing(); // calls "begin()" for each implementation
 		
-		System.out.println(this +" is up");
-		infoService.waitForEndOfBeginPhase();
+		if (IS_MIX)
+			infoService.waitForEndOfBeginPhase();
+		
 		System.out.println("AnonNode up (" +commandLineParameters.gMixTool +": " +this.PUBLIC_PSEUDONYM +")");
 	}
 
 	
 	private void callConstructors() {
-		for (Controller c:components)
+		for (Controller c:components) {
+			System.out.println("ALL: calling constructor of " +c.implementation); 
 			if (c.implementation != null)
 				c.implementation.constructor();
+		}
 	}
 	
 	
@@ -196,28 +194,13 @@ public class AnonNode extends GMixTool {
 	}
 	
 	
-	private Settings generateSettingsObject(CommandLineParameters commandLineParameters) {
-		Settings settings;
-		if (commandLineParameters.globalConfigFile != null) {
-			settings = new Settings(commandLineParameters.globalConfigFile);
-			settings.setProperty("GLOBAL_CONFIG_MODE_ON", "TRUE");
-		} else {
-			settings = new Settings(Paths.PATH_TO_PATH_CONFIG_FILE);
-			settings.addProperties(Paths.GENERAL_CONFIG_PROPERTY_FILE_PATH);
-			settings.setProperty("GLOBAL_CONFIG_MODE_ON", "FALSE");
-		}
-		if (commandLineParameters.overwriteParameters != null)
-			Settings.overwriteSettings(settings.getPropertiesObject(), commandLineParameters.overwriteParameters);
-		return settings;
-	}
-	
-	
 	private void initAndRegisterAtInfoService(CommandLineParameters commandLineParameters) {
 		
-		this.settings = generateSettingsObject(commandLineParameters);
+		this.settings = commandLineParameters.generateSettingsObject();
 		this.clock = new Clock(settings);
 		this.userDatabase = new UserDatabase();
-		Util.checkIfBCIsInstalled(); 
+		Util.checkIfBCIsInstalled();
+		this.gMixTool = commandLineParameters.gMixTool;
 		
 		this.infoService = new InfoServiceClient(settings.getPropertyAsInetAddress("GLOBAL_INFO_SERVICE_ADDRESS"), settings.getPropertyAsInt("GLOBAL_INFO_SERVICE_PORT"));
 		
@@ -264,7 +247,7 @@ public class AnonNode extends GMixTool {
 		this.SOCKET_MIX_BACKEND_QUEUE_SIZE = settings.getPropertyAsInt("GLOBAL_SOCKET_MIX_BACKEND_QUEUE_SIZE");
 		this.SERVER_SOCKET_QUEUE_SIZE = settings.getPropertyAsInt("GLOBAL_SERVER_SOCKET_QUEUE_SIZE");
 		this.SERVER_SOCKET_BACKLOG = settings.getPropertyAsInt("GLOBAL_SERVER_SOCKET_BACKLOG");
-		this.SERVER_SOCKET_BACKLOG = settings.getPropertyAsInt("GLOBAL_TIME_TO_WAIT_FOR_FURTHER_DATA_IN_MICROSEC");
+		this.TIME_TO_WAIT_FOR_FURTHER_DATA = settings.getPropertyAsInt("GLOBAL_TIME_TO_WAIT_FOR_FURTHER_DATA_IN_MICROSEC");
 		this.LAYER_4_CLIENT_INPUT_STREAM_REPLY_BUFFER_SIZE = settings.getProperty("GLOBAL_LAYER_4_CLIENT_INPUT_STREAM_REPLY_BUFFER_SIZE");
 		this.LAYER_4_MIX_INPUT_STREAM_REQUEST_BUFFER_SIZE = settings.getProperty("GLOBAL_LAYER_4_MIX_INPUT_STREAM_REQUEST_BUFFER_SIZE");
 
@@ -299,9 +282,10 @@ public class AnonNode extends GMixTool {
 			this.requestOutputQueue = new ArrayBlockingQueue<Request[]>(settings.getPropertyAsInt("GLOBAL_REQUEST_OUTPUT_QUEUE_SIZE"));
 			this.replyInputQueue = new ArrayBlockingQueue<Reply[]>(settings.getPropertyAsInt("GLOBAL_REPLY_INPUT_QUEUE_SIZE"));
 			this.replyOutputQueue = new ArrayBlockingQueue<Reply[]>(settings.getPropertyAsInt("GLOBAL_REPLY_OUTPUT_QUEUE_SIZE"));
-			if (settings.getPropertyAsBoolean("GLOBAL_DISPLAY_QUEUE_STATUS"))
-				new QueueStatus().start();
 		}
+		
+		if (RECORD_STATISTICS_ON && IS_MIX && IS_LAST_MIX)
+			StatisticsRecorder.init(this);
 	}
 	
 	
@@ -493,6 +477,10 @@ public class AnonNode extends GMixTool {
 				System.err.println("received message for unknown port: " +dstPort);
 				return;
 			} else {
+				if (this.RECORD_STATISTICS_ON) {
+					StatisticsRecorder.addMessageDwellTimeRecord(request);
+					StatisticsRecorder.addRequestThroughputRecord(request.getByteMessage().length, request.getOwner());
+				}
 				destSocket.incomingRequest(request);
 			}
 		}
@@ -660,6 +648,9 @@ public class AnonNode extends GMixTool {
 				putInReplyInputQueue(block);
 		}
 		try {
+			if (this.RECORD_STATISTICS_ON)
+				for (Reply reply:replies)
+					StatisticsRecorder.addReplyThroughputRecord(reply.getByteMessage().length, reply.getOwner());
 			replyInputQueue.put(replies);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
@@ -768,24 +759,7 @@ public class AnonNode extends GMixTool {
 	
 	@Override
 	public String toString() {
-		return "AnonNode (" +this.PUBLIC_PSEUDONYM +")";
-	}
-	
-	
-	private class QueueStatus extends Thread {
-		
-		@Override
-		public void run() {
-			while (true) {
-				System.out.println("---> requestInputQueue ---> requestOutputQueue --->");
-				System.out.println("<--- replyOutputQueue  <--- replyInputQueue    <---");
-				System.out.println("message blocks in requestInputQueue: " +requestInputQueue.size()); 
-				System.out.println("message blocks in requestOutputQueue: " +requestOutputQueue.size()); 
-				System.out.println("message blocks in replyInputQueue: " +replyInputQueue.size()); 
-				System.out.println("message blocks in replyOutputQueue: " +replyOutputQueue.size()); 
-				try {Thread.sleep(1000);} catch (InterruptedException e) {continue;}
-			}
-		}
+		return "AnonNode (" +this.gMixTool +" " +this.PUBLIC_PSEUDONYM +")";
 	}
 	
 	

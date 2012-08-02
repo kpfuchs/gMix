@@ -41,7 +41,7 @@ public class ClientPlugIn extends Implementation implements Layer1NetworkClient 
 	public void constructor() {
 		if (anonNode.IS_DUPLEX)
 			throw new RuntimeException("supports simplex only currently");
-		this.mixList = infoService.getMixList();
+		this.mixList = anonNode.mixList;
 	}
 	
 
@@ -105,6 +105,12 @@ public class ClientPlugIn extends Implementation implements Layer1NetworkClient 
 	@Override
 	public void disconnect() {
 		mix.close();
+	}
+
+
+	@Override
+	public int availableReplies() {
+		throw new RuntimeException("not yet supported"); 
 	}
 
 }

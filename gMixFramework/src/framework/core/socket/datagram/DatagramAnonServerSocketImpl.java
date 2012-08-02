@@ -81,11 +81,18 @@ public class DatagramAnonServerSocketImpl extends AdaptiveAnonServerSocket imple
 			throw new RuntimeException("no user object reference in the bypassed message; use the AnonMessage object you have received with \"receiveMessage()\" for this method! (use \"anonMessage.setByteMessage()\" to add the new reply payload");
 		if (message.getByteMessage().length > getMaxSizeForNextMessageSend())
 			throw new RuntimeException("the bypassed message is too large; use \"message.getMaxReplySize()\" to get the maximum size"); 
-		byte[] payload = Util.concatArrays(new byte[][] {
-				Util.intToByteArray(bindPort),
+		byte[] payload;
+		if (isFreeRoute)
+			payload = Util.concatArrays(new byte[][] {
+				Util.shortToByteArray(bindPort),
 				Util.intToByteArray(message.getSourcePseudonym()),
 				message.getByteMessage()
 			});
+		else
+			payload = Util.concatArrays(new byte[][] {
+					Util.shortToByteArray(bindPort),
+					message.getByteMessage()
+				});
 		Reply reply = MixMessage.getInstanceReply(payload, message.getUser());
 		owner.putInReplyInputQueue(reply);
 	}
@@ -95,7 +102,10 @@ public class DatagramAnonServerSocketImpl extends AdaptiveAnonServerSocket imple
 	public int getMaxSizeForNextMessageSend() {
 		if (!isDuplex)
 			throw new RuntimeException("this socket is simplex only"); 
-		return layer3.getMaxSizeOfNextReply() - 6; // -2 for port; -4 for pseudonym; see sendMessage()
+		if (isFreeRoute)
+			return layer3.getMaxSizeOfNextReply() - 6; // -2 for port; -4 for pseudonym; see sendMessage()
+		else
+			return layer3.getMaxSizeOfNextReply() - 2; // -2 for port; see sendMessage()
 	}
 
 	
@@ -105,6 +115,12 @@ public class DatagramAnonServerSocketImpl extends AdaptiveAnonServerSocket imple
 		if (isDuplex)
 			maxSize -= 4; // pseudonym
 		return maxSize;
+	}
+
+
+	@Override
+	public AdaptiveAnonServerSocket getImplementation() {
+		return this;
 	}
 
 }

@@ -239,6 +239,17 @@ public class InfoServiceClient {
 	}
 	
 	
+	public synchronized void waitForEndOfAddressExchangePhase() {
+		connect();
+		try {
+			InfoServiceServer.client_WAIT_FOR_END_OF_ADDRESS_EXCHANGE_PHASE(outputStream, inputStream);
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException("waitForEndOfRegistrationPhase() failed"); // TODO: try x times again before throwing RuntimeException
+		}
+	}
+	
+	
 	public synchronized void waitForEndOfRegistrationPhase() {
 		connect();
 		try {

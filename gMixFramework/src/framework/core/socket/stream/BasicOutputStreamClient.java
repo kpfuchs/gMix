@@ -116,8 +116,9 @@ public class BasicOutputStreamClient extends OutputStream implements Callable<Ba
 							toWrite.get(payload);
 							sendMessage(payload);
 						} else { // send together with data already stored
-							if (currentTimer != null && !currentTimer.isDone()) // early timer cancel (not really needed, but prevents unnecessary TimerTask executions)
+							if (currentTimer != null && !currentTimer.isDone()) { // early timer cancel (not really needed, but prevents unnecessary TimerTask executions)
 								currentTimer.cancel(false);
+							}
 							byte[] newData = new byte[payloadForNextMessage.remaining()];
 							toWrite.get(newData);
 							payloadForNextMessage.put(newData);
@@ -129,7 +130,7 @@ public class BasicOutputStreamClient extends OutputStream implements Callable<Ba
 					}
 				}
 				// set timeout if needed
-				if (payloadForNextMessage != null && payloadForNextMessage.position() != 0 && currentTimer != null && currentTimer.isDone()) {
+				if (payloadForNextMessage != null && payloadForNextMessage.position() != 0 && (currentTimer == null || currentTimer.isDone())) {
 					timerByteBufferReference = payloadForNextMessage;
 					currentTimer = scheduler.schedule(this, timeToWaitForFurtherData, TimeUnit.MICROSECONDS);
 				}
@@ -173,7 +174,7 @@ public class BasicOutputStreamClient extends OutputStream implements Callable<Ba
 	}
 	
 	
-	private int getMaxSizeForNextMessageSend() {
+	public int getMaxSizeForNextMessageSend() {
 		int maxSize = layer3.getMaxSizeOfNextRequest() - 2; // -2 for port; see sendMessage()
 		if (!socket.getOwner().LAYER_1_LINKS_MESSAGES) // -4 for pseudonym; see sendMessage()
 			maxSize -= 4;

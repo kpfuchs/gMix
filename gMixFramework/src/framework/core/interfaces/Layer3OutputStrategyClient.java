@@ -30,5 +30,7 @@ public interface Layer3OutputStrategyClient extends ArchitectureInterface, Clien
 	public void disconnect();
 	public int getMaxSizeOfNextRequest();
 	public int getMaxSizeOfNextReply();
+	public int availableReplies();
+	public int availableReplyPayload();
 	
 }

@@ -106,7 +106,8 @@ public abstract class Controller {
 	
 
 	public void setImplementation(Implementation implementation) {
-		assert this.implementation == null : "each controller may have only one implementation";
+		if (!anonNode.IS_CLIENT) // TODO
+			assert this.implementation == null : "each controller may have only one implementation";
 		assert implementation != null;
 		this.implementation = implementation;
 	}

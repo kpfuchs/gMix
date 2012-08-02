@@ -41,9 +41,6 @@ public class Layer3OutputStrategyMixController extends Controller implements Lay
 	
 	@Override
 	public void instantiateSubclass() {
-		settings.addProperties("./src/plugIns/layer3outputStrategy/" 
-				+settings.getProperty("LAYER_3_PLUG-IN_MIX") 
-				+"/PlugInSettings.txt");
 		this.implementation = LocalClassLoader.instantiateImplementation(
 				"plugIns.layer3outputStrategy." +settings.getProperty("LAYER_3_PLUG-IN_MIX"), 
 				"MixPlugIn.java",

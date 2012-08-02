@@ -10,7 +10,7 @@ COMPATIBLE_CLIENT_PLUG_INS = nameOfPluginB
 COMPATIBLE_MIX_PLUG_INS = nameOfPluginB
 #
 # static function requirements (see staticFunctions.layerX.*)
-SAME_LAYER_REQUIREMENTS = nameOfStaticFunctionA/SomeClassUsefulForSeveralPlugIns.java
+SAME_LAYER_REQUIREMENTS = 
 LAYER_1_CLIENT_REQUIREMENTS = 
 LAYER_2_CLIENT_REQUIREMENTS = 
 LAYER_3_CLIENT_REQUIREMENTS = 

@@ -38,8 +38,8 @@ public class LocalTest extends GMixTool implements EipEventListener {
 	
 	
 	public LocalTest(CommandLineParameters params) {
-		InfoServiceServer is = new InfoServiceServer(params);
-		this.settings = is.settings;
+		new InfoServiceServer(params);
+		this.settings = params.generateSettingsObject();
 		try {
 			infoService = new InfoServiceClient(
 					InetAddress.getByName("localhost"), 
@@ -82,7 +82,7 @@ public class LocalTest extends GMixTool implements EipEventListener {
 			mixStarters[i] = new MixStarter();
 			mixStarters[i].start();
 			try {
-				Thread.sleep(1000);	
+				Thread.sleep(2000);	
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -91,15 +91,15 @@ public class LocalTest extends GMixTool implements EipEventListener {
 	
 	
 	public void startClients() {
-		try {
-			Thread.sleep(1000);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		// TODO: avoid timeout; use info-service to determine when cascade is up
+		//infoService.waitTillCascadeIsUp();
+		
 		System.out.println("all mixes up");
-		System.out.println("starting clients"); 
-		new LoadGenerator(new CommandLineParameters(new String[0]));
+		System.out.println("starting clients");
+		CommandLineParameters params = new CommandLineParameters(new String[0]);
+		params.overwriteParameters = "LAYER_5_PLUG-IN_CLIENT=loadGeneratorPlugIn_v0_001";
+		params.gMixTool = ToolName.LOCAL_TEST;
+		new LoadGenerator(params);
 	}
 
 	
@@ -108,7 +108,7 @@ public class LocalTest extends GMixTool implements EipEventListener {
 		public void run() {
 			CommandLineParameters params = new CommandLineParameters(new String[0]);
 			params.gMixTool = ToolName.MIX;
-			params.overwriteParameters = "GLOBAL_INFO_SERVICE_ADDRESS=localhost,GLOBAL_LOCAL_MODE_ON=TRUE";
+			params.overwriteParameters = "GLOBAL_INFO_SERVICE_ADDRESS=localhost,GLOBAL_LOCAL_MODE_ON=TRUE,LAYER_5_PLUG-IN_MIX=loadGeneratorPlugIn_v0_001";
 			new AnonNode(params);
 		}
 		

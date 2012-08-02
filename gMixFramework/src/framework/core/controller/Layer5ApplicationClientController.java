@@ -40,9 +40,6 @@ public class Layer5ApplicationClientController extends Controller implements Lay
 		if (settings.getProperty("LAYER_5_PLUG-IN_CLIENT").contains(","))
 			throw new RuntimeException("only one client-side layer 5 plug-in allowed"); 
 		if (!settings.getProperty("LAYER_5_PLUG-IN_CLIENT").equals("")) {
-			settings.addProperties("./src/plugIns/layer5application/" 
-					+settings.getProperty("LAYER_5_PLUG-IN_CLIENT") 
-					+"/PlugInSettings.txt");
 			LocalClassLoader.instantiateImplementation(
 				"plugIns.layer5application." +settings.getProperty("LAYER_5_PLUG-IN_CLIENT"), 
 				"ClientPlugIn.java",

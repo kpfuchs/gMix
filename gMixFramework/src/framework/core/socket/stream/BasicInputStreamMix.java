@@ -27,7 +27,7 @@ import framework.core.AnonNode;
 public class BasicInputStreamMix extends InputStream {
 	
 	private boolean isClosed = false;
-	private ByteBuffer availableData = null;
+	private ByteBuffer buffer= null;
 	private StreamAnonSocketMixImpl socket;
 	
 	
@@ -38,32 +38,32 @@ public class BasicInputStreamMix extends InputStream {
 		this.socket = socket;
 		String requestBufferSize = owner.LAYER_4_MIX_INPUT_STREAM_REQUEST_BUFFER_SIZE;
 		if (requestBufferSize.equalsIgnoreCase("AUTO")) {
-			this.availableData = ByteBuffer.allocate((int)Math.ceil(((double)owner.SOCKET_MIX_BACKEND_QUEUE_SIZE * (double)owner.getOutputStrategyLayerControllerMix().getMaxSizeOfNextRequest() * 1.5)));
+			this.buffer = ByteBuffer.allocate((int)Math.ceil(((double)owner.SOCKET_MIX_BACKEND_QUEUE_SIZE * (double)owner.getOutputStrategyLayerControllerMix().getMaxSizeOfNextRequest() * 1.5)));
 		} else {
-			this.availableData = ByteBuffer.allocate(Integer.parseInt(requestBufferSize));
+			this.buffer = ByteBuffer.allocate(Integer.parseInt(requestBufferSize));
 		}
-		this.availableData.flip();
+		this.buffer.flip();
 	}
 
-
+	
 	// will block till "len" bytes are read
 	private synchronized int forceRead(byte[] b, int off, int len) throws IOException {
 		if (isClosed)
 			throw new IOException("InputStream closed");
-		if (availableData.remaining() >= len) { // enough data in buffer
-			availableData.get(b, off, len);
+		if (buffer.remaining() >= len) { // enough data in buffer
+			buffer.get(b, off, len);
 			tryFillBuffer();
 			return len;
 		} else { // not enough data in buffer
 			int transfered = 0;
 			while (true) {
 				forceFillBuffer();
-				if (availableData.remaining() >= len-transfered) { // enough data
-					availableData.get(b, off, len-transfered);
+				if (buffer.remaining() >= len-transfered) { // enough data
+					buffer.get(b, off, len-transfered);
 					return len;
 				} else { // not enough data
-					int nowAvailable = availableData.remaining();
-					availableData.get(b, off, nowAvailable);
+					int nowAvailable = buffer.remaining();
+					buffer.get(b, off, nowAvailable);
 					off += nowAvailable;
 					transfered += nowAvailable;
 				}
@@ -73,29 +73,35 @@ public class BasicInputStreamMix extends InputStream {
 	
 	
 	private synchronized void tryFillBuffer() {
-		availableData.compact();
-		while (socket.availableRequests() > 0 && availableData.remaining() >= socket.sizeOfNextRequest()) {
-			availableData.put(socket.getNextRequest().getByteMessage());
+		if (socket.availableRequests() > 0) {
+			buffer.compact();
+			while (socket.availableRequests() > 0 && buffer.remaining() >= socket.sizeOfNextRequest())
+				buffer.put(socket.getNextRequest().getByteMessage());
+			buffer.flip();	
 		}
-		availableData.flip();		
 	}
 	
-	
 	private synchronized void forceFillBuffer() {
-		availableData.compact();
-		availableData.put(socket.getNextRequest().getByteMessage());
-		while (socket.availableRequests() > 0 && availableData.remaining() >= socket.sizeOfNextRequest()) {
-			availableData.put(socket.getNextRequest().getByteMessage());
+		buffer.compact();
+		byte[] data = socket.getNextRequest().getByteMessage();
+		if (data.length > buffer.remaining()) { // resize buffer
+			System.out.println("resizing buffer (" +buffer.capacity() +"->" +(buffer.position() +data.length) +")"); 
+			ByteBuffer old = buffer;
+			buffer = ByteBuffer.allocate(buffer.position() +data.length);
+			buffer.put(old);
 		}
-		availableData.flip();	
+		buffer.put(data);
+		while (socket.availableRequests() > 0 && buffer.remaining() >= socket.sizeOfNextRequest()) 
+			buffer.put(socket.getNextRequest().getByteMessage());
+		buffer.flip();
 	}
 	
 	
 	// "Reads the next byte of data from the input stream."
 	@Override
 	public synchronized int read() throws IOException {
-		if (availableData.hasRemaining())
-			return availableData.get();
+		if (buffer.hasRemaining())
+			return buffer.get();
 		else {
 			byte[] result = new byte[1];
 			read(result);
@@ -119,7 +125,7 @@ public class BasicInputStreamMix extends InputStream {
 	@Override
 	public synchronized int available() throws IOException {
 		tryFillBuffer();
-		return availableData.remaining() + socket.availableData();
+		return buffer.remaining();
 	}
 	
 	

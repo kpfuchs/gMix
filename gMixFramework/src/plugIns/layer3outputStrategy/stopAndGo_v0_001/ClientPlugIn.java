@@ -18,6 +18,7 @@
 package plugIns.layer3outputStrategy.stopAndGo_v0_001;
 
 import java.security.SecureRandom;
+import java.util.Vector;
 
 import org.apache.commons.math.MathException;
 import org.apache.commons.math.distribution.ExponentialDistributionImpl;
@@ -46,6 +47,8 @@ public class ClientPlugIn extends Implementation implements Layer3OutputStrategy
 	private int MAX_CLOCK_DEVITION;
 	private boolean isFreeRoute;
 	private int numberOfMixes;
+	private Vector<Reply> replyCache;
+	private int availableReplyPayload = 0;
 	
 	
 	@Override
@@ -67,7 +70,8 @@ public class ClientPlugIn extends Implementation implements Layer3OutputStrategy
 	
 	@Override
 	public void initialize() {
-		
+		if (anonNode.IS_DUPLEX)
+			this.replyCache = new Vector<Reply>();
 	}
 
 	
@@ -163,8 +167,14 @@ public class ClientPlugIn extends Implementation implements Layer3OutputStrategy
 
 	@Override
 	public Reply receiveReply() {
-		Reply reply = layer1.receiveReply();
-		return layer2.extractPayload(reply);
+		if (replyCache.size() > 0) {
+			Reply result = replyCache.remove(0);
+			availableReplyPayload -= result.getByteMessage().length;
+			return result;
+		} else {
+			Reply reply = layer1.receiveReply();
+			return layer2.extractPayload(reply);
+		}
 	}
 
 
@@ -177,5 +187,27 @@ public class ClientPlugIn extends Implementation implements Layer3OutputStrategy
 	@Override
 	public int getMaxSizeOfNextReply() {
 		return layer2.getMaxPayloadForNextReply();
+	}
+
+
+	@Override
+	public int availableReplies() {
+		for (int i=0; i<layer1.availableReplies(); i++) {
+			Reply reply = layer1.receiveReply();
+			replyCache.add(layer2.extractPayload(reply));
+			availableReplyPayload += reply.getByteMessage().length;
+		} 
+		return replyCache.size();
+	}
+
+
+	@Override
+	public int availableReplyPayload() {
+		for (int i=0; i<layer1.availableReplies(); i++) {
+			Reply reply = layer1.receiveReply();
+			replyCache.add(layer2.extractPayload(reply));
+			availableReplyPayload += reply.getByteMessage().length;
+		} 
+		return availableReplyPayload;
 	}
 }

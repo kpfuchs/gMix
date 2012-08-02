@@ -28,14 +28,15 @@ import plugIns.layer1network.cascade_TCP_v0_001.ClientHandler_TCP_RR_sync.Channe
  */
 public final class User {
 
+	public static final int NOT_SET = -1;
 	private int identifier;
 	private HashMap<Object, UserAttachment> attachments;
 	private UserDatabase userDatabase;
-	public volatile int layer1Id = -1; // can be used as a "fast access" identifier on each layer (optional) 
-	public volatile int layer2Id = -1;
-	public volatile int layer3Id = -1;
-	public volatile int layer4Id = -1;
-	public volatile int layer5Id = -1;
+	public volatile int layer1Id = NOT_SET; // can be used as a "fast access" identifier on each layer (optional) 
+	public volatile int layer2Id = NOT_SET;
+	public volatile int layer3Id = NOT_SET;
+	public volatile int layer4Id = NOT_SET;
+	public volatile int layer5Id = NOT_SET;
 	public ChannelData channeldata; // TODO: remove
 	
 	
@@ -76,6 +77,8 @@ public final class User {
 	public <T extends UserAttachment> T getAttachment(Object callingInstance, Class<T> desiredType) {
 		//System.out.println("get attachment: " +desiredType +" (" +callingInstance +")"); // TODO
 		try {
+			if (attachments.get(callingInstance) == null)
+				throw new RuntimeException("no data stored for the calling instance " +callingInstance +". this methode requires a reference on the instance the attachment was created in."); 
 			return desiredType.cast(attachments.get(callingInstance));
 		} catch (Exception e) {
 			return null;

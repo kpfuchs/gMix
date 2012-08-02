@@ -15,16 +15,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package framework.infoService;
+package evaluation.loadGenerator;
 
-import framework.core.launcher.CommandLineParameters;
+import evaluation.loadGenerator.scheduler.Scheduler;
 
 
-public class InfoService {
+public interface ClientTrafficScheduleWriter<E> {
 
+	// @return hasMoreEventsToSchedule
+	public boolean scheduleRecords(int numberOfRecords, Scheduler<E> scheduler);
 	
-	public InfoService(CommandLineParameters params) {
-		System.out.println("\nInfoService dummy started"); 
-	}
-	
+	public ClientWrapper getClientWrapper(int identifier);
+
 }

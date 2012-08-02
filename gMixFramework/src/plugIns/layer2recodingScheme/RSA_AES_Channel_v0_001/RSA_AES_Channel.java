@@ -56,7 +56,6 @@ public class RSA_AES_Channel {
 	private Cipher[] symmetricDecryptCiphers;
 	private SecureRandom secureRandom;
 	private boolean channelEstablished = false;
-	private MixPlugIn attachmentKey;
 	
 	
 	public RSA_AES_Channel(AnonNode owner, RSA_AES_Channel_Config config) {
@@ -90,9 +89,8 @@ public class RSA_AES_Channel {
 	
 	
 	// TODO: aufrufen!
-	public void initAsRecoder(MixPlugIn attachmentKey) {
+	public void initAsRecoder() {
 		assert !owner.IS_FREE_ROUTE;
-		this.attachmentKey = attachmentKey;
 		try {
 			this.secureRandom = SecureRandom.getInstance(config.PRNG_ALGORITHM);
 			this.asymmetricCipher = Cipher.getInstance(config.ASYM_CRYPTOGRAPHY_ALGORITHM, config.CRYPTO_PROVIDER);
@@ -105,19 +103,17 @@ public class RSA_AES_Channel {
 	
 	
 	// returns the message's payload
-	public synchronized Request recodeMessage(Request message) {
-		if (message.getOwner().getAttachment(attachmentKey, ChannelData.class).macKey == null)
-			return recodeChannelEstablishMessage(message);
+	public synchronized Request recodeMessage(Request message, ChannelData channelData) {
+		if (channelData.macKey == null)
+			return recodeChannelEstablishMessage(message, channelData);
 		else
-			return recodeChannelMessage(message);
+			return recodeChannelMessage(message, channelData);
 	}
 
 
-	private Request recodeChannelEstablishMessage(Request message) {
+	private Request recodeChannelEstablishMessage(Request message, ChannelData channelData) {
 		String cipherTextHash = null;
 		try {
-			ChannelData channelData = message.getOwner().getAttachment(attachmentKey, ChannelData.class);
-			
 			if (config.DEBUG_ON) {
 				cipherTextHash = Util.md5(message.getByteMessage());
 			}
@@ -203,11 +199,10 @@ public class RSA_AES_Channel {
 	}
 	
 	
-	private Request recodeChannelMessage(Request message) {
+	private Request recodeChannelMessage(Request message, ChannelData channelData) {
 		try {
 			String ct = Util.md5(message.getByteMessage());
 			int ctlength = message.getByteMessage().length;
-			ChannelData channelData = message.getOwner().getAttachment(attachmentKey, ChannelData.class);
 			byte[] plaintext = channelData.decryptCipher.update(message.getByteMessage());
 			assert ctlength == message.getByteMessage().length;
 			
@@ -247,8 +242,7 @@ public class RSA_AES_Channel {
 	}
 
 	
-	public synchronized Reply recodeReply(Reply message) {
-		ChannelData channelData = message.getOwner().getAttachment(attachmentKey, ChannelData.class);
+	public synchronized Reply recodeReply(Reply message, ChannelData channelData) {
 		if (owner.IS_LAST_MIX) {
 			if (message.getByteMessage() == null) // dummy
 				message.setByteMessage(new byte[0]);
@@ -269,7 +263,7 @@ public class RSA_AES_Channel {
 			assert (message.getByteMessage().length % channelData.encryptCipher.getBlockSize()) == 0;
 		}
 		byte[] result = channelData.encryptCipher.update(message.getByteMessage());
-		//System.out.println(" oOoOo " +mix.toString() +": " +Util.md5(message.getByteMessage()) + " -> " +Util.md5(result)); 
+		// System.out.println(" oOoOo " +owner.toString() +" sende " +Util.md5(message.getByteMessage()) + " -> " +Util.md5(result) +"( for " +message.getOwner() +", " +channelData +")"); 
 		assert result.length == message.getByteMessage().length;
 		message.setByteMessage(result);
 		
@@ -498,16 +492,24 @@ public class RSA_AES_Channel {
 
 
 	public Reply extractPayload(Reply reply) {
+		// TODO: extract iv; setup cipher...
 		byte[] result = reply.getByteMessage();
+		//byte[] forLater = reply.getByteMessage().clone();
 		for (int i=0; i<config.numberOfMixes; i++) {
 			Cipher cipher = symmetricDecryptCiphers[i];
 			byte[] plaintext = cipher.update(result);
 			assert plaintext.length == result.length;
-			//System.out.println(" oOoOo " +client.toString() +": " +Util.md5(plaintext) + " <- " +Util.md5(result)); 
+			//System.out.println(" oOoOo " +owner.toString() +" haber empfangen: " +Util.md5(plaintext) + " <- " +Util.md5(result)); 
 			result = plaintext;
 		}
 		int lengthOfPayload = Util.byteArrayToInt(Arrays.copyOf(result, 4));
-		result = Arrays.copyOfRange(result, config.LENGTH_HEADER_LENGTH, config.LENGTH_HEADER_LENGTH + lengthOfPayload);
+		try {
+			result = Arrays.copyOfRange(result, config.LENGTH_HEADER_LENGTH, config.LENGTH_HEADER_LENGTH + lengthOfPayload);
+			
+		} catch (Exception e) {
+			//System.err.println("oOoOo " +owner.toString() +" haber empfangen: " +Util.md5(result) + " <- " +Util.md5(forLater)); 
+			e.printStackTrace();
+		}
 		reply.setByteMessage(result);
 		return reply;
 	}

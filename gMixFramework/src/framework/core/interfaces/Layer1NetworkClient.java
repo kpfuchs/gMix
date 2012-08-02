@@ -27,6 +27,7 @@ public interface Layer1NetworkClient extends ArchitectureInterface, ClientSocket
 	public void sendMessage(Request request);
 	public void connect();
 	public void disconnect();
+	public int availableReplies(); // available reply messages (can be read (with "receiveReply()") without blocking)
 	public Reply receiveReply();
 	
 }

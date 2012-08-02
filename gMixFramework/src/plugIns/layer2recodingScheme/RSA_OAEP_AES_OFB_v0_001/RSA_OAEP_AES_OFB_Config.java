@@ -105,9 +105,7 @@ public class RSA_OAEP_AES_OFB_Config {
 			infoService.postValueAsMix(owner.PUBLIC_PSEUDONYM, "RSA_PUBLIC_KEY", keyPair.getPublic().getEncoded());
 			if (PERFORM_REPLY_DETECTION)
 				this.replayDetection = ReplayDetectionBasic.getInstance(owner);
-			this.NUMBER_OF_THREADS = settings.getPropertyAsInt("NUMBER_OF_THREADS");
-			// -1 means "automatic detection"
-			this.NUMBER_OF_THREADS = (this.NUMBER_OF_THREADS == -1) ?  Runtime.getRuntime().availableProcessors(): this.NUMBER_OF_THREADS;
+			this.NUMBER_OF_THREADS = owner.NUMBER_OF_THREADS;
 		}
 	}
 	

@@ -104,7 +104,7 @@ public class BasicOutputStreamMix extends OutputStream implements Callable<Basic
 		
 		if (sendImmediately) {
 			while (toWrite.hasRemaining()) {
-				int length = getMaxSizeForNextMessageSend() > toWrite.remaining() ? toWrite.remaining() : getMaxSizeForNextMessageSend();
+				int length = getMTU() > toWrite.remaining() ? toWrite.remaining() : getMTU();
 				byte[] payload = new byte[length];
 				toWrite.get(payload);
 				sendMessage(payload);
@@ -113,7 +113,7 @@ public class BasicOutputStreamMix extends OutputStream implements Callable<Basic
 			synchronized (synchronizer) {
 				while (toWrite.hasRemaining()) { // send as many full packets as possible; store additional data (that doesn't fill a complete packet) for later sending
 					if (payloadForNextMessage == null)
-						payloadForNextMessage = ByteBuffer.allocate(getMaxSizeForNextMessageSend());
+						payloadForNextMessage = ByteBuffer.allocate(getMTU());
 					if (toWrite.remaining() >= payloadForNextMessage.remaining()) { // send new message now
 						if (payloadForNextMessage.position() == 0) { // empty -> send directly (without "payloadForNextMessage"-ByteBuffer)
 							byte[] payload = new byte[payloadForNextMessage.capacity()];
@@ -133,7 +133,7 @@ public class BasicOutputStreamMix extends OutputStream implements Callable<Basic
 					}
 				}
 				// set timeout if needed
-				if (payloadForNextMessage != null && payloadForNextMessage.position() != 0 && currentTimer != null && currentTimer.isDone()) {
+				if (payloadForNextMessage != null && payloadForNextMessage.position() != 0 && (currentTimer == null || currentTimer.isDone())) {
 					timerByteBufferReference = payloadForNextMessage;
 					currentTimer = scheduler.schedule(this, timeToWaitForFurtherData, TimeUnit.MICROSECONDS);
 				}
@@ -164,7 +164,6 @@ public class BasicOutputStreamMix extends OutputStream implements Callable<Basic
 				return;
 			if (currentTimer != null && !currentTimer.isDone())
 				currentTimer.cancel(false);
-			
 			byte[] payload = new byte[payloadForNextMessage.position()];
 			payloadForNextMessage.get(payload);
 			payloadForNextMessage = null;
@@ -173,7 +172,7 @@ public class BasicOutputStreamMix extends OutputStream implements Callable<Basic
 	}
 	
 	
-	private int getMaxSizeForNextMessageSend() {
+	public int getMTU() {
 		return layer3.getMaxSizeOfNextReply();
 	}
 

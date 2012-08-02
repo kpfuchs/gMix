@@ -48,6 +48,7 @@ public class UserDatabase implements ObservationSubject<DatabaseEventListener> {
 		return newUser;
 	}
 
+	
 	public User generateUser(int id) { // TODO: distinguish between different types of users
 		User newUser = new User(id, this);
 		//addUser(newUser);

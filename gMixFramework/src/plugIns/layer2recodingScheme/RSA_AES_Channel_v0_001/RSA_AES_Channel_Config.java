@@ -46,6 +46,7 @@ public class RSA_AES_Channel_Config {
 	public int MAX_PAYLOAD;
 	public boolean DEBUG_ON;
 	public boolean PERFORM_REPLY_DETECTION;
+	public int RS_THREAD_QUEUE_LENGTH;
 	
 	// settings for reply block
 	public String PRNG_ALGORITHM; // used to derive keys for reply packages
@@ -84,7 +85,8 @@ public class RSA_AES_Channel_Config {
 		this.MAC_KEY_LENGTH = settings.getPropertyAsInt("MAC_KEY_LENGTH"); // in byte
 		this.MAC_LENGTH = settings.getPropertyAsInt("MAC_LENGTH"); // in byte
 		this.LENGTH_HEADER_LENGTH = settings.getPropertyAsInt("LENGTH_HEADER_LENGTH"); // in byte
-		
+		this.RS_THREAD_QUEUE_LENGTH = settings.getPropertyAsInt("RS_THREAD_QUEUE_LENGTH");
+				
 		// settings for reply block
 		this.PRNG_ALGORITHM = settings.getProperty("PRNG_ALGORITHM"); // used to derive keys for reply packages
 		this.PRNG_SEED_LENGTH = settings.getPropertyAsInt("PRNG_SEED_LENGTH"); // in byte
@@ -100,9 +102,7 @@ public class RSA_AES_Channel_Config {
 			infoService.postValueAsMix(owner.PUBLIC_PSEUDONYM, "RSA_PUBLIC_KEY", keyPair.getPublic().getEncoded());
 			if (PERFORM_REPLY_DETECTION)
 				this.replayDetection = ReplayDetectionBasic.getInstance(owner);
-			this.NUMBER_OF_THREADS = settings.getPropertyAsInt("NUMBER_OF_THREADS");
-			// -1 means "automatic detection"
-			this.NUMBER_OF_THREADS = (this.NUMBER_OF_THREADS == -1) ?  Runtime.getRuntime().availableProcessors(): this.NUMBER_OF_THREADS;
+			this.NUMBER_OF_THREADS = owner.NUMBER_OF_THREADS;
 		}
 	}
 	

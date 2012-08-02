@@ -1,1 +1,162 @@
-# no specific settings yet
+# ------------------------------------------------------------------------------
+# settings for the load generator (see package evaluation.loadGenerator)
+# ------------------------------------------------------------------------------
+#
+GENERATE_LOAD_ON = APPLICATION_LEVEL
+#	possible values:
+#		- APPLICATION_LEVEL: the load generator will generate payload and send 
+#		  it through a layer 4 socket (see options below)
+#		- MIX_PACKET_LEVEL: the load generator will generate and send mix 
+#		  packets directly (see options below)
+#
+SCHEDULE_AHEAD = 1000
+#	to decrease memory usage the load generator will schedule packets during
+#	load generation. the load generator will try to have always scheduled 
+#	"SCHEDULE_AHEAD" packets in addition to the packet currently sent
+#
+TOLERANCE = 2500
+#	in microsec; displays a warning if the load generator is more than 
+#	"TOLERANCE" microsec behind the schedule (i.e. if messages 
+#	are sent later than specified in the trace file)
+#
+#
+# ------------------------------------------------------------------------------
+# random variables:
+#   options below tagged with [SUPPORTS_RANDOM_VARIABLE] can be set to one of 
+#	the following random variables:
+#   	- [RAND_VAR:Binomial(int numberOfTrials, double probabilityOfSuccess)]:
+          [int]
+#   	- [RAND_VAR:Exponential(double mean)]:[double]
+#   	- [RAND_VAR:Gaussian(double mu, double sigma)]:[double]
+#   	- [RAND_VAR:Hypergeometric(int populationSize, int numberOfSuccesses, 
+#         int sampleSize)]:[int]
+#   	- [RAND_VAR:Poisson(double mean)]:[int]
+#   	- [RAND_VAR:UniformDouble(double lower, double upper)]:[double]
+#		- [RAND_VAR:UniformInt(int lower, int upper)]:[int]
+#   	- [RAND_VAR:Zipf(int numberOfElements, double exponent)]:[int]
+#   	- [RAND_VAR:Weibull(double shape, double scale)]:[double]
+#	example: REQUEST_SIZE = [RAND_VAR:UniformInt(16, 16000)]
+#   see "org.apache.commons.math.random.RandomDataImpl" for details
+#	
+#
+# ------------------------------------------------------------------------------
+# settings for APPLICATION_LEVEL load generation:
+#
+AL-MODE = CONSTANT_RATE
+#	possible values:
+#		- TRACE_FILE: the load generator will replay traffic from a trace file 
+#		  (see property "TRACE_FILE_NAME" below)
+#		- AFAP: the simulated clients will send (A)s (F)ast (A)s (P)ossible
+#		  ("greedy source model"; see options below)
+#		- CONSTANT_RATE: the simulated clients will send at constant rate
+#		  (see options below)
+#		- POISSON: the simulated clients will send mix packets poisson 
+#		  distributed (see options below)
+#
+# ---TRACE_FILE-options:
+AL-TRACE_FILE-NAME = mixed/trace.dat
+#	trace file must be in folder "./inputOutput/loadGenerator/" or a sub-folder
+#
+AL-TRACE_FILE-READ_AHEAD = 1000
+#	number of lines the trace reader will try to "read ahead" of the currently 
+#	active line
+#
+AL-TRACE_FILE-USE_DYNAMIC_SCHEDULE = FALSE
+#	with a dynamic schedule, the load generator will not send requests at the 
+#	exact points of time specified in the trace file, but always wait for the 
+#	corresponding reply (before sending the next request)
+#
+# ---AFAP-options:
+AL-AFAP-NUMBER_OF_CLIENTS = 10
+#
+# ---CONSTANT_RATE-options:
+AL-CONSTANT_RATE-REQUEST_PAYLOAD_SIZE = AUTO
+#	each simulated client will send "AL-CONSTANT_RATE-PAYLOAD_SIZE" bytes
+#	per "CONSTANT_RATE_PERIOD" ms
+#	when set to "AUTO", the "AL-CONSTANT_RATE-REQUEST_PAYLOAD_SIZE" will be set 
+#   to the maximum payload of a mix packet
+#   [SUPPORTS_RANDOM_VARIABLE]
+#
+AL-CONSTANT_RATE-REPLY_PAYLOAD_SIZE = AUTO
+#	in byte
+#	when set to "AUTO", the "AL-CONSTANT_RATE-REPLY_PAYLOAD_SIZE" will be set 
+#   to the maximum payload of a reply packet
+#   [SUPPORTS_RANDOM_VARIABLE]
+#
+AL-CONSTANT_RATE-PERIOD = 1
+#	in seconds (float)
+#
+AL-CONSTANT_RATE-MESSAGES_PER_PERIOD = 2
+#	(float)
+#
+AL-CONSTANT_RATE-NUMBER_OF_CLIENTS = 2
+#
+AL-CONSTANT_RATE-REPLY_DELAY = 0.1
+#	in seconds (float)
+#   [SUPPORTS_RANDOM_VARIABLE]
+#
+# ---POISSON-options:
+AL-POISSON-REQUEST_PAYLOAD_SIZE = AUTO
+#	each simulated client will send "AL-POISSON-REQUEST_PAYLOAD_SIZE" bytes
+#	per "CONSTANT_RATE_PERIOD" ms
+#	when set to "AUTO", the "AL-POISSON-REQUEST_PAYLOAD_SIZE" will be set to the 
+#	maximum payload of a mix packet
+#   [SUPPORTS_RANDOM_VARIABLE]
+#
+AL-POISSON-REPLY_PAYLOAD_SIZE = AUTO
+#	in byte
+#	when set to "AUTO", the "AL-POISSON-REPLY_PAYLOAD_SIZE" will be set to the 
+#	maximum payload of a reply packet
+#   [SUPPORTS_RANDOM_VARIABLE]
+#
+AL-POISSON-AVERAGE_SEND_OPERATIONS_PER_PULSE = 5
+#	average number of payload-objects to be sent per client and pulse (see 
+#	"AL-POISSON-PULSE_LENGTH") (= lambda)
+#   (float)
+#   [SUPPORTS_RANDOM_VARIABLE]
+#
+AL-POISSON-PULSE_LENGTH = 1
+#	in seconds (float)
+#
+AL-POISSON-NUMBER_OF_CLIENTS = 4
+#
+AL-POISSON-REPLY_DELAY = 0.1
+#	in seconds (float)
+#   [SUPPORTS_RANDOM_VARIABLE]
+#
+# ------------------------------------------------------------------------------
+# settings for MIX_PACKET_LEVEL load generation:
+#
+MPL-MODE = POISSON
+#	possible values:
+#		- AFAP: the simulated clients will send (A)s (F)ast (A)s (P)ossible
+#		  ("greedy source model"; see options below)
+#		- CONSTANT_RATE: the simulated clients will send at constant rate
+#		  (see options below)
+#		- POISSON: the simulated clients will send mix packets poisson 
+#		  distributed (see options below)
+#
+# ---AFAP-options:
+MPL-AFAP-NUMBER_OF_CLIENTS = 10
+#
+# ---CONSTANT_RATE-options:
+MPL-CONSTANT_RATE-PERIOD = 1
+#	in seconds (float)
+#
+MPL-CONSTANT_RATE-PACKET_PER_PERIOD = 2
+#	(float) (packets per period and client)
+#
+MPL-CONSTANT_RATE-NUMBER_OF_CLIENTS = 2
+#
+# ---POISSON-options:
+MPL-POISSON-AVERAGE_PACKETS_PER_PULSE = 5
+#	average number of packets to be sent per client and pulse (see 
+#	"MPL-POISSON-PULSE_LENGTH") (= lambda)
+#   (float)
+#   [SUPPORTS_RANDOM_VARIABLE]
+#
+MPL-POISSON-PULSE_LENGTH = 1
+#	in seconds (float)
+#
+MPL-POISSON-NUMBER_OF_CLIENTS = 4
+#

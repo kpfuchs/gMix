@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
+import java.util.Vector;
 
 import framework.core.controller.Implementation;
 import framework.core.interfaces.Layer1NetworkClient;
@@ -44,11 +45,12 @@ public class ClientPlugIn extends Implementation implements Layer1NetworkClient 
 	private Socket mix;
 	private int replyBufferSize;
 	private int requestBufferSize;
-	
+	private int replyLength = Util.NOT_SET;
+	private Vector<Reply> replyCache;
 	
 	@Override
 	public void constructor() {
-		this.mixList = infoService.getMixList(); 
+		this.mixList = anonNode.mixList;
 		this.requestBufferSize = settings.getPropertyAsInt("CLIENT_REQUEST_BUFFER_SIZE");
 		this.replyBufferSize = settings.getPropertyAsInt("CLIENT_REPLY_BUFFER_SIZE");
 		this.timeout = settings.getPropertyAsInt("CLIENT_CONNECTION_TIMEOUT");
@@ -57,6 +59,7 @@ public class ClientPlugIn extends Implementation implements Layer1NetworkClient 
 
 	@Override
 	public void initialize() {
+
 	}
 
 	
@@ -82,7 +85,10 @@ public class ClientPlugIn extends Implementation implements Layer1NetworkClient 
 		try {
 			mix.connect(socketAddress, timeout);
 			mixOutputStream = new BufferedOutputStream(mix.getOutputStream(), requestBufferSize);
-			mixInputStream = new BufferedInputStream(mix.getInputStream(), replyBufferSize);	
+			if (anonNode.IS_DUPLEX) {
+				mixInputStream = new BufferedInputStream(mix.getInputStream(), replyBufferSize);
+				replyCache = new Vector<Reply>();
+			}
 		} catch (IOException e) {
 			System.err.println("could not connect to mix... try again");
 			try {Thread.sleep(5000);} catch (InterruptedException e1) {e1.printStackTrace();}
@@ -98,8 +104,9 @@ public class ClientPlugIn extends Implementation implements Layer1NetworkClient 
 		try {
 			mixOutputStream.write(Util.intToByteArray(request.getByteMessage().length));
 			mixOutputStream.write(request.getByteMessage());
-			mixOutputStream.flush();
+			mixOutputStream.flush(); 
 		} catch (IOException e) {
+			e.printStackTrace();
 			System.err.println("connection lost... try again"); 
 			connect();
 		}
@@ -108,15 +115,10 @@ public class ClientPlugIn extends Implementation implements Layer1NetworkClient 
 	
 	@Override
 	public Reply receiveReply() {
-		try {
-			int lengthHeader = Util.forceReadInt(mixInputStream);
-			byte[] message = Util.forceRead(mixInputStream, lengthHeader);
-			return MixMessage.getInstanceReply(message);
-		} catch (IOException e) {
-			System.err.println("connection lost... try again"); 
-			connect();
-			return receiveReply();
-		}
+		if (replyCache.size() > 0)
+			return replyCache.remove(0);
+		else
+			return forceReadReply();
 	}
 	
 
@@ -127,6 +129,63 @@ public class ClientPlugIn extends Implementation implements Layer1NetworkClient 
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	
+	private Reply tryReadReply() {
+		try {
+			if (replyLength == Util.NOT_SET) {
+				if (mixInputStream.available() > 4) {
+					replyLength = Util.forceReadInt(mixInputStream);
+					assert (replyLength + 4) < replyBufferSize;
+				} else {
+					return null;
+				}
+			}
+			if (mixInputStream.available() >= replyLength) {
+				byte[] message = Util.forceRead(mixInputStream, replyLength);
+				//System.out.println("habe empfangen auf layer 0 (" +anonNode.toString() +"): " +Util.md5(message));
+				replyLength = Util.NOT_SET;
+				return MixMessage.getInstanceReply(message);
+			} else {
+				return null;
+			}	
+		} catch (IOException e) {
+			System.err.println("connection lost... try again"); 
+			connect();
+			return tryReadReply();
+		}
+	}
+	
+	
+	private Reply forceReadReply() {
+		try {
+			if (replyLength == Util.NOT_SET) {
+				replyLength = Util.forceReadInt(mixInputStream);
+				assert (replyLength + 4) < replyBufferSize;
+			}
+			byte[] message = Util.forceRead(mixInputStream, replyLength);
+			//System.out.println("habe empfangen auf layer 0 (" +anonNode.toString() +"): " +Util.md5(message));
+			replyLength = Util.NOT_SET;
+			return MixMessage.getInstanceReply(message);
+		} catch (IOException e) {
+			System.err.println("connection lost... try again"); 
+			connect();
+			return receiveReply();
+		}
+	}
+	
+	
+	@Override
+	public int availableReplies() {
+		while (true) {
+			Reply reply = tryReadReply();
+			if (reply == null)
+				break;
+			else
+				replyCache.add(reply);
+		}
+		return replyCache.size();
 	}
 
 }

@@ -43,9 +43,6 @@ public class Layer1NetworkClientController extends Controller {
 
 	
 	public Layer1NetworkClient loadClientPluginInstance() {
-		settings.addProperties("./src/plugIns/layer1network/" 
-				+settings.getProperty("LAYER_1_PLUG-IN_CLIENT") 
-				+"/PlugInSettings.txt");
 		return LocalClassLoader.instantiateImplementation(
 				"plugIns.layer1network." +settings.getProperty("LAYER_1_PLUG-IN_CLIENT"), 
 				"ClientPlugIn.java",

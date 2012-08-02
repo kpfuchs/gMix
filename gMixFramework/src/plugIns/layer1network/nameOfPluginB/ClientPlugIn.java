@@ -84,4 +84,11 @@ public class ClientPlugIn extends Implementation implements Layer1NetworkClient 
 		return null;
 	}
 
+
+	@Override
+	public int availableReplies() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
 }

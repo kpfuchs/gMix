@@ -21,6 +21,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
 
+import framework.core.config.MatchingMechanism;
+import framework.core.config.Paths;
+import framework.core.config.Settings;
+
 
 public class CommandLineParameters {
 	
@@ -30,9 +34,23 @@ public class CommandLineParameters {
 	public String overwriteParameters = null; // list of parameters (key-value-pairs) to overwrite the normal or global config
 	public String[] passthroughParameters = null; // tool-specific parameters
 	
+	private boolean settingsObjectCreated = false;
+	private Settings settings;
+	
 
+	public CommandLineParameters(String[] args, ToolName gMixTool) {
+		init(args, gMixTool);
+	}
+	
+	
 	public CommandLineParameters(String[] args) {
-		
+		init(args, null);
+	}
+	
+	
+	private void init(String[] args, ToolName gMixTool) {
+		if (gMixTool != null)
+			this.gMixTool = gMixTool;
 		Vector<String> parameters = new Vector<String>(Arrays.asList(args));
 		Vector<String> unknownParameters = new Vector<String>();
 		
@@ -43,7 +61,8 @@ public class CommandLineParameters {
 			if (par.equalsIgnoreCase("noGUI")) {
 				useGui = false;
 			} else if (par.startsWith("TOOL=")) {
-				gMixTool = stringToToolName(par.split("=")[1]);
+				if (gMixTool == null)
+					this.gMixTool = stringToToolName(par.split("=")[1]);
 			} else if (par.startsWith("GLOBAL_CONFIG=")) {
 				globalConfigFile = par.split("=")[1];
 			} else if (par.startsWith("OVERWRITE=")) {
@@ -96,5 +115,131 @@ public class CommandLineParameters {
 			return ToolName.NOT_SET;
 		}
 	}
+	
+	
+	public Settings generateSettingsObject() {
+		if (settingsObjectCreated)
+			return settings;
+		settingsObjectCreated = true;
+		
+		if (globalConfigFile != null) {
+			settings = new Settings(globalConfigFile);
+			settings.setProperty("GLOBAL_CONFIG_MODE_ON", "TRUE");
+			return settings;
+		}
+		
+		settings = new Settings(Paths.PATH_TO_PATH_CONFIG_FILE);
+		settings.addProperties(Paths.GENERAL_CONFIG_PROPERTY_FILE_PATH);
+		settings.setProperty("GLOBAL_CONFIG_MODE_ON", "FALSE");
+		
+		if (	gMixTool == ToolName.CLIENT 
+				|| gMixTool == ToolName.LOAD_GENERATOR
+				|| gMixTool == ToolName.LOCAL_TEST
+				|| gMixTool == ToolName.MIX
+				|| gMixTool == ToolName.P2P
+				|| gMixTool == null) {
+			loadPluginSettings();
+		}
+		
+		if (gMixTool == ToolName.LOAD_GENERATOR)
+			settings.addProperties(Paths.LG_PROPERTY_FILE_PATH);
+		
+		if (overwriteParameters != null)
+			Settings.overwriteSettings(settings.getPropertiesObject(), overwriteParameters);
+		
+		// validate composition
+		boolean validateConfig = settings.getPropertyAsBoolean("VALIDATE_CONFIG");
+		if (validateConfig && !MatchingMechanism.isConfigValid(settings))
+			throw new RuntimeException("invalid plug-in composition"); 
+		
+		return settings;
+	}
+	
+	
+
+	private void loadPluginSettings() {
+		// load plugin-composition-file:
+		Settings pluginComposition = new Settings("./inputOutput/anonNode/pluginComposition/" + settings.getProperty("PLUG_IN_COMPOSITION"));
+		if (overwriteParameters != null)
+			Settings.overwriteExistingSettings(pluginComposition.getPropertiesObject(), overwriteParameters);
+		settings.addProperties(pluginComposition.getPropertiesObject());
+		for (String key: pluginComposition.getPropertiesObject().stringPropertyNames()) {
+			String value = pluginComposition.getProperty(key);
+			if (value != null && !value.equals("")) {
+				for (String plugInName: value.split(",")) {
+					Settings plugInSettings = new Settings(Paths.getProperty(key +"_PATH") +plugInName +"/PlugInSettings.txt");
+					String staticFunctions = plugInSettings.getProperty("SAME_LAYER_REQUIREMENTS");
+					if (staticFunctions != null && !staticFunctions.equals(""))
+						for (String staticFunction: staticFunctions.split(","))
+							plugInSettings.addProperties((Paths.getProperty(key +"_PATH")).replace("/plugIns/", "/staticFunctions/") +staticFunction +"/StaticFunctionSettings.txt");
+					
+					staticFunctions = plugInSettings.getProperty("LAYER_1_CLIENT_REQUIREMENTS");
+					if (staticFunctions != null && !staticFunctions.equals(""))
+						for (String staticFunction: staticFunctions.split(","))
+							plugInSettings.addProperties((Paths.getProperty("LAYER_1_PLUG-IN_CLIENT_PATH")).replace("/plugIns/", "/staticFunctions/") +staticFunction +"/StaticFunctionSettings.txt");
+					staticFunctions = plugInSettings.getProperty("LAYER_1_MIX_REQUIREMENTS");
+					if (staticFunctions != null && !staticFunctions.equals(""))
+						for (String staticFunction: staticFunctions.split(","))
+							plugInSettings.addProperties((Paths.getProperty("LAYER_1_PLUG-IN_MIX_PATH")).replace("/plugIns/", "/staticFunctions/") +staticFunction +"/StaticFunctionSettings.txt");
+					
+					staticFunctions = plugInSettings.getProperty("LAYER_2_CLIENT_REQUIREMENTS");
+					if (staticFunctions != null && !staticFunctions.equals(""))
+						for (String staticFunction: staticFunctions.split(","))
+							plugInSettings.addProperties((Paths.getProperty("LAYER_2_PLUG-IN_CLIENT_PATH")).replace("/plugIns/", "/staticFunctions/") +staticFunction +"/StaticFunctionSettings.txt");
+					staticFunctions = plugInSettings.getProperty("LAYER_2_MIX_REQUIREMENTS");
+					if (staticFunctions != null && !staticFunctions.equals(""))
+						for (String staticFunction: staticFunctions.split(","))
+							plugInSettings.addProperties((Paths.getProperty("LAYER_2_PLUG-IN_MIX_PATH")).replace("/plugIns/", "/staticFunctions/") +staticFunction +"/StaticFunctionSettings.txt");
+					
+					staticFunctions = plugInSettings.getProperty("LAYER_3_MIX_REQUIREMENTS");
+					if (staticFunctions != null && !staticFunctions.equals(""))
+						for (String staticFunction: staticFunctions.split(","))
+							plugInSettings.addProperties((Paths.getProperty("LAYER_3_PLUG-IN_MIX_PATH")).replace("/plugIns/", "/staticFunctions/") +staticFunction +"/StaticFunctionSettings.txt");
+					staticFunctions = plugInSettings.getProperty("LAYER_3_CLIENT_REQUIREMENTS");
+					if (staticFunctions != null && !staticFunctions.equals(""))
+						for (String staticFunction: staticFunctions.split(","))
+							plugInSettings.addProperties((Paths.getProperty("LAYER_4_PLUG-IN_CLIENT_PATH")).replace("/plugIns/", "/staticFunctions/") +staticFunction +"/StaticFunctionSettings.txt");
+					
+					staticFunctions = plugInSettings.getProperty("LAYER_4_MIX_REQUIREMENTS");
+					if (staticFunctions != null && !staticFunctions.equals(""))
+						for (String staticFunction: staticFunctions.split(","))
+							plugInSettings.addProperties((Paths.getProperty("LAYER_4_PLUG-IN_MIX_PATH")).replace("/plugIns/", "/staticFunctions/") +staticFunction +"/StaticFunctionSettings.txt");
+					staticFunctions = plugInSettings.getProperty("LAYER_4_CLIENT_REQUIREMENTS");
+					if (staticFunctions != null && !staticFunctions.equals(""))
+						for (String staticFunction: staticFunctions.split(","))
+							plugInSettings.addProperties((Paths.getProperty("LAYER_4_PLUG-IN_CLIENT_PATH")).replace("/plugIns/", "/staticFunctions/") +staticFunction +"/StaticFunctionSettings.txt");
+					
+					staticFunctions = plugInSettings.getProperty("LAYER_5_MIX_REQUIREMENTS");
+					if (staticFunctions != null && !staticFunctions.equals(""))
+						for (String staticFunction: staticFunctions.split(","))
+							plugInSettings.addProperties((Paths.getProperty("LAYER_5_PLUG-IN_MIX_PATH")).replace("/plugIns/", "/staticFunctions/") +staticFunction +"/StaticFunctionSettings.txt");
+					staticFunctions = plugInSettings.getProperty("LAYER_5_CLIENT_REQUIREMENTS");
+					if (staticFunctions != null && !staticFunctions.equals(""))
+						for (String staticFunction: staticFunctions.split(","))
+							plugInSettings.addProperties((Paths.getProperty("LAYER_5_PLUG-IN_CLIENT_PATH")).replace("/plugIns/", "/staticFunctions/") +staticFunction +"/StaticFunctionSettings.txt");
+					
+					settings.addProperties(plugInSettings.getPropertiesObject());
+				}
+			}
+		}
+	}
+
+
+	/*public void addPlugInSettings(String plugInPath, String plugInName, Settings settings) {
+		Settings plugInSettings = new Settings(plugInPath +  plugInName + "/PlugInSettings.txt");
+		settings.addProperties(plugInSettings.getPropertiesObject());
+		String requirements = plugInSettings.getProperty("SAME_LAYER_REQUIREMENTS");
+		if (requirements != null)
+			for (String requiredStaticFunction:requirements.split(","))
+				settings.addProperties(
+						plugInPath.replace("/plugIns/", "/staticFunctions/")
+						+requiredStaticFunction
+						+"/StaticFinctionSettings.txt"
+						);
+			
+			
+	
+	}*/
+
 }
 

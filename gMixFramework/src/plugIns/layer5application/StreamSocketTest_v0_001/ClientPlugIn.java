@@ -32,12 +32,8 @@ import framework.core.util.Util;
 public class ClientPlugIn extends Implementation implements Layer5ApplicationClient {
 
 	
-	private int maxPayload;
-	
-	
 	@Override
 	public void constructor() {
-		this.maxPayload = anonNode.MAX_PAYLOAD;
 	}
 
 
@@ -50,6 +46,7 @@ public class ClientPlugIn extends Implementation implements Layer5ApplicationCli
 	@Override
 	public void begin() {
 		int numberOfConnections = settings.getPropertyAsInt("NUMBER_OF_PARALLEL_CONNECTIONS");
+		System.out.println("generating load for " +numberOfConnections +" users"); 
 		for (int i=0; i<numberOfConnections; i++)
 			new RequestThread().start();
 	}
@@ -71,13 +68,14 @@ public class ClientPlugIn extends Implementation implements Layer5ApplicationCli
 				if (anonNode.IS_DUPLEX)
 					new ReplyThread(socket).start();
 				OutputStream outputStream = socket.getOutputStream();
-				byte[] data = new byte[maxPayload];
+				int mtu = socket.getMTU();
+				byte[] data = new byte[mtu];
 				//int ctr = 0;
 				
 				while(true) { 
 					//outputStream.write(data);
 					if (ct++ == 10000) {
-						System.out.println("client sent: " +maxPayload * ct +" bytes");
+						System.out.println("client sent: " +mtu * ct +" bytes");
 						ct = 0;
 					}
 					//System.out.println("send " +ct++ +":" +data.length); 
@@ -137,9 +135,11 @@ public class ClientPlugIn extends Implementation implements Layer5ApplicationCli
 	
 	private class ReplyThread extends Thread {
 		
+		private StreamAnonSocket socket;
 		private InputStream inputStream;
 		
 		public ReplyThread(StreamAnonSocket socket) throws IOException {
+			this.socket = socket;
 			this.inputStream = socket.getInputStream();
 		}
 		
@@ -147,13 +147,14 @@ public class ClientPlugIn extends Implementation implements Layer5ApplicationCli
 
 		@Override
 		public void run() {
+			int mtu = socket.getMTU();
 			while (true) {
 				byte[] reply;
 				try {
-					reply = new byte[maxPayload];
+					reply = new byte[mtu];
 					Util.forceRead(inputStream, reply);
 					if (ct++ == 10000) {
-						System.out.println("client received: " +maxPayload * ct +" bytes");
+						System.out.println("client received: " +mtu * ct +" bytes");
 						ct = 0;
 						}
 					//System.out.println("read " +ct++ +": " +reply.length); 

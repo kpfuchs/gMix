@@ -119,4 +119,15 @@ public class ConnectedDatagramAnonSocketMixImpl extends AdaptiveAnonSocket imple
 	}
 
 
+	@Override
+	public User getUser() {
+		return user;
+	}
+
+
+	@Override
+	public AdaptiveAnonSocket getImplementation() {
+		return this;
+	}
+
 }

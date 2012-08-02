@@ -36,7 +36,6 @@ public class Paths {
 		}
 	}
 	
-	
 	// info service
 	public final static String IS_PROPERTY_FILE_PATH = properties.getProperty("IS_PROPERTY_FILE_PATH");
 	
@@ -59,4 +58,7 @@ public class Paths {
 	// general config (mix/client etc.)
 	public static final String GENERAL_CONFIG_PROPERTY_FILE_PATH = properties.getProperty("GENERAL_CONFIG_PROPERTY_FILE_PATH");
 
+	public static String getProperty(String key) {
+		return properties.getProperty(key); 
+	}
 }

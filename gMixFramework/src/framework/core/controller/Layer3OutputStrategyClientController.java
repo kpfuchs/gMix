@@ -42,9 +42,6 @@ public class Layer3OutputStrategyClientController extends Controller {
 	
 
 	public Layer3OutputStrategyClient loadClientPluginInstance() {
-		settings.addProperties("./src/plugIns/layer3outputStrategy/" 
-				+settings.getProperty("LAYER_3_PLUG-IN_CLIENT") 
-				+"/PlugInSettings.txt");
 		return LocalClassLoader.instantiateImplementation(
 				"plugIns.layer3outputStrategy." +settings.getProperty("LAYER_3_PLUG-IN_CLIENT"), 
 				"ClientPlugIn.java",

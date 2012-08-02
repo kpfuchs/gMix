@@ -17,6 +17,7 @@
  */
 package plugIns.layer2recodingScheme.RSA_AES_LossTolerantChannel_v0_001;
 
+
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
@@ -32,7 +33,12 @@ import framework.core.userDatabase.UserAttachment;
 public class MixPlugIn extends Implementation implements Layer2RecodingSchemeMix {
 
 	private RSA_AES_LossTolerantChannel_Config config;
-	private WorkerThread[] workerThreads;
+	
+	private RequestWorkerThread[] requestWorkerThreads;
+	private ReplyWorkerThread[] replyWorkerThreads;
+	
+	private long waitCounter = 0;
+	private long noWaitCounter = 0;
 	
 	
 	@Override
@@ -40,10 +46,19 @@ public class MixPlugIn extends Implementation implements Layer2RecodingSchemeMix
 		if (anonNode.IS_FREE_ROUTE)
 			throw new RuntimeException("not supported"); // TODO: support it...
 		this.config = new RSA_AES_LossTolerantChannel_Config(anonNode, false);
-		this.workerThreads = new WorkerThread[config.NUMBER_OF_THREADS];
+		this.requestWorkerThreads = new RequestWorkerThread[config.NUMBER_OF_THREADS];
+
+		if (anonNode.IS_DUPLEX) {
+			this.replyWorkerThreads = new ReplyWorkerThread[config.NUMBER_OF_THREADS];
+		}
+		
 		for (int i=0; i<config.NUMBER_OF_THREADS; i++) {
 			RSA_AES_LossTolerantChannel recodingScheme = new RSA_AES_LossTolerantChannel(anonNode, config);
-			workerThreads[i] = new WorkerThread(recodingScheme);
+			requestWorkerThreads[i] = new RequestWorkerThread(recodingScheme);
+			if (anonNode.IS_DUPLEX) {
+				recodingScheme = new RSA_AES_LossTolerantChannel(anonNode, config);
+				replyWorkerThreads[i] = new ReplyWorkerThread(recodingScheme);
+			}
 		}
 	}
 
@@ -51,15 +66,23 @@ public class MixPlugIn extends Implementation implements Layer2RecodingSchemeMix
 	@Override
 	public void initialize() {
 		assert !anonNode.IS_FREE_ROUTE;
-		for (int i=0; i<workerThreads.length; i++)
-			workerThreads[i].recodingScheme.initAsRecoder();
+		for (int i=0; i<requestWorkerThreads.length; i++) {
+			requestWorkerThreads[i].recodingScheme.initAsRecoder();
+			if (anonNode.IS_DUPLEX)
+				replyWorkerThreads[i].recodingScheme.initAsRecoder();
+				
+		}
 	}
 	
 
 	@Override
 	public void begin() {
-		for (int i=0; i<workerThreads.length; i++)
-			this.workerThreads[i].start();
+		for (int i=0; i<requestWorkerThreads.length; i++) {
+			this.requestWorkerThreads[i].start();
+			if (anonNode.IS_DUPLEX)
+				this.replyWorkerThreads[i].start();
+		}
+		new StatisticsThread().start();
 	}
 
 	
@@ -105,105 +128,94 @@ public class MixPlugIn extends Implementation implements Layer2RecodingSchemeMix
 		Cipher decryptCipher;
 		boolean established = false;
 		
-		//Cipher encryptCipher; // for reply channel
-		//int threadId;
+		Cipher encryptCipher; // for reply channel
+		
+		Object requestSynchronizer = new Object();
+		Object replySynchronizer = new Object();
 		
 		public ChannelData(User owner) {
 			super(owner, getThis());
-			//this.threadId = threadId;
 		}
 	}
 	
-	
-	/*class RequestDistributorThread extends Thread {
-	
-	private int next = -1;
-	
-	@Override
-	public void run() {
-		while (true) { // process messages
-			Request request = inputOutputHandler.getRequest();
-			if (request.getOwner().getAttachment(getThis(), ChannelData.class) == null) {
-				int threadId = getNextThreadId();
-				new ChannelData(request.getOwner(), threadId);
-				try {
-					workerThreads[threadId].queue.put(request);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-					continue;
-				}
-			} else {
-				ChannelData cd = request.getOwner().getAttachment(getThis(), ChannelData.class);
-				try {
-					workerThreads[cd.threadId].queue.put(request);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-					continue;
-				}
-			}
-		}	
-	}
-	
-	private int getNextThreadId() {
-		if (++next == workerThreads.length)
-			next = 0;
-		return next;
-	}
-	}*/
 
-
-	class WorkerThread extends Thread {
-	
-		RSA_AES_LossTolerantChannel recodingScheme;
-	
-		public WorkerThread(RSA_AES_LossTolerantChannel recodingScheme) {
+	class RequestWorkerThread extends Thread {
+		
+		public RSA_AES_LossTolerantChannel recodingScheme;
+		
+		public RequestWorkerThread(RSA_AES_LossTolerantChannel recodingScheme) {
 			this.recodingScheme = recodingScheme;
 		}
 
-	
+		
 		@Override
 		public void run() {
-		
-			while (true) {
-				Request[] requests = anonNode.getFromRequestInputQueue();
-				for (Request request:requests) {
-					synchronized (getThis()) {
-						if (request.getOwner().getAttachment(getThis(), ChannelData.class) == null)// {
-							new ChannelData(request.getOwner());
-						/*} else {
-							request.getOwner().getAttachment(getThis(), ChannelData.class);
-						}*/
+			while (true) { // process messages
+				for (Request request: anonNode.getFromRequestInputQueue()) {
+					ChannelData channelData = null;
+					if (request.getOwner().layer2Id == User.NOT_SET) { // not set
+						request.getOwner().layer2Id = 1;
+						channelData = new ChannelData(request.getOwner());
+					} else {
+						channelData = request.getOwner().getAttachment(getThis(), ChannelData.class);
+						assert channelData != null;
 					}
-					request = recodingScheme.recodeMessage(request);
-					if (request != null)
-						outputStrategyLayerMix.addRequest(request);
-				}
-			
-			
-			/*while (true) { // process messages
-				Request request = inputOutputHandler.getRequest();
-				synchronized (getThis()) {
-					if (request.getOwner().getAttachment(getThis(), ChannelData.class) == null)// {
-						new ChannelData(request.getOwner());
-					/*} else {
-						request.getOwner().getAttachment(getThis(), ChannelData.class);
-					}*/
-				/*}
-				request = recodingScheme.recodeMessage(request);
-				if (request != null)
-					outputStrategy.addRequest(request);
-				
-				/*if (message instanceof Request) {
-					Request recodedMsg = recodingScheme.recodeMessage((Request)message);
-					if (recodedMsg != null)
-						outputStrategy.addRequest(recodedMsg);
-				}/* else {
-					Reply recodedMsg = recodingScheme.recodeReply((Reply)message);
-					if (recodedMsg != null)
-						outputStrategy.addReply(recodedMsg);
-				}*/
-				
-			//}	
+					long enter = System.nanoTime();
+					synchronized (channelData.requestSynchronizer) {
+						if (System.nanoTime() - enter > 10000)
+							waitCounter++;
+						else
+							noWaitCounter++;
+						request = recodingScheme.recodeMessage(request, channelData); 
+						if (request != null)
+							outputStrategyLayerMix.addRequest(request); 
+					}
+				} 
+			}	
+		}
+		
+	}
+
+	
+	class ReplyWorkerThread extends Thread {
+		
+		public RSA_AES_LossTolerantChannel recodingScheme;
+		
+		public ReplyWorkerThread(RSA_AES_LossTolerantChannel recodingScheme) {
+			this.recodingScheme = recodingScheme;
+		}
+
+		
+		@Override
+		public void run() {
+			while (true) { // process messages
+				for (Reply reply: anonNode.getFromReplyInputQueue()) {
+					ChannelData channelData = reply.getOwner().getAttachment(getThis(), ChannelData.class);
+					if (channelData == null) {
+						System.err.println("no channel data stored for " +reply.getOwner());
+						userDatabase.removeUser(reply.getOwner());
+						continue;
+					}
+					synchronized (channelData.replySynchronizer) {
+						reply = recodingScheme.recodeReply(reply, channelData);
+						if (reply != null)
+							outputStrategyLayerMix.addReply(reply);
+					}
+				} 
+			}	
+		}
+		
+	}
+	
+	
+	class StatisticsThread extends Thread {
+		@Override
+		public void run() {
+			while (true) {
+				try {Thread.sleep(5000);} catch (InterruptedException e) {e.printStackTrace();continue;}
+				System.out.println("recoding threads had to wait in " +((double)waitCounter/(double)(waitCounter+noWaitCounter))*100 +" % of cases");
+				waitCounter = 0;
+				noWaitCounter = 0;
 			}
 		}
 	}

@@ -69,7 +69,7 @@ public class BasicInputStreamClient extends InputStream {
 			while (result.hasRemaining()) { // receive as many messages as needed
 				byte[] newData = layer3.receiveReply().getByteMessage();
 				if (newData.length > result.remaining()) { // received more data than needed; return result and store rest of data for later use
-					byte[][] chunks = Util.splitAfter(result.remaining(), newData);
+					byte[][] chunks = Util.split(result.remaining(), newData);
 					result.put(chunks[0]);
 					remaining.clear();
 					remaining.put(chunks[1]);
@@ -90,6 +90,7 @@ public class BasicInputStreamClient extends InputStream {
 	// "Reads the next byte of data from the input stream."
 	@Override
 	public synchronized int read() throws IOException {
+		System.out.println("read()"); 
 		if (remaining.hasRemaining())
 			return remaining.get();
 		else {
@@ -108,13 +109,14 @@ public class BasicInputStreamClient extends InputStream {
 	
 	@Override
 	public int read(byte[] b, int off, int len) throws IOException {
-		return forceRead(b, off, len).length;
+		forceRead(b, off, len);
+		return len;
 	}
 
 	
 	@Override
 	public synchronized int available() throws IOException {
-		return remaining.remaining();
+		return remaining.remaining() + layer3.availableReplyPayload();
 	}
 	
 	

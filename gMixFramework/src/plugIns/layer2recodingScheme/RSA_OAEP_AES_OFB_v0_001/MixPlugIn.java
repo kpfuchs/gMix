@@ -94,10 +94,6 @@ public class MixPlugIn extends Implementation implements Layer2RecodingSchemeMix
 	@Override
 	public Request generateDummy(int[] route, User user) {
 		throw new RuntimeException("not supported");
-		/*Request request = MixMessage.getInstanceRequest(new byte[0], settings);
-		request.setOwner(user);
-		request.route = route;
-		return request;*/
 	}
 
 	
@@ -115,19 +111,12 @@ public class MixPlugIn extends Implementation implements Layer2RecodingSchemeMix
 	@Override
 	public Reply generateDummyReply(int[] route, User user) {
 		throw new RuntimeException("not supported");
-		/*Reply reply = MixMessage.getInstanceReply(new byte[0], settings);
-		reply.setOwner(user);
-		reply.route = route;
-		return reply;*/
 	}
 
 	
 	@Override
 	public Reply generateDummyReply(User user) {
 		throw new RuntimeException("not supported");
-		/*Reply reply = MixMessage.getInstanceReply(new byte[0], settings);
-		reply.setOwner(user);
-		return reply;*/
 	}
 
 	

@@ -22,6 +22,7 @@ import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -38,6 +39,7 @@ import java.security.SecureRandom;
 import java.security.Security;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Vector;
 import java.util.concurrent.TimeUnit;
 
 import javax.crypto.Cipher;
@@ -48,6 +50,9 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 
 public final class Util {
+	
+	
+	public static final int NOT_SET =-222222222;
 	
 	
 	/**
@@ -173,6 +178,27 @@ public final class Util {
 		
 		return result;
 		
+	}
+	
+	
+	
+	public static byte[] floatToByteArray(float source) {
+		return intToByteArray(Float.floatToRawIntBits(source));
+	}
+	
+	
+	public static float byteArrayToFloat(byte[] byteArray) {
+		return Float.intBitsToFloat(byteArrayToInt(byteArray));		
+	}
+	
+	
+	public static byte[] doubleToByteArray(double source) {
+		return longToByteArray(Double.doubleToRawLongBits(source));
+	}
+	
+	
+	public static double byteArrayToDouble(byte[] byteArray) {
+		return Double.longBitsToDouble(byteArrayToLong(byteArray));	
 	}
 	
 	
@@ -525,9 +551,9 @@ public final class Util {
 	}
 	
 	
-	public static byte[][] splitAfter(int splitBefore, byte[] source) {
+	public static byte[][] split(int splitBefore, byte[] source) {
 		if (source.length <= splitBefore)
-			throw new RuntimeException("cannot split the bypassed array (array too small)"); 
+			throw new RuntimeException("cannot split the bypassed array (array too small: "+source.length +"<=" +splitBefore +")"); 
 		byte[][] result = new byte[2][];
 		result[0] = Arrays.copyOfRange(source, 0, splitBefore);
 		result[1] = Arrays.copyOfRange(source, splitBefore, source.length);
@@ -545,10 +571,54 @@ public final class Util {
 			if (timeLeft > SLEEP_PRECISION)
 				Thread.sleep(1);
 			else
-				Thread.sleep(0); // Thread.yield();
+				Thread.yield();
 			timeLeft = end - System.nanoTime();
 			if (Thread.interrupted())
 				throw new InterruptedException();
 		} while (timeLeft > 0);
 	}
+	
+	
+	public static String humanReadableByteCount(long bytes, boolean si) {
+		// see http://stackoverflow.com/questions/3758606/how-to-convert-byte-size-into-human-readable-format-in-java
+	    int unit = si ? 1000 : 1024;
+	    if (bytes < unit) return bytes + " B";
+	    int exp = (int) (Math.log(bytes) / Math.log(unit));
+	    String pre = (si ? "kMGTPE" : "KMGTPE").charAt(exp-1) + (si ? "" : "i");
+	    return String.format("%.1f %sB", bytes / Math.pow(unit, exp), pre);
+	}
+	
+	/**
+	 * Comment
+	 *
+	 * @param args Not used.
+	 */
+	public static void main(String[] args) {
+		for (File f:getFilePaths(".", "StaticFinctionSettings.txt"))
+			System.out.println(f); 
+		
+	} 
+	
+	
+	// example:
+	// for (File f:getFilePaths(".", "StaticFinctionSettings.txt"))
+	//      System.out.println(f); 
+	public static File[] getFilePaths(String rootFolder, String filename) {
+		Vector<File> found = new Vector<File>();
+		File root = new File(rootFolder);
+		getFilePaths(root, filename, found);
+		return found.toArray(new File[0]);
+	}
+	
+	
+	private static void getFilePaths(File rootFolder, String filename, Vector<File> found) {
+		if (rootFolder.isDirectory()) {
+			File[] files = rootFolder.listFiles();
+			for (File f : files)
+				getFilePaths(f, filename, found);
+		} else if (rootFolder.isFile() && rootFolder.getName().equalsIgnoreCase(filename)) {
+			found.add(rootFolder);
+		}
+	}
+	
 }

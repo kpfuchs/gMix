@@ -48,6 +48,7 @@ public class MixPlugIn extends Implementation implements Layer5ApplicationMix {
 
 	@Override
 	public void begin() {
+		System.out.println("StreamSocketTest_v0_001 loaded"); 
 		CommunicationMode cm = anonNode.IS_DUPLEX ? CommunicationMode.DUPLEX : CommunicationMode.SIMPLEX_RECEIVER;
 		this.serverSocket = anonNode.createStreamAnonServerSocket(settings.getPropertyAsInt("SERVICE_PORT1"), cm, false);
 		new AcceptorThread().start(); 
@@ -66,12 +67,6 @@ public class MixPlugIn extends Implementation implements Layer5ApplicationMix {
 	
 	private class ReplyThread extends Thread {
 		
-		int[] statDelays = new int[1001];
-		long excessiveDelayCounter = 0;
-		long statTotalMessages = 0;
-		long displayStatPeriod = settings.getPropertyAsLong("DISPLAY_STAT_PERIOD");
-		long displayStatCounter = 0;
-		long startStat = 0;
 		InputStream inputStream;
 		OutputStream outputStream;
 		
@@ -86,7 +81,6 @@ public class MixPlugIn extends Implementation implements Layer5ApplicationMix {
 		
 		@Override
 		public void run() {
-			boolean recordStatistics = anonNode.RECORD_STATISTICS_ON;
 			long ctr = 0;
 			long timeFrame = 1000000000l; // in ms
 			long start = -1;

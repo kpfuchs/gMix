@@ -120,4 +120,11 @@ public class ConnectedDatagramAnonSocketClientImpl extends AdaptiveAnonSocket im
 			throw new RuntimeException("this socket is simplex only"); 
 		return layer3.getMaxSizeOfNextReply();
 	}
+
+
+	@Override
+	public AdaptiveAnonSocket getImplementation() {
+		return this;
+	}
+
 }

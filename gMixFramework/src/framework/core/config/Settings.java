@@ -177,7 +177,7 @@ public class Settings {
 	
 	public static Properties overwriteSettings(Properties properties, String args) {
 		if (args != null) {
-			if (!args.contains("="))
+			if (!args.contains("=")) // TODO
 				throw new RuntimeException("invalid parameter: " +args +". Example: java -jar gMixFramework.jar mix DUPLEX_ON=FALSE,ADDRESS=AUTO;PORT=AUTO"); 
 			String[] keyValuePairs = args.split(",");
 			System.out.println("args: " +args); // TODO
@@ -186,6 +186,21 @@ public class Settings {
 				String[] keyValue = keyValuePair.split("=");
 				System.out.println("setting " +keyValue[0] +" to " +keyValue[1]); 
 				properties.setProperty(keyValue[0], keyValue[1]);
+			}
+		}
+		return properties;
+	}
+	
+	
+	public static Properties overwriteExistingSettings(Properties properties, String args) {
+		if (args != null) {
+			if (!args.contains("=")) // TODO
+				throw new RuntimeException("invalid parameter: " +args +". Example: java -jar gMixFramework.jar mix DUPLEX_ON=FALSE,ADDRESS=AUTO;PORT=AUTO"); 
+			String[] keyValuePairs = args.split(",");
+			for (String keyValuePair:keyValuePairs) {
+				String[] keyValue = keyValuePair.split("=");
+				if (properties.getProperty(keyValue[0]) != null)
+					properties.setProperty(keyValue[0], keyValue[1]);
 			}
 		}
 		return properties;

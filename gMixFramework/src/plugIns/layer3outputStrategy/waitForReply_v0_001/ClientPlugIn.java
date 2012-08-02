@@ -40,12 +40,15 @@ public class ClientPlugIn extends Implementation implements Layer3OutputStrategy
 	private ArrayBlockingQueue<Reply> replyQueue;
 	private RequestReplyThread requestReplyThread;
 	private long delay;
+	private int availableReplyPayload = 0;
+	private int availableReplies = 0;
+	private Object replySynchronizer = new Object();
 	
 
 	@Override
 	public void constructor() {
 		this.requestQueue = new ArrayBlockingQueue<Request>(settings.getPropertyAsInt("WAIT_FOR_REPLY_REQUEST_QUEUE_SIZE"));
-		this.replyQueue = new ArrayBlockingQueue<Reply>(settings.getPropertyAsInt("WAIT_FOR_REPLY_REQUEST_QUEUE_SIZE"));
+		this.replyQueue = new ArrayBlockingQueue<Reply>(settings.getPropertyAsInt("WAIT_FOR_REPLY_REPLY_QUEUE_SIZE"));
 		this.delay = TimeUnit.MICROSECONDS.toNanos(settings.getPropertyAsLong("WAIT_FOR_REPLY_DELAY"));
 	}
 
@@ -135,7 +138,11 @@ public class ClientPlugIn extends Implementation implements Layer3OutputStrategy
 			e.printStackTrace();
 			return receiveReply();
 		}
-		return layer2.extractPayload(reply);
+		synchronized (replySynchronizer) { // lazy-set information about available data
+			availableReplyPayload -= reply.getByteMessage().length;
+			availableReplies--;
+		}
+		return reply;
 	}
 
 
@@ -170,7 +177,12 @@ public class ClientPlugIn extends Implementation implements Layer3OutputStrategy
 				}
 				
 				Reply reply = layer1.receiveReply();
+				reply = layer2.extractPayload(reply);
 				forcePutInQueue(reply);
+				synchronized (replySynchronizer) { // lazy-set information about available data
+					availableReplyPayload += reply.getByteMessage().length;
+					availableReplies++;
+				}
 				
 				if (isStopped.get() == true)
 					break;
@@ -183,6 +195,22 @@ public class ClientPlugIn extends Implementation implements Layer3OutputStrategy
 						e.printStackTrace();
 					}
 			}
+		}
+	}
+
+
+	@Override
+	public int availableReplies() {
+		synchronized (replySynchronizer) {
+			return availableReplies;
+		}
+	}
+
+
+	@Override
+	public int availableReplyPayload() {
+		synchronized (replySynchronizer) {
+			return availableReplyPayload;
 		}
 	}
 	

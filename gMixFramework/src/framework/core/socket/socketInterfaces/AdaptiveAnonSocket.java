@@ -17,9 +17,7 @@
  */
 package framework.core.socket.socketInterfaces;
 
-import java.util.Iterator;
 import java.util.Random;
-import java.util.concurrent.ArrayBlockingQueue;
 
 import framework.core.AnonNode;
 import framework.core.config.Settings;
@@ -31,7 +29,6 @@ import framework.core.interfaces.Layer2RecodingSchemeClient;
 import framework.core.interfaces.Layer3OutputStrategyClient;
 import framework.core.message.Request;
 import framework.core.interfaces.ThreePhaseStart;
-
 
 
 //TODO: ioexception instead of throw new RuntimeException(where possible); 
@@ -60,8 +57,8 @@ public abstract class AdaptiveAnonSocket implements AnonSocket, AnonSocketOption
 	protected AnonNode owner;
 	protected Settings settings;
 	
-	protected ArrayBlockingQueue<AnonMessage> receivedDatagrams = null;
-	protected ArrayBlockingQueue<Request> receivedRequests = null;
+	//protected ArrayBlockingQueue<AnonMessage> receivedDatagrams = null;
+	private ConcurrentCapacityAwareMixMessageQueue<Request> receivedRequests = null;
 	
 	
 	// client-side
@@ -127,8 +124,8 @@ public abstract class AdaptiveAnonSocket implements AnonSocket, AnonSocketOption
 		this.destinationPseudonym = endToEndPseudonym;
 		this.sourcePseudonym = endToEndPseudonym;
 		
-		this.receivedDatagrams = new ArrayBlockingQueue<AnonMessage>(owner.SOCKET_MIX_BACKEND_QUEUE_SIZE);
-		this.receivedRequests = new ArrayBlockingQueue<Request>(owner.SOCKET_MIX_BACKEND_QUEUE_SIZE);
+		//this.receivedDatagrams = new ArrayBlockingQueue<AnonMessage>(owner.SOCKET_MIX_BACKEND_QUEUE_SIZE);
+		this.receivedRequests = new ConcurrentCapacityAwareMixMessageQueue<Request>(owner.SOCKET_MIX_BACKEND_QUEUE_SIZE);
 	}
 	
 	
@@ -182,7 +179,7 @@ public abstract class AdaptiveAnonSocket implements AnonSocket, AnonSocketOption
 		if (isClientSideSocket)
 			throw new RuntimeException("this method is only available on server-side plugins"); 
 		try {
-			receivedRequests.put(message);
+			receivedRequests.add(message);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 			newIncomingMessage(message);
@@ -194,7 +191,7 @@ public abstract class AdaptiveAnonSocket implements AnonSocket, AnonSocketOption
 		if (isClientSideSocket)
 			throw new RuntimeException("this method is only available on server-side plugins"); 
 		try {
-			return receivedRequests.take();
+			return receivedRequests.get();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 			return getNextRequest();
@@ -211,7 +208,7 @@ public abstract class AdaptiveAnonSocket implements AnonSocket, AnonSocketOption
 			if (nextRequest == null || nextRequest.getByteMessage().length > maxSize)
 				return null;
 			else
-				return receivedRequests.take();
+				return receivedRequests.get();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 			return getNextRequest();
@@ -222,7 +219,7 @@ public abstract class AdaptiveAnonSocket implements AnonSocket, AnonSocketOption
 	public int availableRequests() {
 		if (isClientSideSocket)
 			throw new RuntimeException("this method is only available on server-side plugins"); 
-		return receivedRequests.size();
+		return receivedRequests.messagesAvailable();
 	}
 	
 	
@@ -240,11 +237,7 @@ public abstract class AdaptiveAnonSocket implements AnonSocket, AnonSocketOption
 	public int availableData() {
 		if (isClientSideSocket)
 			throw new RuntimeException("this method is only available on server-side plugins"); 
-		int result = 0;
-		Iterator<Request> i = receivedRequests.iterator();
-		while (i.hasNext())
-			result += i.next().getByteMessage().length;
-		return result;
+		return receivedRequests.bytesAvailable();
 	}
 	
 	

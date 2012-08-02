@@ -32,6 +32,7 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
+
 import plugIns.layer2recodingScheme.RSA_AES_LossTolerantChannel_v0_001.MixPlugIn.ChannelData;
 
 import framework.core.AnonNode;
@@ -68,11 +69,11 @@ public class RSA_AES_LossTolerantChannel {
 	public void initAsClient() {
 		this.macKeys = new SecretKey[config.numberOfMixes]; 
 		this.sessionKeysForRequestChannel = new SecretKey[config.numberOfMixes];
-		//this.sessionKeysForReplyChannel = new SecretKey[config.numberOfMixes];
+		this.sessionKeysForReplyChannel = new SecretKey[config.numberOfMixes];
 		this.sessionIVsForRequestChannel = new IvParameterSpec[config.numberOfMixes];
-		//this.sessionIVsForReplyChannel = new IvParameterSpec[config.numberOfMixes];
+		this.sessionIVsForReplyChannel = new IvParameterSpec[config.numberOfMixes];
 		this.symmetricEncryptCiphers = new Cipher[config.numberOfMixes];
-		//this.symmetricDecryptCiphers = new Cipher[config.numberOfMixes];
+		this.symmetricDecryptCiphers = new Cipher[config.numberOfMixes];
 		this.asymmetricCiphers = new Cipher[config.numberOfMixes];
 		// create key generators and ciphers
 		try {
@@ -91,7 +92,7 @@ public class RSA_AES_LossTolerantChannel {
 	public void initAsRecoder() {
 		assert !owner.IS_FREE_ROUTE;
 		try {
-			//this.secureRandom = SecureRandom.getInstance(config.PRNG_ALGORITHM);
+			this.secureRandom = SecureRandom.getInstance(config.PRNG_ALGORITHM);
 			this.asymmetricCipher = Cipher.getInstance(config.ASYM_CRYPTOGRAPHY_ALGORITHM, config.CRYPTO_PROVIDER);
 			this.asymmetricCipher.init(Cipher.DECRYPT_MODE, config.keyPair.getPrivate());
 		} catch (Exception e) {
@@ -101,26 +102,24 @@ public class RSA_AES_LossTolerantChannel {
 	}
 	
 	
-	public synchronized Request recodeMessage(Request message) {
-		if (message.getOwner().getAttachment(this, ChannelData.class).established) { // weak check if channel already established
-			return recodeChannelMessage(message);
+	public synchronized Request recodeMessage(Request message, ChannelData channelData) {
+		if (channelData.established) { // weak check if channel already established
+			return recodeChannelMessage(message, channelData);
 		} else {
 			synchronized (config) { // secure check
-				if (!message.getOwner().getAttachment(this, ChannelData.class).established) {
-					return recodeChannelEstablishMessage(message);
+				if (!channelData.established) {
+					return recodeChannelEstablishMessage(message, channelData);
 				} else {
-					return recodeChannelMessage(message);
+					return recodeChannelMessage(message, channelData);
 				}
 			}
 		}
 	}
 
 
-	private Request recodeChannelEstablishMessage(Request message) {
+	private Request recodeChannelEstablishMessage(Request message, ChannelData channelData) {
 		String cipherTextHash = null;
 		try {
-			ChannelData channelData = message.getOwner().getAttachment(this, ChannelData.class);
-			
 			if (config.DEBUG_ON) {
 				cipherTextHash = Util.md5(message.getByteMessage());
 			}
@@ -150,14 +149,14 @@ public class RSA_AES_LossTolerantChannel {
 			channelData.decryptCipher = Cipher.getInstance(config.SYM_CRYPTOGRAPHY_ALGORITHM, config.CRYPTO_PROVIDER);
 			channelData.decryptCipher.init(Cipher.DECRYPT_MODE, channelData.symSessionKey, initVector);
 			
-			/*if (mix.isDuplex()) {
+			if (owner.IS_DUPLEX) {
 				byte[] symRepKeyAsByteArray = Arrays.copyOfRange(asymPlaintext, pointer, pointer += config.SYM_KEY_LENGTH);
 				SecretKey symRepKey = new SecretKeySpec(symRepKeyAsByteArray, config.SYM_CRYPTOGRAPHY_ALGORITHM);
 				ivAsByteArray = Arrays.copyOfRange(asymPlaintext, pointer, pointer += config.IV_LENGTH);
 				initVector = new IvParameterSpec(ivAsByteArray);
 				channelData.encryptCipher = Cipher.getInstance(config.SYM_CRYPTOGRAPHY_ALGORITHM, config.CRYPTO_PROVIDER);
 				channelData.encryptCipher.init(Cipher.ENCRYPT_MODE, symRepKey, initVector);
-			}*/
+			}
 			
 			byte[] payloadLengthAsArray = Arrays.copyOfRange(asymPlaintext, pointer, pointer += config.LENGTH_HEADER_LENGTH);
 			payloadLength = Util.byteArrayToInt(payloadLengthAsArray);
@@ -177,8 +176,9 @@ public class RSA_AES_LossTolerantChannel {
 			macGenerator.init(channelData.macKey);
 			byte[] signedData = Arrays.copyOfRange(plaintext, config.MAC_LENGTH, plaintext.length);
 			if (config.DEBUG_ON)
-				System.out.println(owner +" " +cipherTextHash +" -> " +Util.md5(signedData));
+				System.out.println(owner +" " +cipherTextHash +" -> " +Util.md5(signedData) +" key: " +Util.md5(channelData.macKey.getEncoded()));
 			byte[] locallyGeneratedMac = macGenerator.doFinal(signedData);
+			System.out.println("mix: mac-data: " +Util.md5(signedData) +", mac: " +Util.md5(locallyGeneratedMac) +", received mac: " +Util.md5(mac)); // TODO
 			
 			if (!Arrays.equals(locallyGeneratedMac, mac)) {
 				System.out.println("wrong MAC!");
@@ -209,9 +209,8 @@ public class RSA_AES_LossTolerantChannel {
 	}
 	
 	
-	private Request recodeChannelMessage(Request message) {
+	private Request recodeChannelMessage(Request message, ChannelData channelData) {
 		try {
-			ChannelData channelData = message.getOwner().getAttachment(this, ChannelData.class);
 			String ct = Util.md5(message.getByteMessage());
 			byte[] ivAsArray = Arrays.copyOf(message.getByteMessage(), config.IV_LENGTH);
 			IvParameterSpec iv = new IvParameterSpec(ivAsArray);
@@ -231,9 +230,11 @@ public class RSA_AES_LossTolerantChannel {
 			macGenerator.init(channelData.macKey);
 			byte[] signedData = Arrays.copyOfRange(plaintext, config.MAC_LENGTH, plaintext.length);
 			byte[] locallyGeneratedMac = macGenerator.doFinal(signedData);
+			//System.out.println("mix: mac-data: " +Util.md5(signedData) +", mac: " +Util.md5(locallyGeneratedMac) +", received mac: " +Util.md5(mac) +"\n" +new String(signedData) +"\n\n\n"); // TODO
+			//System.out.println("mix: plaintext: " +Util.md5(plaintext) +", ciphertext: " +Util.md5(cipherText) +", symiv: " +Util.md5(ivAsArray) +", symKey: " +Util.md5(channelData.symSessionKey.getEncoded()) +", macKey: " +Util.md5(channelData.macKey.getEncoded()) +", mac-data: " +Util.md5(signedData) +", mac (generated): " +Util.md5(locallyGeneratedMac) +", received mac: " +Util.md5(mac)); 
 			
 			if (!Arrays.equals(locallyGeneratedMac, mac)) {
-				System.err.println(owner.toString() +" wrong MAC cm! " +ct +" mac of " +Util.md5(signedData) +" is " +Util.md5(mac)); // TODO
+				System.err.println(owner.toString() +" wrong MAC cm! " +ct +" mac of " +Util.md5(signedData) +" is " +Util.md5(mac) +" key: " +Util.md5(channelData.macKey.getEncoded())); // TODO
 				return null;
 			}
 			
@@ -268,10 +269,8 @@ public class RSA_AES_LossTolerantChannel {
 	}
 
 	
-	public synchronized Reply recodeReply(Reply message) {
-		throw new RuntimeException("not implemented yet"); 
-		/*ChannelData channelData = message.getOwner().getAttachment(master, ChannelData.class);
-		if (mix.isLastMix()) {
+	public synchronized Reply recodeReply(Reply message, ChannelData channelData) {
+		if (owner.IS_LAST_MIX) {
 			if (message.getByteMessage() == null) // dummy
 				message.setByteMessage(new byte[0]);
 			if (message.getByteMessage().length > config.MAX_PAYLOAD)
@@ -295,7 +294,7 @@ public class RSA_AES_LossTolerantChannel {
 		//System.out.println(" oOoOo " +mix.toString() +": " +Util.md5(message.getByteMessage()) + " -> " +Util.md5(result)); 
 		assert result.length == message.getByteMessage().length;
 		message.setByteMessage(result);
-		return message;*/
+		return message;
 	}
 
 
@@ -329,14 +328,14 @@ public class RSA_AES_LossTolerantChannel {
 				this.sessionIVsForRequestChannel[i] = new IvParameterSpec(ivReq);
 				this.symmetricEncryptCiphers[i] = Cipher.getInstance(config.SYM_CRYPTOGRAPHY_ALGORITHM, config.CRYPTO_PROVIDER);
 				this.symmetricEncryptCiphers[i].init(Cipher.ENCRYPT_MODE, sessionKeysForRequestChannel[i], sessionIVsForRequestChannel[i]);             				
-				/*if (DUPLEX) {
+				if (owner.IS_DUPLEX) {
 					this.sessionKeysForReplyChannel[i] = symKeyGenerator.generateKey();
 					byte[] ivRep = new byte[sessionKeysForReplyChannel[i].getEncoded().length];
 					secureRandom.nextBytes(ivRep);
 					this.sessionIVsForReplyChannel[i] = new IvParameterSpec(ivRep);
 					this.symmetricDecryptCiphers[i] = Cipher.getInstance(config.SYM_CRYPTOGRAPHY_ALGORITHM, config.CRYPTO_PROVIDER);
 					this.symmetricDecryptCiphers[i].init(Cipher.DECRYPT_MODE, sessionKeysForReplyChannel[i], sessionIVsForReplyChannel[i]);             				
-				}*/
+				}
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -352,7 +351,7 @@ public class RSA_AES_LossTolerantChannel {
 				byte[] payloadLength = Util.intToByteArray(payload.length);
 				
 				// concat header and payload
-				/*if (DUPLEX) {
+				if (owner.IS_DUPLEX) {
 					plaintext = Util.concatArrays(new byte[][] {
 							macKeys[i].getEncoded(),
 							sessionKeysForRequestChannel[i].getEncoded(),
@@ -362,7 +361,7 @@ public class RSA_AES_LossTolerantChannel {
 							payloadLength,
 							payload
 						});
-				} else {*/
+				} else {
 					plaintext = Util.concatArrays(new byte[][] {
 							macKeys[i].getEncoded(),
 							sessionKeysForRequestChannel[i].getEncoded(),
@@ -370,7 +369,7 @@ public class RSA_AES_LossTolerantChannel {
 							payloadLength,
 							payload
 						});
-				//}
+				}
 				
 				// add padding for last mix' payload
 				if (i == config.numberOfMixes-1 && payload.length != config.MAX_PAYLOAD) {
@@ -392,6 +391,7 @@ public class RSA_AES_LossTolerantChannel {
 				Mac macGenerator = Mac.getInstance(config.MAC_ALGORITHM);
 				macGenerator.init(macKeys[i]);
 				mac = macGenerator.doFinal(plaintext);
+				System.out.println("client: mac-data: " +Util.md5(plaintext) +", mac: " +Util.md5(mac)); // TODO
 				plaintext = Util.concatArrays(mac, plaintext); 
 				
 				assert macKeys[i].getEncoded().length == config.MAC_KEY_LENGTH;
@@ -436,12 +436,13 @@ public class RSA_AES_LossTolerantChannel {
 							//+"\n\tlength of sym ciphertext: " +symCipherText.length
 							//+"\n\ttotal length of ciphertext: " +cipherText.length
 							+"(pt " +Util.md5(Arrays.copyOfRange(plaintext, config.MAC_LENGTH, plaintext.length)) +")"
-							+", (ct: " +Util.md5(cipherText) +")"
+							+", (ct: " +Util.md5(cipherText) +") key: " +Util.md5(macKeys[i].getEncoded())
 							//+"\n\thash of public key: " +Util.md5(publicKeysOfMixes[i].getEncoded())
 							+"] "
 							; 
 					//System.out.println(Util.display(Arrays.copyOfRange(plaintext, MAC_LENGTH, plaintext.length)));
 					//System.out.println(Util.display(cipherText));
+					
 				}
 				
 				payload = cipherText;
@@ -494,8 +495,21 @@ public class RSA_AES_LossTolerantChannel {
 				byte[] mac = macGenerator.doFinal(payload);
 				payload = Util.concatArrays(mac, payload);
 				
+				// explicit IV mode; first block must be random (cf. S. Vaudenay: "Security Flaws Induced by CBC Padding-Applications to SSL, IPSEC, WTLS")
+				byte[] rand = new byte[config.IV_LENGTH]; 
+				secureRandom.nextBytes(rand);
+				payload = Util.concatArrays(rand, payload);
+				
+				// include iv with packet
+				byte[] ivAsArray = new byte[config.IV_LENGTH];
+				secureRandom.nextBytes(ivAsArray);
+				IvParameterSpec iv = new IvParameterSpec(ivAsArray);
+				symmetricEncryptCiphers[i].init(Cipher.ENCRYPT_MODE, sessionKeysForRequestChannel[i], iv);
+				
 				byte[] ciphertext = symmetricEncryptCiphers[i].update(payload);
 				assert ciphertext.length == payload.length;
+				ciphertext = Util.concatArrays(ivAsArray, ciphertext);
+				
 				payload = ciphertext;
 				
 			} catch (NoSuchAlgorithmException e) {
@@ -504,6 +518,8 @@ public class RSA_AES_LossTolerantChannel {
 			} catch (InvalidKeyException e) {
 				e.printStackTrace();
 				throw new RuntimeException("");
+			} catch (InvalidAlgorithmParameterException e) {
+				e.printStackTrace();
 			}
 			
 		}
@@ -533,8 +549,8 @@ public class RSA_AES_LossTolerantChannel {
 			result = plaintext;
 		}
 		int lengthOfPayload = Util.byteArrayToInt(Arrays.copyOf(result, 4));
-		result = Arrays.copyOfRange(result, config.LENGTH_HEADER_LENGTH, config.LENGTH_HEADER_LENGTH + lengthOfPayload);
-		reply.setByteMessage(result);
+		byte[] payload = Arrays.copyOfRange(result, config.LENGTH_HEADER_LENGTH, config.LENGTH_HEADER_LENGTH + lengthOfPayload);
+		reply.setByteMessage(payload);
 		return reply;
 	}
 

@@ -25,4 +25,7 @@ public interface DatagramAnonServerSocket extends AnonServerSocket, AnonSocketOp
 	public void sendMessage(AnonMessage message); // not available if socket is simplex
 	public int getMaxSizeForNextMessageSend(); // not available if socket is simplex
 	public int getMaxSizeForNextMessageReceive();
+	
+	public AdaptiveAnonServerSocket getImplementation();
+	
 }

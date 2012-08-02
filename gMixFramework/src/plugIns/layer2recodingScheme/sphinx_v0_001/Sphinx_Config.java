@@ -91,7 +91,7 @@ public class Sphinx_Config {
 				e.printStackTrace();
 				throw new RuntimeException("could not post id"); 
 			}
-			loadPlubicKeysOfMixes();
+			loadPlubicKeysOfMixes(owner);
 		} else { // mix
 			byte[][] keyPair = Sphinx.generateKeyPair(this);
 			publicKey = keyPair[0];
@@ -101,15 +101,13 @@ public class Sphinx_Config {
 			infoService.postValueAsMix(owner.PUBLIC_PSEUDONYM, "SPHINX_PUBLIC_KEY", publicKey);
 			if (PERFORM_REPLY_DETECTION)
 				this.replayDetection = ReplayDetectionBasic.getInstance(owner);
-			this.NUMBER_OF_THREADS = settings.getPropertyAsInt("NUMBER_OF_THREADS");
-			// -1 means "automatic detection"
-			this.NUMBER_OF_THREADS = (this.NUMBER_OF_THREADS == -1) ?  Runtime.getRuntime().availableProcessors(): this.NUMBER_OF_THREADS;
+			this.NUMBER_OF_THREADS = owner.NUMBER_OF_THREADS;
 		}
 	}
 
 
-	public void loadPlubicKeysOfMixes() {
-		this.mixList = infoService.getMixList();
+	public void loadPlubicKeysOfMixes(AnonNode owner) {
+		this.mixList = owner.mixList;
 		this.mixIdsSphinx = infoService.getValueFromAllMixes("SPHINX_MIX_ID");
 		this.publicKeysOfMixes = infoService.getValueFromAllMixes("SPHINX_PUBLIC_KEY");
 		this.replyDataTable = new HashMap<String, ReplyData>();

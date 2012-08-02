@@ -42,9 +42,6 @@ public class Layer2RecodingSchemeClientController extends Controller {
 	
 	
 	public Layer2RecodingSchemeClient loadClientPluginInstance() {
-		settings.addProperties("./src/plugIns/layer2recodingScheme/" 
-				+settings.getProperty("LAYER_2_PLUG-IN_CLIENT") 
-				+"/PlugInSettings.txt");
 		return LocalClassLoader.instantiateImplementation(
 				"plugIns.layer2recodingScheme." +settings.getProperty("LAYER_2_PLUG-IN_CLIENT"), 
 				"ClientPlugIn.java",

@@ -33,6 +33,7 @@ public class StreamAnonSocketMixImpl extends AdaptiveAnonSocket implements Strea
 	private StreamAnonServerSocketImpl serverSocket;
 	private BasicInputStreamMix inputStream = null;
 	private BasicOutputStreamMix outputStream = null;
+	private User user;
 	
 	
 	public StreamAnonSocketMixImpl(
@@ -52,6 +53,7 @@ public class StreamAnonSocketMixImpl extends AdaptiveAnonSocket implements Strea
 				isFreeRoute
 				);
 		this.serverSocket = serverSocket;
+		this.user = user;
 		this.isConnected = true;
 		if (isDuplex && !owner.LAYER_1_LINKS_MESSAGES)
 			throw new RuntimeException("currently not supported"); // TODO: requires same user-object for each message (maybe this is a general problem and can't be solved without layer1 linkage) 
@@ -87,6 +89,18 @@ public class StreamAnonSocketMixImpl extends AdaptiveAnonSocket implements Strea
 	@Override
 	public InputStream getInputStream() {
 		return this.inputStream;
+	}
+
+
+	@Override
+	public User getUser() {
+		return user;
+	}
+
+
+	@Override
+	public AdaptiveAnonSocket getImplementation() {
+		return this;
 	}
 
 }

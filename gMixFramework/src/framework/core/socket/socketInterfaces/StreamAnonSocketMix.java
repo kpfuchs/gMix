@@ -21,6 +21,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import framework.core.userDatabase.User;
+
 
 public interface StreamAnonSocketMix extends AnonSocket {
 
@@ -29,5 +31,9 @@ public interface StreamAnonSocketMix extends AnonSocket {
 	
 	public OutputStream getOutputStream(); // may be not available if the implementing socket is simplex
 	public InputStream getInputStream(); 
+	
+	public User getUser();
+	
+	public AdaptiveAnonSocket getImplementation();
 	
 }
