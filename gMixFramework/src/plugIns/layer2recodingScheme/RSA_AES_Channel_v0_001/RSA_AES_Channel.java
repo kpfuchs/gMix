@@ -35,6 +35,7 @@ import framework.core.AnonNode;
 import framework.core.config.Settings;
 import framework.core.message.Reply;
 import framework.core.message.Request;
+import framework.core.routing.RoutingMode;
 import framework.core.util.Util;
 
 
@@ -67,6 +68,8 @@ public class RSA_AES_Channel {
 	
 	
 	public void initAsClient() {
+		if (owner.ROUTING_MODE != RoutingMode.CASCADE)
+			throw new RuntimeException("not supported"); // TODO: support it...
 		this.macKeys = new SecretKey[config.numberOfMixes]; 
 		this.sessionKeysForRequestChannel = new SecretKey[config.numberOfMixes];
 		this.sessionKeysForReplyChannel = new SecretKey[config.numberOfMixes];
@@ -88,9 +91,8 @@ public class RSA_AES_Channel {
 	}
 	
 	
-	// TODO: aufrufen!
 	public void initAsRecoder() {
-		assert !owner.IS_FREE_ROUTE;
+		assert owner.ROUTING_MODE == RoutingMode.CASCADE;
 		try {
 			this.secureRandom = SecureRandom.getInstance(config.PRNG_ALGORITHM);
 			this.asymmetricCipher = Cipher.getInstance(config.ASYM_CRYPTOGRAPHY_ALGORITHM, config.CRYPTO_PROVIDER);

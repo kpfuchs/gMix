@@ -23,16 +23,17 @@ import framework.core.interfaces.Layer2RecodingSchemeClient;
 import framework.core.interfaces.Layer3OutputStrategyClient;
 import framework.core.message.Reply;
 import framework.core.message.Request;
+import framework.core.routing.MixList;
+import framework.core.routing.RoutingMode;
+import framework.core.util.Util;
 
 
 public class ClientPlugIn extends Implementation implements Layer2RecodingSchemeClient {
 
-	private int maxPayload;
-	
 	
 	@Override
 	public void constructor() {
-		this.maxPayload = anonNode.MAX_PAYLOAD;
+		
 	}
 	
 
@@ -58,19 +59,40 @@ public class ClientPlugIn extends Implementation implements Layer2RecodingScheme
 
 	@Override
 	public Request applyLayeredEncryption(Request request) {
-		return request;
+		if (anonNode.ROUTING_MODE == RoutingMode.CASCADE) {
+			return request;
+		} else if (anonNode.ROUTING_MODE == RoutingMode.FREE_ROUTE_SOURCE_ROUTING) {
+			assert request.route != null;
+			byte[] routeArray = MixList.packIdArray(request.route, (short)0);
+			if (anonNode.DISPLAY_ROUTE_INFO)
+				System.out.println("" +anonNode +" creating route header"); 
+			request.setByteMessage(Util.concatArrays(routeArray, request.getByteMessage()));
+			return request;
+		} else if (anonNode.ROUTING_MODE == RoutingMode.FREE_ROUTE_DYNAMIC_ROUTING) {
+			return request;
+		} else {
+			throw new RuntimeException("not supported routing mode: " +anonNode.ROUTING_MODE); 
+		}
 	}
 
 	
 	@Override
 	public int getMaxPayloadForNextMessage() {
-		return this.maxPayload;
+		if (anonNode.ROUTING_MODE == RoutingMode.CASCADE) {
+			return anonNode.MAX_PAYLOAD;
+		} else if (anonNode.ROUTING_MODE == RoutingMode.FREE_ROUTE_SOURCE_ROUTING) {
+			return anonNode.MAX_PAYLOAD - MixPlugIn.getRouteHeaderSize(anonNode);
+		} else if (anonNode.ROUTING_MODE == RoutingMode.FREE_ROUTE_DYNAMIC_ROUTING) {
+			return anonNode.MAX_PAYLOAD;
+		} else {
+			throw new RuntimeException("not supported routing mode: " +anonNode.ROUTING_MODE); 
+		}
 	}
 
 	
 	@Override
 	public int getMaxPayloadForNextReply() {
-		return this.maxPayload;
+		return anonNode.MAX_PAYLOAD;
 	}
 
 	

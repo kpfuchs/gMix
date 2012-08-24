@@ -32,10 +32,10 @@ import framework.core.controller.SubImplementation;
 import framework.core.message.MixMessage;
 import framework.core.message.Reply;
 import framework.core.message.Request;
+import framework.core.routing.MixList;
 import framework.core.userDatabase.DatabaseEventListener;
 import framework.core.userDatabase.User;
 import framework.core.util.Util;
-import framework.infoService.MixList;
 
 
 public class NextMixHandler_TCP_multiplexed_sync extends SubImplementation implements DatabaseEventListener {	

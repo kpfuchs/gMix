@@ -19,6 +19,8 @@ package framework.core.userDatabase;
 
 import java.util.HashMap;
 
+import framework.core.util.Util;
+
 import plugIns.layer1network.cascade_TCP_v0_001.ClientHandler_TCP_RR_sync.ChannelData;
 
 
@@ -38,6 +40,7 @@ public final class User {
 	public volatile int layer4Id = NOT_SET;
 	public volatile int layer5Id = NOT_SET;
 	public ChannelData channeldata; // TODO: remove
+	public int prevHopAddress = Util.NOT_SET;
 	
 	
 	protected User(int identifier, UserDatabase userDatabase) {

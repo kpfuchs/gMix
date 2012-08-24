@@ -28,12 +28,12 @@ import framework.core.interfaces.Layer2RecodingSchemeClient;
 import framework.core.interfaces.Layer3OutputStrategyClient;
 import framework.core.message.Reply;
 import framework.core.message.Request;
-import framework.infoService.MixList;
+import framework.core.routing.MixList;
+import framework.core.routing.RoutingMode;
 
 
 public class ClientPlugIn extends Implementation implements Layer1NetworkClient {
 	
-	private MixList mixList;
 	private DatagramSocket mix;
 	
 	
@@ -41,7 +41,6 @@ public class ClientPlugIn extends Implementation implements Layer1NetworkClient 
 	public void constructor() {
 		if (anonNode.IS_DUPLEX)
 			throw new RuntimeException("supports simplex only currently");
-		this.mixList = anonNode.mixList;
 	}
 	
 
@@ -67,7 +66,7 @@ public class ClientPlugIn extends Implementation implements Layer1NetworkClient 
 	
 	
 	@Override
-	public void connect() {
+	public void connect(MixList mixList) {
 		try {
 			mix = new DatagramSocket();
 			SocketAddress socketAddress = new InetSocketAddress(mixList.addresses[0], mixList.ports[0]);
@@ -75,6 +74,14 @@ public class ClientPlugIn extends Implementation implements Layer1NetworkClient 
 		} catch (IOException e) {
 			System.err.println("could not init socket");
 		}
+	}
+	
+	
+	@Override
+	public void connect() {
+		if (anonNode.ROUTING_MODE != RoutingMode.CASCADE)
+			throw new RuntimeException("for free route sockets, call connect(MixList mixList)"); 
+		connect(anonNode.mixList);
 	}
 	
 	

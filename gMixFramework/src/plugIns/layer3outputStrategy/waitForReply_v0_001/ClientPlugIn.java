@@ -28,6 +28,8 @@ import framework.core.interfaces.Layer3OutputStrategyClient;
 import framework.core.message.MixMessage;
 import framework.core.message.Reply;
 import framework.core.message.Request;
+import framework.core.routing.MixList;
+import framework.core.routing.RoutingMode;
 import framework.core.util.Util;
 
 
@@ -43,8 +45,9 @@ public class ClientPlugIn extends Implementation implements Layer3OutputStrategy
 	private int availableReplyPayload = 0;
 	private int availableReplies = 0;
 	private Object replySynchronizer = new Object();
+	private MixList route;
 	
-
+	
 	@Override
 	public void constructor() {
 		this.requestQueue = new ArrayBlockingQueue<Request>(settings.getPropertyAsInt("WAIT_FOR_REPLY_REQUEST_QUEUE_SIZE"));
@@ -79,6 +82,8 @@ public class ClientPlugIn extends Implementation implements Layer3OutputStrategy
 	@Override
 	public void connect() {
 		this.isStopped.set(false);
+		if (anonNode.ROUTING_MODE == RoutingMode.FREE_ROUTE_SOURCE_ROUTING)
+			this.route = anonNode.mixList.getRandomRoute(anonNode.FREE_ROUTE_LENGTH);
 		this.requestReplyThread = new RequestReplyThread();
 		this.requestReplyThread.start();
 		this.layer1.connect();
@@ -87,11 +92,19 @@ public class ClientPlugIn extends Implementation implements Layer3OutputStrategy
 	
 	@Override
 	public void connect(int destPseudonym) {
-		// TODO: choose and store route... 
 		this.isStopped.set(false);
-		this.requestReplyThread = new RequestReplyThread();
-		this.requestReplyThread.start();
-		this.layer1.connect();
+		if (anonNode.ROUTING_MODE == RoutingMode.FREE_ROUTE_SOURCE_ROUTING) {
+			this.route = anonNode.mixList.getRandomRoute(anonNode.FREE_ROUTE_LENGTH, destPseudonym);
+			if (anonNode.DISPLAY_ROUTE_INFO)
+				System.out.println(""+anonNode +" generated random route: " +this.route); 
+			this.requestReplyThread = new RequestReplyThread();
+			this.requestReplyThread.start();
+			this.layer1.connect(this.route);
+		} else {
+			this.requestReplyThread = new RequestReplyThread();
+			this.requestReplyThread.start();
+			this.layer1.connect();
+		}
 	}
 	
 	
@@ -124,6 +137,11 @@ public class ClientPlugIn extends Implementation implements Layer3OutputStrategy
 	
 	@Override
 	public void sendMessage(Request request) {
+		if (anonNode.ROUTING_MODE == RoutingMode.FREE_ROUTE_SOURCE_ROUTING) {
+			request.destinationPseudonym = this.route.mixIDs[route.mixIDs.length-1];
+			request.nextHopAddress = this.route.mixIDs[0];
+			request.route = this.route.mixIDs;
+		}
 		request = layer2.applyLayeredEncryption(request);
 		forcePutInQueue(request);
 	}

@@ -15,11 +15,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package plugIns.layer1network.cascade_TCP_v0_001;
+package plugIns.layer1network.sourceRouting_TCP_v0_001;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -31,10 +32,11 @@ import framework.core.message.Reply;
 import framework.core.message.Request;
 import framework.core.routing.RoutingMode;
 import framework.core.userDatabase.User;
+import framework.core.userDatabase.UserAttachment;
 import framework.core.util.Util;
 
 
-public class ClientHandler_TCP_RR_sync extends SubImplementation {
+public class ClientHandler_TCP_RR_sync extends SubImplementation implements ClientReplyReceiver {
 	//TODO: add timeout for inactive users
 	
 	private int port; 
@@ -48,16 +50,25 @@ public class ClientHandler_TCP_RR_sync extends SubImplementation {
 	private int expectedConnections;
 	private int requestBufferSize;
 	private int replyBufferSize;
-	private AcceptorThread acceptorThread;
-	private RequestThread requestThread;
-	private ReplyThread replyThread;
+	private Object attachmentKey = new Object();
 	//private int queueBlockSize;
+	
+	// for connection based mixes:
+	private ConnectionBasedAcceptorThread acceptorThread;
+	private ConnectionBasedRequestThread requestThread;
+	private ConnectionBasedReplyThread replyThread;
+	
+	// for message-based (none-connection-based) mixes:
+	private MessageReceiverThread receiverThread;
+	private MessageSenderThread senderThread;
+	
+	private ClientReplyProvider clientReplyProvider;
 	
 	
 	@Override
 	public void constructor() {
-		if (anonNode.ROUTING_MODE != RoutingMode.CASCADE)
-			throw new RuntimeException("this is a cascade plug-in; ROUTING_MODE is not set to CASCADE -> will exit now"); 
+		if (anonNode.ROUTING_MODE == RoutingMode.CASCADE)
+			throw new RuntimeException("this is a free route plug-in; ROUTING_MODE is set to CASCADE -> will exit now"); 
 		this.bindAddress = settings.getPropertyAsInetAddress("GLOBAL_MIX_BIND_ADDRESS");
 		this.port = settings.getPropertyAsInt("GLOBAL_MIX_BIND_PORT");
 		this.backlog = settings.getPropertyAsInt("BACKLOG");
@@ -87,45 +98,115 @@ public class ClientHandler_TCP_RR_sync extends SubImplementation {
 			throw new RuntimeException("could not open ServerSocket"); 
 		}
 		System.out.println(anonNode +" listening on " +bindAddress +":" +port);
-		this.acceptorThread = new AcceptorThread();
-		this.requestThread = new RequestThread();
-		if (anonNode.IS_DUPLEX)
-			this.replyThread = new ReplyThread();
-		this.acceptorThread.start();
-		this.requestThread.start();
-		if (anonNode.IS_DUPLEX)
-			this.replyThread.start();
+		
+		if (anonNode.IS_CONNECTION_BASED) {
+			this.acceptorThread = new ConnectionBasedAcceptorThread();
+			this.requestThread = new ConnectionBasedRequestThread();
+			if (anonNode.IS_DUPLEX)
+				this.replyThread = new ConnectionBasedReplyThread();
+			this.acceptorThread.start();
+			this.requestThread.start();
+			if (anonNode.IS_DUPLEX)
+				this.replyThread.start();
+		} else { // not connection-based
+			this.receiverThread = new MessageReceiverThread();
+			if (anonNode.IS_DUPLEX)
+				this.senderThread = new MessageSenderThread();
+			this.receiverThread.start();
+			if (anonNode.IS_DUPLEX)
+				this.senderThread.start();
+		}
 	}
 
 	
-	private class AcceptorThread extends Thread {
+	@Override
+	public void setClientReplyProvider(ClientReplyProvider provider) {
+		this.clientReplyProvider = provider;
+	} 
+	
+	
+	private class MessageReceiverThread extends Thread {
 		
 		@Override
 		public void run() {
-			/*new Thread(// TODO: remove
-					new Runnable() {
-						public void run() {
-							while (true) {
-								System.out.println("free in ioh-queue: " +anonNode.getRequestInputQueue().size()); 
-								try {
-									Thread.sleep(1000);
-								} catch (InterruptedException e) {
-									// TODO Auto-generated catch block
-									e.printStackTrace();
-								}
-							}
-						}
+			while (true) {
+				try {
+					Socket client = serverSocket.accept();
+					User user = userDatabase.generateUser();
+					ChannelData channelData = new ChannelData(user);
+					userDatabase.addUser(channelData.user);
+					InputStream in = client.getInputStream();
+					if (anonNode.IS_DUPLEX) {
+						channelData.replyAddress = client.getInetAddress();
+						channelData.replyPort = Util.forceReadShort(in);
 					}
-				).start(); */
+					int len = Util.forceReadInt(in);
+					if (len > maxRequestLength) {
+						System.err.println("warning: user " +user +" sent a too large message");
+						client.close();
+						continue;
+					}
+					byte[] msg = Util.forceRead(in, len);
+					client.close();
+					Request r = MixMessage.getInstanceRequest(msg, user);
+					user.prevHopAddress = MixMessage.CLIENT;
+					if (anonNode.DISPLAY_ROUTE_INFO)
+						System.out.println("" +anonNode +" received message on layer1"); 
+					anonNode.putInRequestInputQueue(r);
+				} catch (IOException e) {
+					e.printStackTrace();
+					continue;
+				}
+			}
+		}
+		
+	}
+	
+	
+	private class MessageSenderThread extends Thread {
+		
+		@Override
+		public void run() {
+			while (true) {
+				Reply[] replies = anonNode.getFromReplyOutputQueue();
+				for (Reply reply: replies) {
+					try {
+						assert reply != null;
+						assert reply.getOwner() != null;
+						//System.out.println("sende auf layer 0 fuer " +reply.getOwner().toString() +": " +Util.md5(reply.getByteMessage())); 
+						ChannelData channel = reply.getOwner().getAttachment(attachmentKey, ChannelData.class);
+						assert channel != null;
+						Socket client = new Socket(channel.replyAddress, channel.replyPort);
+						if (anonNode.DISPLAY_ROUTE_INFO)
+							System.out.println("" +anonNode +" sending reply on layer 1 to client (" +channel.replyAddress +":" +channel.replyPort +")"); 
+						client.getOutputStream().write(Util.intToByteArray(reply.getByteMessage().length));
+						client.getOutputStream().write(reply.getByteMessage());
+						client.getOutputStream().flush();
+						client.close();
+					} catch (IOException e) {
+						System.err.println("warning: connection to " +reply.getOwner() +" lost");
+						e.printStackTrace();
+						continue;
+					}
+				}
+			}
+		}
+		
+	}
+	
+	
+	private class ConnectionBasedAcceptorThread extends Thread {
+		
+		@Override
+		public void run() {
 			int counter = 0;
 			while (true) {
 				try {
 					Socket client = serverSocket.accept();
 					if (++counter%100 == 0)
 						System.out.println(counter +" connections"); 
-					ChannelData channelData = new ChannelData();
-					channelData.user = userDatabase.generateUser();
-					channelData.user.channeldata = channelData;
+					User user = userDatabase.generateUser();
+					ChannelData channelData = new ChannelData(user);
 					userDatabase.addUser(channelData.user);
 					channelData.socket = client;
 					channelData.inputStream = new BufferedInputStream(client.getInputStream(), requestBufferSize);
@@ -156,7 +237,7 @@ public class ClientHandler_TCP_RR_sync extends SubImplementation {
 	}
 	
 	
-	private class RequestThread extends Thread {
+	private class ConnectionBasedRequestThread extends Thread {
 		
 		@Override
 		public void run() {
@@ -195,6 +276,10 @@ public class ClientHandler_TCP_RR_sync extends SubImplementation {
 									assert read == ch.requestLength; // should not be different due to buffered stream; check anyways...
 									ch.requestLength = ChannelData.NOT_SET;
 									Request r = MixMessage.getInstanceRequest(msg, ch.user);
+									if (ch.user.prevHopAddress == Util.NOT_SET)
+										ch.user.prevHopAddress = MixMessage.CLIENT;
+									if (anonNode.DISPLAY_ROUTE_INFO)
+										System.out.println("" +anonNode +" received message on layer1"); 
 									if (newRequestsForCurrentChannel == null)
 										newRequestsForCurrentChannel = new Vector<Request>(maxReadsPerChannelInARow);
 									newRequestsForCurrentChannel.add(r);
@@ -229,90 +314,52 @@ public class ClientHandler_TCP_RR_sync extends SubImplementation {
 				for (Vector<Request> requests:newRequests)
 					anonNode.putInRequestInputQueue(requests.toArray(new Request[0])); // might block
 			}
-			
-			/*try {
-				
-				
-			} catch
-							
-							if (ch.inputStream.available() >= 4) {
-								
-								
-								
-							if (userData.receivedData.position() == 0)
-								userData.receivedData.limit(4);
-							
-							if (userData.socketChannel.read(userData.receivedData) == -1) // read data
-								throw new IOException("warning: lost connection to user " +userData.getOwner());
-							
-							if (userData.receivedData.hasRemaining()) {
-								return null;
-							} else {
-								userData.receivedData.flip();
-								byte[] lengthHeader = new byte[4];
-								userData.receivedData.get(lengthHeader);
-								int messageLength = Util.byteArrayToInt(lengthHeader);
-								if (messageLength > maxRequestLength)
-									throw new IOException("warning: user " +userData.getOwner() +" sent a too large message");
-								userData.receivedData.clear();
-								userData.receivedData = ByteBuffer.allocate(messageLength);
-								userData.requestLengthHeaderRead = true;
-							}
-							
-						} 
-						
-						
-						if (ch.inputStream.available()>)
-					}
-					
-					
-					int messageLength = Util.forceReadInt(inputStream);
-					if (messageLength > maxRequestLength)
-						throw new IOException("warning: user " +user +" sent a too large message");
-					Request request = MixMessage.getInstanceRequest(Util.forceRead(inputStream, messageLength), user, settings);
-					inputOutputHandlerInternal.addUnprocessedRequests(new Request[]{request}); // might block
-				}
-			} catch (IOException e) {
-				System.err.println("warning: connection to " +user +" lost");
-				e.printStackTrace();
-			}*/
 		}
 	}
 	
 	
-	private class ReplyThread extends Thread {
+	private class ConnectionBasedReplyThread extends Thread {
 
 		@Override
 		public void run() {
-			while (true) {
-				Reply[] replies = anonNode.getFromReplyOutputQueue();
-				for (Reply reply: replies) {
-					try {
-						//if (reply.getOwner().channeldata == null)
-						//	reply.getOwner().channeldata = 
-						assert reply != null;
-						assert reply.getOwner() != null;
-						assert reply.getOwner().channeldata != null;
-						assert reply.getOwner().channeldata.outputStream != null;
-						
-						//System.out.println("sende auf layer 0 fuer " +reply.getOwner().toString() +": " +Util.md5(reply.getByteMessage())); 
-						
-						reply.getOwner().channeldata.outputStream.write(Util.intToByteArray(reply.getByteMessage().length));
-						reply.getOwner().channeldata.outputStream.write(reply.getByteMessage());
-						reply.getOwner().channeldata.outputStream.flush();
-					} catch (IOException e) {
-						System.err.println("warning: connection to " +reply.getOwner() +" lost");
-						e.printStackTrace();
-						System.exit(0);
-						// TODO: disconeect etc
-					}
+			if (anonNode.NUMBER_OF_MIXES == 1) { // all replies are for clients
+				while (true) {
+					Reply[] replies = anonNode.getFromReplyOutputQueue();
+					for (Reply reply: replies)
+						writeReply(reply);
 				}
+			} else { // only replies not for other mixes are for clients (prevMixHandler decides)
+				while (true)
+					writeReply(clientReplyProvider.getReplyForClient());
+			}
+		}
+		
+		
+		private void writeReply(Reply reply) {
+			try {
+				assert reply != null;
+				assert reply.getOwner() != null;
+				//System.out.println("sende auf layer 0 fuer " +reply.getOwner().toString() +": " +Util.md5(reply.getByteMessage())); 
+				ChannelData channel = reply.getOwner().getAttachment(attachmentKey, ChannelData.class);
+				assert channel != null;
+				assert channel.inputStream != null;
+				if (anonNode.DISPLAY_ROUTE_INFO)
+					System.out.println("" +anonNode +" sending reply on layer 1 to client (" +channel.socket.getRemoteSocketAddress() +")"); 
+				channel.outputStream.write(Util.intToByteArray(reply.getByteMessage().length));
+				channel.outputStream.write(reply.getByteMessage());
+				channel.outputStream.flush();
+			} catch (IOException e) {
+				System.err.println("warning: connection to " +reply.getOwner() +" lost");
+				e.printStackTrace();
+				System.exit(0);
+				// TODO: disconnect etc
 			}
 		}
 	}
 	
 	
-	public class ChannelData {
+	public class ChannelData extends UserAttachment {
+		
 		final static int NOT_SET = -2;
 		BufferedInputStream inputStream;
 		BufferedOutputStream outputStream;
@@ -320,5 +367,16 @@ public class ClientHandler_TCP_RR_sync extends SubImplementation {
 		User user;
 		int requestLength = NOT_SET;
 		int replyLength = NOT_SET;
+		
+		InetAddress replyAddress;
+		short replyPort;
+		
+		
+		public ChannelData(User user) {
+			super(user, attachmentKey);
+			this.user = user;
+		}
+
 	}
+	
 }

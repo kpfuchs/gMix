@@ -34,13 +34,11 @@ public class Layer5ApplicationMixController extends Controller implements Layer5
 			UserDatabase userDatabase, Clock clock,
 			InfoServiceClient infoService) {
 		super(anonNode, settings, userDatabase, clock, infoService);
-		System.out.println("ALL: constructor Layer5ApplicationMixController"); // TODO
 	}
 
 	
 	@Override
 	public void instantiateSubclass() {
-		System.out.println("ALL: instantiateSubclass: " +settings.getProperty("LAYER_5_PLUG-IN_MIX")); // TODO
 		String[] plugInNames = settings.getProperty("LAYER_5_PLUG-IN_MIX").split(",");
 		this.implementations = new Implementation[plugInNames.length];
 		for (int i=0; i<plugInNames.length; i++) {

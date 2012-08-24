@@ -26,6 +26,7 @@ import framework.core.controller.Implementation;
 import framework.core.interfaces.Layer2RecodingSchemeMix;
 import framework.core.message.Reply;
 import framework.core.message.Request;
+import framework.core.routing.RoutingMode;
 import framework.core.userDatabase.User;
 import framework.core.userDatabase.UserAttachment;
 
@@ -43,7 +44,7 @@ public class MixPlugIn extends Implementation implements Layer2RecodingSchemeMix
 	
 	@Override
 	public void constructor() {
-		if (anonNode.IS_FREE_ROUTE)
+		if (anonNode.ROUTING_MODE != RoutingMode.CASCADE)
 			throw new RuntimeException("not supported"); // TODO: support it...
 		this.config = new RSA_AES_LossTolerantChannel_Config(anonNode, false);
 		this.requestWorkerThreads = new RequestWorkerThread[config.NUMBER_OF_THREADS];
@@ -65,7 +66,6 @@ public class MixPlugIn extends Implementation implements Layer2RecodingSchemeMix
 	
 	@Override
 	public void initialize() {
-		assert !anonNode.IS_FREE_ROUTE;
 		for (int i=0; i<requestWorkerThreads.length; i++) {
 			requestWorkerThreads[i].recodingScheme.initAsRecoder();
 			if (anonNode.IS_DUPLEX)

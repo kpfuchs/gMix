@@ -23,6 +23,7 @@ import framework.core.interfaces.Layer2RecodingSchemeClient;
 import framework.core.interfaces.Layer3OutputStrategyClient;
 import framework.core.message.Reply;
 import framework.core.message.Request;
+import framework.core.routing.MixList;
 
 
 public class ClientPlugIn extends Implementation implements Layer1NetworkClient {
@@ -89,6 +90,13 @@ public class ClientPlugIn extends Implementation implements Layer1NetworkClient 
 	public int availableReplies() {
 		// TODO Auto-generated method stub
 		return 0;
+	}
+
+
+	@Override
+	public void connect(MixList route) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

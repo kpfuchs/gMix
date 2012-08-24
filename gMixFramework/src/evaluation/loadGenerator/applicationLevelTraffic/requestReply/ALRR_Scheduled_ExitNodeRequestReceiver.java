@@ -150,7 +150,7 @@ public class ALRR_Scheduled_ExitNodeRequestReceiver implements ExitNodeRequestRe
 							+ "; replySize: " +nextEntry.getReplySize() +"bytes"
 							+ "; replyDelay: " +nextEntry.getReplyDelayInMilliSec() +"ms"
 							+ ")";
-						System.out.println(stats); 
+					System.out.println(stats); 
 					//System.err.println("mix sending reply (" +payload.length +" bytes): " +Arrays.toString(payload)); // TODO: remove
 					if (payload.length <= resultBuffer.remaining()) {
 						resultBuffer.put(payload);

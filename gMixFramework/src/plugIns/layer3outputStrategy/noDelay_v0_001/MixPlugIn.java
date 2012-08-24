@@ -19,8 +19,10 @@ package plugIns.layer3outputStrategy.noDelay_v0_001;
 
 import framework.core.controller.Implementation;
 import framework.core.interfaces.Layer3OutputStrategyMix;
+import framework.core.message.MixMessage;
 import framework.core.message.Reply;
 import framework.core.message.Request;
+import framework.core.routing.RoutingMode;
 
 
 public class MixPlugIn extends Implementation implements Layer3OutputStrategyMix {
@@ -46,6 +48,11 @@ public class MixPlugIn extends Implementation implements Layer3OutputStrategyMix
 	
 	@Override
 	public void addRequest(Request request) {
+		if (anonNode.ROUTING_MODE == RoutingMode.FREE_ROUTE_DYNAMIC_ROUTING) {
+			request.nextHopAddress = anonNode.mixList.getRandomMixId();
+			if (request.nextHopAddress == anonNode.PUBLIC_PSEUDONYM) // this mix is the final mix for this message
+				request.nextHopAddress = MixMessage.NONE;
+		}
 		anonNode.putOutRequest(request);
 	}
 

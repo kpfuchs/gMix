@@ -15,21 +15,27 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package framework.core.interfaces;
+package framework.core.routing;
 
-import framework.core.message.Reply;
-import framework.core.message.Request;
-import framework.core.routing.MixList;
+import framework.core.config.Settings;
 
+public enum RoutingMode {
 
-public interface Layer1NetworkClient extends ArchitectureInterface, ClientSocketReferences {
+	CASCADE,
+	FREE_ROUTE_SOURCE_ROUTING,
+	FREE_ROUTE_DYNAMIC_ROUTING;
 	
-	/** must block till message is sent */
-	public void sendMessage(Request request);
-	public void connect();
-	public void connect(MixList route);
-	public void disconnect();
-	public int availableReplies(); // available reply messages (can be read (with "receiveReply()") without blocking)
-	public Reply receiveReply();
+	
+	public static RoutingMode getMode(Settings settings) {
+		String modeAsString = settings.getProperty("GLOBAL_ROUTING_MODE");
+		if (modeAsString.equals("CASCADE"))
+			return RoutingMode.CASCADE;
+		else if (modeAsString.equals("FREE_ROUTE_SOURCE_ROUTING"))
+			return RoutingMode.FREE_ROUTE_SOURCE_ROUTING;
+		else if (modeAsString.equals("FREE_ROUTE_DYNAMIC_ROUTING"))
+			return RoutingMode.FREE_ROUTE_DYNAMIC_ROUTING;
+		else
+			throw new RuntimeException("unkown GLOBAL_ROUTING_MODE mode specified");
+	}
 	
 }

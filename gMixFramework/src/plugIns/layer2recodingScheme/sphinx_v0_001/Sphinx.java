@@ -35,6 +35,7 @@ import staticFunctions.layer2recodingScheme.curve25519.Curve25519;
 import framework.core.AnonNode;
 import framework.core.message.Reply;
 import framework.core.message.Request;
+import framework.core.routing.RoutingMode;
 import framework.core.util.Util;
 
 
@@ -70,7 +71,7 @@ public class Sphinx {
 	
 	
 	public void initAsRecoder() {
-		assert !owner.IS_FREE_ROUTE;
+		assert owner.ROUTING_MODE == RoutingMode.CASCADE;
 	}
 	
 	

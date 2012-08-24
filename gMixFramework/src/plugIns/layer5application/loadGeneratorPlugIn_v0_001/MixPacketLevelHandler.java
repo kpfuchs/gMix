@@ -20,6 +20,7 @@ package plugIns.layer5application.loadGeneratorPlugIn_v0_001;
 import java.util.Random;
 
 import framework.core.AnonNode;
+import framework.core.routing.RoutingMode;
 import framework.core.socket.datagram.DatagramAnonServerSocketImpl;
 import framework.core.socket.socketInterfaces.AnonMessage;
 import framework.core.socket.socketInterfaces.AnonSocketOptions.CommunicationMode;
@@ -41,8 +42,8 @@ public class MixPacketLevelHandler {
 				cm, 
 				true, 
 				true, 
-				false
-			); // TODO: free route
+				owner.ROUTING_MODE != RoutingMode.CASCADE
+			);
 		new WorkerThread().start();
 	}
 
@@ -55,7 +56,6 @@ public class MixPacketLevelHandler {
 		@Override
 		public void run() {
 			while (true) {
-				// TODO: hier weiter: hier kommt nie etwas an, obwohl gesendet wird........
 				AnonMessage message = socket.receiveMessage();
 				System.out.println("DISTANT_PROXY: received request"); 
 				if (IS_DUPLEX) {

@@ -51,8 +51,6 @@ public class StreamAnonSocketClientImpl extends AdaptiveAnonSocket implements St
 
 	@Override
 	public void connect(int destinationPort) throws IOException {
-		if (isFreeRoute)
-			throw new RuntimeException("this is a free route socket; you must specify a destination address; use \"connect(destinationPseudonym, destinationPort)\" instead"); 
 		layer3.connect();
 		
 		this.destinationPort = destinationPort;

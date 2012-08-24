@@ -25,6 +25,7 @@ import framework.core.AnonNode;
 import framework.core.message.MixMessage;
 import framework.core.message.Reply;
 import framework.core.message.Request;
+import framework.core.routing.RoutingMode;
 import framework.core.socket.socketInterfaces.AdaptiveAnonSocket;
 import framework.core.socket.socketInterfaces.AnonMessage;
 import framework.core.socket.socketInterfaces.DatagramAnonSocket;
@@ -52,7 +53,7 @@ public class DatagramAnonSocketClientImpl extends AdaptiveAnonSocket implements 
 				);
 		if (isDuplex)
 			this.pseudonymToDestAddress = new HashMap<Integer, Integer>(100);
-		if (!owner.IS_FREE_ROUTE)
+		if (owner.ROUTING_MODE == RoutingMode.CASCADE)
 			layer1.connect();
 	}
 

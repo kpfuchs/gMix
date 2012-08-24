@@ -31,6 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import framework.core.config.Settings;
 import framework.core.launcher.CommandLineParameters;
+import framework.core.routing.MixList;
 import framework.core.util.Util;
 
 
@@ -46,7 +47,6 @@ public class InfoServiceServer {
 	private int PORT;
 	private int BACKLOG;
 	private String ADDRESS;
-	private String MODE;
 	
 	private AtomicInteger mixIdCounter = new AtomicInteger(0);
 	private AtomicInteger clientIdCounter = new AtomicInteger(0);
@@ -79,7 +79,6 @@ public class InfoServiceServer {
 		this.NUMBER_OF_MIXES = settings.getPropertyAsInt("GLOBAL_NUMBER_OF_MIXES");
 		this.PORT = settings.getPropertyAsInt("GLOBAL_INFO_SERVICE_PORT");
 		this.ADDRESS = settings.getProperty("GLOBAL_INFO_SERVICE_ADDRESS");
-		this.MODE = settings.getProperty("GLOBAL_IS_MODE");
 		this.BACKLOG = settings.getPropertyAsInt("IS_BACKLOG");
 		
 		begin();
@@ -97,28 +96,24 @@ public class InfoServiceServer {
 	
 	
 	private void begin() {
-		if (MODE.equalsIgnoreCase("BUILD_CASCADE")) {
-			try {
-				if (LOCAL_MODE_ON)
-					serverSocket = new ServerSocket(PORT, BACKLOG, InetAddress.getByName("localhost"));
-				else if (ADDRESS.equalsIgnoreCase("AUTO"))
-					serverSocket = new ServerSocket(PORT, BACKLOG, InetAddress.getLocalHost());
-				else
-					serverSocket = new ServerSocket(PORT, BACKLOG, InetAddress.getByName(ADDRESS));
-			} catch (IOException e) {
-				e.printStackTrace();
-				throw new RuntimeException(""); 
-			}
-			new Thread(
-	        		new Runnable() {
-	        			public void run() {
-	        				acceptConnections();
-	        			}	
-	        		}
-	        	).start(); 
-		} else {
-			throw new RuntimeException("unknown mode: " +MODE +" currently supported mode(s): BUILD_CASCADE"); 
+		try {
+			if (LOCAL_MODE_ON)
+				serverSocket = new ServerSocket(PORT, BACKLOG, InetAddress.getByName("localhost"));
+			else if (ADDRESS.equalsIgnoreCase("AUTO"))
+				serverSocket = new ServerSocket(PORT, BACKLOG, InetAddress.getLocalHost());
+			else
+				serverSocket = new ServerSocket(PORT, BACKLOG, InetAddress.getByName(ADDRESS));
+		} catch (IOException e) {
+			e.printStackTrace();
+			throw new RuntimeException(""); 
 		}
+		new Thread(
+        		new Runnable() {
+        			public void run() {
+        				acceptConnections();
+        			}	
+        		}
+        	).start(); 
 	}
 
 	
@@ -204,8 +199,8 @@ public class InfoServiceServer {
 						WAIT_FOR_END_OF_INITIALIZATION_PHASE(outputStream, inputStream);
 					else if (command.equals("WAIT_FOR_END_OF_BEGIN_PHASE"))
 						WAIT_FOR_END_OF_BEGIN_PHASE(outputStream, inputStream);
-					else if (command.equals("WAIT_TILL_CASCADE_IS_UP"))
-						WAIT_TILL_CASCADE_IS_UP(outputStream, inputStream);
+					else if (command.equals("WAIT_TILL_MIXES_ARE_UP"))
+						WAIT_TILL_MIXES_ARE_UP(outputStream, inputStream);
 					else if (command.equals("DISCONNECT")) {
 						socket.close();
 						return;
@@ -764,7 +759,7 @@ public class InfoServiceServer {
 		synchronized(beginPhaseFinished) {
 			readyMixes++;
 			if (readyMixes >= NUMBER_OF_MIXES) {
-				System.out.println("InfoService: cascade is up (begin phase finished)"); 
+				System.out.println("InfoService: all mixes are up (begin phase finished)"); 
 				beginPhaseFinished.set(true);
 				beginPhaseFinished.notifyAll();
 				/*synchronized (eventListeners) { // TODO
@@ -799,9 +794,9 @@ public class InfoServiceServer {
 	}
 	
 	
-	public void WAIT_TILL_CASCADE_IS_UP(OutputStream outputStream, InputStream inputStream) throws Exception {
+	public void WAIT_TILL_MIXES_ARE_UP(OutputStream outputStream, InputStream inputStream) throws Exception {
 		if (ProtocolPrimitives.DEBUG)
-			System.out.println("server: WAIT_TILL_CASCADE_IS_UP()");
+			System.out.println("server: WAIT_TILL_MIXES_ARE_UP()");
 		synchronized(beginPhaseFinished) {
 			while (beginPhaseFinished.get() == false) {
 				try {
@@ -813,24 +808,24 @@ public class InfoServiceServer {
 			}
 		}
 		
-		ProtocolPrimitives.sendString(outputStream, "CASCADE_IS_UP");
+		ProtocolPrimitives.sendString(outputStream, "MIXES_ARE_UP");
 		outputStream.flush();
 	}
 	
 	
-	public static void client_WAIT_TILL_CASCADE_IS_UP(OutputStream outputStream, InputStream inputStream) throws UnsupportedEncodingException, IOException {
+	public static void client_WAIT_TILL_MIXES_ARE_UP(OutputStream outputStream, InputStream inputStream) throws UnsupportedEncodingException, IOException {
 		if (ProtocolPrimitives.DEBUG)
-			System.out.println("void client_WAIT_TILL_CASCADE_IS_UP()");
-		ProtocolPrimitives.sendString(outputStream, "WAIT_TILL_CASCADE_IS_UP");
+			System.out.println("void client_WAIT_TILL_MIXES_ARE_UP()");
+		ProtocolPrimitives.sendString(outputStream, "WAIT_TILL_MIXES_ARE_UP");
 		String result = ProtocolPrimitives.receiveString(inputStream);
-		if (!result.equals("CASCADE_IS_UP"))
+		if (!result.equals("MIXES_ARE_UP"))
 			throw new RuntimeException("received wrong result!");
 	}
 	
 	
-	public void localWaitTillCascadeIsUp() throws IOException {
+	public void localWaitTillMixesAreUp() throws IOException {
 		if (ProtocolPrimitives.DEBUG)
-			System.out.println("server: localWaitTillCascadeIsUp()");
+			System.out.println("server: localWaitTillMixesAreUp()");
 		synchronized(beginPhaseFinished) {
 			while (beginPhaseFinished.get() == false) {
 				try {

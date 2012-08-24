@@ -18,60 +18,26 @@
 package framework.core.message;
 
 import framework.core.userDatabase.User;
+import framework.core.util.Util;
 
 
 public abstract class MixMessage implements Message, ExternalMessage, Comparable<MixMessage> {
 	
 	public static final int NONE = -111;
+	public static final int CLIENT = -343555;
 	private int identifier;
 	private User owner;
 	private byte[] byteMessage;
 	private static int msgIdCounter = 0;
 	
 	public static boolean recordStatistics = false;
-	public int nextHopAddress;
-	
+	public int nextHopAddress = Util.NOT_SET;
+
 	public int destinationPseudonym;
 	public int[] route;
 	public byte[][] headers;
 
 	public long statisticsCreateTime;
-	
-	
-	/**
-	 * Comment
-	 *
-	 * @param args Not used.
-	 */
-	public static void main(String[] args) {
-		
-		/*try {
-			//Get the System Classloader
-	        ClassLoader sysClassLoader = ClassLoader.getSystemClassLoader();
-	        
-	        //Get the URLs
-	        URL[] urls = ((URLClassLoader)sysClassLoader).getURLs();
-
-	        for(int i=0; i< urls.length; i++)
-	        {
-	            System.out.println(urls[i].getFile());
-	        } 
-	        
-	        LocalClassLoader.instantiateMixRequest("Request.java", "message");
-			/*System.get
-			Enumeration e = ClassLoader.getSystemClassLoader().getResources("message.Reply");
-			while(e.hasMoreElements())
-				System.out.println(e.nextElement()); 
-			System.out.println(); */
-		/*} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		File verzeichnis = new File ("./");
-		File[] dateien = verzeichnis.listFiles();
-		for (File f: dateien)
-			System.out.println(f); */
-	} 
 	
 	
 	public static Request getInstanceRequest(byte[] byteMesssage, User owner) {
@@ -100,6 +66,7 @@ public abstract class MixMessage implements Message, ExternalMessage, Comparable
 		Reply reply = new Reply();
 		reply.setByteMessage(byteMesssage);
 		reply.setOwner(owner);
+		reply.nextHopAddress = owner.prevHopAddress;
 		return reply;
 	}
 	

@@ -33,6 +33,7 @@ import evaluation.loadGenerator.scheduler.Scheduler;
 import framework.core.AnonNode;
 import framework.core.config.Settings;
 import framework.core.launcher.ToolName;
+import framework.core.routing.RoutingMode;
 import framework.core.socket.socketInterfaces.AnonSocketOptions.CommunicationMode;
 
 
@@ -81,7 +82,7 @@ public class ALM_FS_ConstantRate implements ClientTrafficScheduleWriter<Applicat
 		System.out.println("LOAD_GENERATOR: connecting clients..."); 
 		for (int i=0; i<numberOfClients; i++) {
 			clientsArray[i] = new ALRR_ClientWrapper(i);
-			clientsArray[i].socket = client.createStreamSocket(cm, false); // TODO: free route
+			clientsArray[i].socket = client.createStreamSocket(cm, client.ROUTING_MODE != RoutingMode.CASCADE);
 			try {
 				clientsArray[i].socket.connect(port);
 				clientsArray[i].outputStream = new BufferedOutputStream(clientsArray[i].socket.getOutputStream());

@@ -17,12 +17,17 @@
  */
 package plugIns.layer2recodingScheme.noDelay_v0_001;
 
+import framework.core.AnonNode;
 import framework.core.controller.Implementation;
 import framework.core.interfaces.Layer2RecodingSchemeMix;
 import framework.core.message.MixMessage;
 import framework.core.message.Reply;
 import framework.core.message.Request;
+import framework.core.routing.MixList;
+import framework.core.routing.RoutingMode;
+import framework.core.routing.UnpackedIdArray;
 import framework.core.userDatabase.User;
+import framework.core.util.Util;
 
 
 public class MixPlugIn extends Implementation implements Layer2RecodingSchemeMix {
@@ -30,8 +35,7 @@ public class MixPlugIn extends Implementation implements Layer2RecodingSchemeMix
 	
 	@Override
 	public void constructor() {
-		if (anonNode.IS_FREE_ROUTE)
-			throw new RuntimeException("not supported"); // TODO: support it...
+		
 	}
 
 	
@@ -57,7 +61,15 @@ public class MixPlugIn extends Implementation implements Layer2RecodingSchemeMix
 	
 	@Override
 	public int getMaxSizeOfNextRequest() {
-		return anonNode.MAX_PAYLOAD;
+		if (anonNode.ROUTING_MODE == RoutingMode.CASCADE) {
+			return anonNode.MAX_PAYLOAD;
+		} else if (anonNode.ROUTING_MODE == RoutingMode.FREE_ROUTE_SOURCE_ROUTING) {
+			return anonNode.MAX_PAYLOAD - getRouteHeaderSize(anonNode);
+		} else if (anonNode.ROUTING_MODE == RoutingMode.FREE_ROUTE_DYNAMIC_ROUTING) {
+			return anonNode.MAX_PAYLOAD;
+		} else {
+			throw new RuntimeException("not supported routing mode: " +anonNode.ROUTING_MODE); 
+		}
 	}
 
 	
@@ -103,8 +115,33 @@ public class MixPlugIn extends Implementation implements Layer2RecodingSchemeMix
 		public void run() {
 			while (true) {
 				Request[] requests = anonNode.getFromRequestInputQueue();
-				for (Request request:requests)
-					outputStrategyLayerMix.addRequest(request);
+				for (Request request:requests) {
+					if (anonNode.ROUTING_MODE == RoutingMode.CASCADE) {
+						outputStrategyLayerMix.addRequest(request);
+					} else if (anonNode.ROUTING_MODE == RoutingMode.FREE_ROUTE_SOURCE_ROUTING) {
+						byte[][] splitted = Util.split(getRouteHeaderSize(anonNode), request.getByteMessage());
+						UnpackedIdArray routeInfo = MixList.unpackIdArrayWithPos(splitted[0]);
+						if (routeInfo.pos >= routeInfo.route.length) {
+							if (anonNode.DISPLAY_ROUTE_INFO)
+								System.out.println(""+anonNode +" setting nextHopAddress to \"LAST HOP\" (pos: " +routeInfo.pos +")"); 
+							request.nextHopAddress = MixMessage.NONE;
+							request.setByteMessage(splitted[1]);
+						} else {
+							if (anonNode.DISPLAY_ROUTE_INFO)
+								System.out.println(""+anonNode +" setting nextHopAddress to " +routeInfo.route[routeInfo.pos] +", pos: " +routeInfo.pos); 
+							request.nextHopAddress = routeInfo.route[routeInfo.pos];
+							routeInfo.pos++;
+							System.arraycopy(MixList.packIdArray(routeInfo), 0, request.getByteMessage(), 0, getRouteHeaderSize(anonNode));
+						}
+						outputStrategyLayerMix.addRequest(request);
+					} else if (anonNode.ROUTING_MODE == RoutingMode.FREE_ROUTE_DYNAMIC_ROUTING) {
+						request.nextHopAddress = anonNode.mixList.getRandomMixId();
+						outputStrategyLayerMix.addRequest(request);
+					} else {
+						throw new RuntimeException("not supported routing mode: " +anonNode.ROUTING_MODE); 
+					}
+					
+				}
 
 			}	
 		}
@@ -118,10 +155,23 @@ public class MixPlugIn extends Implementation implements Layer2RecodingSchemeMix
 			while (true) {
 				Reply[] replies = anonNode.getFromReplyInputQueue();
 				for (Reply reply:replies) {
-					outputStrategyLayerMix.addReply(reply);
+					if (anonNode.ROUTING_MODE == RoutingMode.CASCADE) {
+						outputStrategyLayerMix.addReply(reply);
+					} else if (anonNode.ROUTING_MODE == RoutingMode.FREE_ROUTE_SOURCE_ROUTING) {
+						outputStrategyLayerMix.addReply(reply);
+					} else if (anonNode.ROUTING_MODE == RoutingMode.FREE_ROUTE_DYNAMIC_ROUTING) {
+						reply.nextHopAddress = anonNode.mixList.getRandomMixId();
+						outputStrategyLayerMix.addReply(reply);
+					} else {
+						throw new RuntimeException("not supported routing mode: " +anonNode.ROUTING_MODE); 
+					}
 				}
 			}
 		}
 	}
 
+	
+	protected static int getRouteHeaderSize(AnonNode anonNode) {
+		return ((anonNode.FREE_ROUTE_LENGTH-1)*4)+2;
+	}
 }

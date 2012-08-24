@@ -15,21 +15,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package framework.core.interfaces;
+package plugIns.layer1network.sourceRouting_TCP_v0_001;
 
 import framework.core.message.Reply;
-import framework.core.message.Request;
-import framework.core.routing.MixList;
 
 
-public interface Layer1NetworkClient extends ArchitectureInterface, ClientSocketReferences {
-	
-	/** must block till message is sent */
-	public void sendMessage(Request request);
-	public void connect();
-	public void connect(MixList route);
-	public void disconnect();
-	public int availableReplies(); // available reply messages (can be read (with "receiveReply()") without blocking)
-	public Reply receiveReply();
-	
+public interface ClientReplyProvider {
+
+	public Reply getReplyForClient();
 }

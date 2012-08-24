@@ -37,6 +37,7 @@ import framework.core.AnonNode;
 import framework.core.config.Paths;
 import framework.core.config.Settings;
 import framework.core.launcher.ToolName;
+import framework.core.routing.RoutingMode;
 import framework.core.socket.socketInterfaces.AnonSocketOptions.CommunicationMode;
 import framework.core.util.IOTester;
 import framework.core.util.Util;
@@ -113,7 +114,7 @@ public class ALM_DS_Tracefile {
 						
 		// generate and connect sockets
 		for (ALRR_ClientWrapper cw: clientsArray) // generate sockets
-			cw.socket = client.createStreamSocket(CommunicationMode.DUPLEX, false); // TODO: free route
+			cw.socket = client.createStreamSocket(CommunicationMode.DUPLEX, client.ROUTING_MODE != RoutingMode.CASCADE);
 		// connect sockets:
 		int port = settings.getPropertyAsInt("SERVICE_PORT1");
 		System.out.println("LOAD_GENERATOR: connecting clients..."); 

@@ -38,6 +38,7 @@ import plugIns.layer2recodingScheme.RSA_AES_LossTolerantChannel_v0_001.MixPlugIn
 import framework.core.AnonNode;
 import framework.core.message.Reply;
 import framework.core.message.Request;
+import framework.core.routing.RoutingMode;
 import framework.core.util.Util;
 
 
@@ -67,6 +68,8 @@ public class RSA_AES_LossTolerantChannel {
 	
 	
 	public void initAsClient() {
+		if (owner.ROUTING_MODE != RoutingMode.CASCADE)
+			throw new RuntimeException("not supported"); // TODO: support it...
 		this.macKeys = new SecretKey[config.numberOfMixes]; 
 		this.sessionKeysForRequestChannel = new SecretKey[config.numberOfMixes];
 		this.sessionKeysForReplyChannel = new SecretKey[config.numberOfMixes];
@@ -90,7 +93,6 @@ public class RSA_AES_LossTolerantChannel {
 	
 	// TODO: aufrufen!
 	public void initAsRecoder() {
-		assert !owner.IS_FREE_ROUTE;
 		try {
 			this.secureRandom = SecureRandom.getInstance(config.PRNG_ALGORITHM);
 			this.asymmetricCipher = Cipher.getInstance(config.ASYM_CRYPTOGRAPHY_ALGORITHM, config.CRYPTO_PROVIDER);

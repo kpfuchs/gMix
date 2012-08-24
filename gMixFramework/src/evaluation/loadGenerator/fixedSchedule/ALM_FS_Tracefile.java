@@ -37,6 +37,7 @@ import framework.core.AnonNode;
 import framework.core.config.Paths;
 import framework.core.config.Settings;
 import framework.core.launcher.ToolName;
+import framework.core.routing.RoutingMode;
 import framework.core.socket.socketInterfaces.AnonSocketOptions.CommunicationMode;
 
 
@@ -100,7 +101,7 @@ public class ALM_FS_Tracefile implements ClientTrafficScheduleWriter<Application
 		// generate and connect sockets
 		CommunicationMode cm = client.IS_DUPLEX ? CommunicationMode.DUPLEX : CommunicationMode.SIMPLEX_SENDER;
 		for (ALRR_ClientWrapper cw: clientsArray) // generate sockets
-			cw.socket = client.createStreamSocket(cm, false); // TODO: free route
+			cw.socket = client.createStreamSocket(cm, client.ROUTING_MODE != RoutingMode.CASCADE);
 		// connect sockets:
 		int port = settings.getPropertyAsInt("SERVICE_PORT1");
 		System.out.println("LOAD_GENERATOR: connecting clients..."); 

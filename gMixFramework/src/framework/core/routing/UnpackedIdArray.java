@@ -15,21 +15,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package framework.core.interfaces;
+package framework.core.routing;
 
-import framework.core.message.Reply;
-import framework.core.message.Request;
-import framework.core.routing.MixList;
+import java.util.Arrays;
 
-
-public interface Layer1NetworkClient extends ArchitectureInterface, ClientSocketReferences {
+public class UnpackedIdArray {
+	public short pos;
+	public int[] route;
 	
-	/** must block till message is sent */
-	public void sendMessage(Request request);
-	public void connect();
-	public void connect(MixList route);
-	public void disconnect();
-	public int availableReplies(); // available reply messages (can be read (with "receiveReply()") without blocking)
-	public Reply receiveReply();
-	
+	@Override
+	public String toString() {
+		return	"UnpackedIdArray (" +this.hashCode() 
+				+"): pos: " +pos 
+				+"; route: " +Arrays.toString(route);
+	}
 }

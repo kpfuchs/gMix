@@ -24,6 +24,7 @@ import evaluation.loadGenerator.ExitNodeRequestReceiver;
 import evaluation.loadGenerator.LoadGenerator;
 import evaluation.loadGenerator.ExitNodeRequestReceiver.ClientData;
 import framework.core.AnonNode;
+import framework.core.routing.RoutingMode;
 import framework.core.socket.socketInterfaces.StreamAnonServerSocket;
 import framework.core.socket.socketInterfaces.StreamAnonSocketMix;
 import framework.core.socket.socketInterfaces.AnonSocketOptions.CommunicationMode;
@@ -44,7 +45,7 @@ public class ApplicationLevelHandler {
 		this.newClients = new Vector<ClientData>(50);
 		this.requestThread = new RequestThread();
 		CommunicationMode cm = owner.IS_DUPLEX ? CommunicationMode.DUPLEX : CommunicationMode.SIMPLEX_RECEIVER;
-		this.serverSocket = owner.createStreamAnonServerSocket(owner.getSettings().getPropertyAsInt("SERVICE_PORT1"), cm, false);
+		this.serverSocket = owner.createStreamAnonServerSocket(owner.getSettings().getPropertyAsInt("SERVICE_PORT1"), cm, owner.ROUTING_MODE != RoutingMode.CASCADE);
 		this.requestReceiver = LoadGenerator.createExitNodeRequestReceiver(owner);
 		new AcceptorThread().start(); 
 		this.requestThread.start(); 

@@ -29,6 +29,8 @@ import framework.core.interfaces.Layer2RecodingSchemeClient;
 import framework.core.interfaces.Layer3OutputStrategyClient;
 import framework.core.message.Reply;
 import framework.core.message.Request;
+import framework.core.routing.MixList;
+import framework.core.routing.RoutingMode;
 
 
 //Kesdogan et. al. 1998: Stop-and-Go MIXes: Providing Probabilistic Anonymity in an Open System
@@ -45,10 +47,9 @@ public class ClientPlugIn extends Implementation implements Layer3OutputStrategy
 	private int MIN_CLIENT_MIX_DELAY;
 	private int MAX_CLIENT_MIX_DELAY;
 	private int MAX_CLOCK_DEVITION;
-	private boolean isFreeRoute;
-	private int numberOfMixes;
 	private Vector<Reply> replyCache;
 	private int availableReplyPayload = 0;
+	private MixList route;
 	
 	
 	@Override
@@ -62,9 +63,6 @@ public class ClientPlugIn extends Implementation implements Layer3OutputStrategy
 		this.MAX_CLIENT_MIX_DELAY = settings.getPropertyAsInt("STOP_AND_GO_MAX_CLIENT_MIX_DELAY");
 		this.MAX_CLOCK_DEVITION = settings.getPropertyAsInt("STOP_AND_GO_MAX_CLOCK_DEVITION");
 		this.expDist = new ExponentialDistributionImpl(1d/SECURITY_PARAMETER_MU);
-		this.isFreeRoute = anonNode.IS_FREE_ROUTE;
-		if (!isFreeRoute) // fixed route
-			this.numberOfMixes = anonNode.mixList.numberOfMixes;
 	}
 
 	
@@ -94,14 +92,22 @@ public class ClientPlugIn extends Implementation implements Layer3OutputStrategy
 	
 	@Override
 	public void connect() {
+		if (anonNode.ROUTING_MODE == RoutingMode.FREE_ROUTE_SOURCE_ROUTING)
+			this.route = anonNode.mixList.getRandomRoute(anonNode.FREE_ROUTE_LENGTH);
 		this.layer1.connect();
 	}
 
 	
 	@Override
 	public void connect(int destPseudonym) {
-		// TODO: choose and store route... 
-		this.layer1.connect();
+		if (anonNode.ROUTING_MODE == RoutingMode.FREE_ROUTE_SOURCE_ROUTING) {
+			this.route = anonNode.mixList.getRandomRoute(anonNode.FREE_ROUTE_LENGTH, destPseudonym);
+			if (anonNode.DISPLAY_ROUTE_INFO)
+				System.out.println(""+anonNode +" generated random route: " +this.route); 
+			this.layer1.connect(this.route);
+		} else {
+			this.layer1.connect();
+		}
 	}
 	
 	
@@ -113,8 +119,15 @@ public class ClientPlugIn extends Implementation implements Layer3OutputStrategy
 	
 	@Override
 	public synchronized void sendMessage(Request request) {
-		if (isFreeRoute)
+		int numberOfMixes;
+		if (anonNode.ROUTING_MODE == RoutingMode.CASCADE) {
+			numberOfMixes = anonNode.mixList.numberOfMixes;
+		} else { // free route
+			request.destinationPseudonym = this.route.mixIDs[route.mixIDs.length-1];
+			request.nextHopAddress = this.route.mixIDs[0];
+			request.route = this.route.mixIDs;
 			numberOfMixes = request.route.length;
+		}
 		request.headers = new byte[numberOfMixes][];
 		this.expDist.reseedRandomGenerator(secureRandom.nextLong());
 		// draw delays from sample

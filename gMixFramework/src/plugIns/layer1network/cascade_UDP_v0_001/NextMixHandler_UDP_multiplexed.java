@@ -28,10 +28,10 @@ import java.util.HashMap;
 
 import framework.core.controller.SubImplementation;
 import framework.core.message.Request;
+import framework.core.routing.MixList;
 import framework.core.userDatabase.DatabaseEventListener;
 import framework.core.userDatabase.User;
 import framework.core.util.Util;
-import framework.infoService.MixList;
 
 
 public class NextMixHandler_UDP_multiplexed extends SubImplementation implements DatabaseEventListener {

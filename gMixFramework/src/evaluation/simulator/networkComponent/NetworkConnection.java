@@ -147,7 +147,6 @@ public class NetworkConnection implements EventExecutor, Identifiable {
 			}
 			*/
 			
-			// TODO: hier weiter
 			if (event.getAttachment() instanceof NoneMixMessage && !((NoneMixMessage)event.getAttachment()).isRequest() && event.getEventType() == DistantProxyEvent.INCOMING_REQUEST && event.getTarget() instanceof Mix) {
 				System.out.println(event + " -- " +event.getAttachment()); 
 				System.out.println(event.getTarget()); 

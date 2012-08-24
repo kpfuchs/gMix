@@ -25,8 +25,8 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
-import java.net.UnknownHostException;
 
+import framework.core.routing.MixList;
 import framework.core.util.Util;
 
 
@@ -38,22 +38,6 @@ public class InfoServiceClient {
 	private Socket infoServiceSocket;	// TODO: ssl
 	private InputStream inputStream;
 	private OutputStream outputStream;
-	
-	
-	/**
-	 * Comment
-	 *
-	 * @param args Not used.
-	 */
-	public static void main(String[] args) { // TODO
-		InfoServiceClient is = null;
-		try {is = new InfoServiceClient(InetAddress.getByName("localhost"), 22002);} catch (UnknownHostException e) {e.printStackTrace();}
-		System.out.println("registration done: " +is.registerAsClient()); 
-		int mixId = is.registerAsMix();
-		System.out.println("registration as mix done: " +mixId); 
-		try {is.postValueAsMix(0,"ADR", InetAddress.getByName("localhost").getAddress());} catch (UnknownHostException e) {e.printStackTrace();} 
-		System.out.println(is.getValueFromMix(0, "ADR")); 
-	}
 	
 	
 	public InfoServiceClient(InetAddress infoServiceAddress, int infoServicePort) {
@@ -283,13 +267,13 @@ public class InfoServiceClient {
 	}
 
 	
-	public synchronized void waitTillCascadeIsUp() {
+	public synchronized void waitTillMixesAreUp() {
 		connect();
 		try {
-			InfoServiceServer.client_WAIT_TILL_CASCADE_IS_UP(outputStream, inputStream);
+			InfoServiceServer.client_WAIT_TILL_MIXES_ARE_UP(outputStream, inputStream);
 		} catch (Exception e) {
 			e.printStackTrace();
-			throw new RuntimeException("waitTillCascadeIsUp() failed"); // TODO: try x times again before throwing RuntimeException
+			throw new RuntimeException("waitTillMixesAreUp() failed"); // TODO: try x times again before throwing RuntimeException
 		}
 	}
 

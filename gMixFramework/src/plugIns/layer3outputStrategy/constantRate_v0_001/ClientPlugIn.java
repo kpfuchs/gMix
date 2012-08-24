@@ -32,6 +32,8 @@ import framework.core.logger.OutputCap;
 import framework.core.message.MixMessage;
 import framework.core.message.Reply;
 import framework.core.message.Request;
+import framework.core.routing.MixList;
+import framework.core.routing.RoutingMode;
 
 
 public class ClientPlugIn extends Implementation implements Layer3OutputStrategyClient, Runnable {
@@ -48,6 +50,7 @@ public class ClientPlugIn extends Implementation implements Layer3OutputStrategy
 	private static OutputCap warning;
 	private Vector<Reply> replyCache;
 	private int availableReplyPayload = 0;
+	private MixList route;
 	
 	
 	@Override
@@ -85,6 +88,8 @@ public class ClientPlugIn extends Implementation implements Layer3OutputStrategy
 	
 	@Override
 	public void connect() {
+		if (anonNode.ROUTING_MODE == RoutingMode.FREE_ROUTE_SOURCE_ROUTING)
+			this.route = anonNode.mixList.getRandomRoute(anonNode.FREE_ROUTE_LENGTH);
 		this.layer1.connect();
 		this.currentTimer = scheduler.scheduleAtFixedRate(this, rate, rate, TimeUnit.MILLISECONDS);
 		this.isStopped.set(false);
@@ -93,8 +98,14 @@ public class ClientPlugIn extends Implementation implements Layer3OutputStrategy
 	
 	@Override
 	public void connect(int destPseudonym) {
-		// TODO: choose and store route... 
-		this.layer1.connect();
+		if (anonNode.ROUTING_MODE == RoutingMode.FREE_ROUTE_SOURCE_ROUTING) {
+			this.route = anonNode.mixList.getRandomRoute(anonNode.FREE_ROUTE_LENGTH, destPseudonym);
+			if (anonNode.DISPLAY_ROUTE_INFO)
+				System.out.println(""+anonNode +" generated random route: " +this.route); 
+			this.layer1.connect(this.route);
+		} else {
+			this.layer1.connect();
+		}
 		this.currentTimer = scheduler.scheduleAtFixedRate(this, rate, rate, TimeUnit.MILLISECONDS);
 		this.isStopped.set(false);
 	}
@@ -113,6 +124,11 @@ public class ClientPlugIn extends Implementation implements Layer3OutputStrategy
 	
 	@Override
 	public void sendMessage(Request request) {
+		if (anonNode.ROUTING_MODE == RoutingMode.FREE_ROUTE_SOURCE_ROUTING) {
+			request.destinationPseudonym = this.route.mixIDs[route.mixIDs.length-1];
+			request.nextHopAddress = this.route.mixIDs[0];
+			request.route = this.route.mixIDs;
+		}
 		request = layer2.applyLayeredEncryption(request);
 		forcePutInQueue(request);
 	}

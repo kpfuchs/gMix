@@ -21,6 +21,7 @@ import evaluation.loadGenerator.LoadGenerator.InsertLevel;
 import evaluation.loadGenerator.LoadGenerator;
 import framework.core.controller.Implementation;
 import framework.core.interfaces.Layer5ApplicationMix;
+import framework.core.routing.RoutingMode;
 
 
 public class MixPlugIn extends Implementation implements Layer5ApplicationMix {
@@ -39,7 +40,17 @@ public class MixPlugIn extends Implementation implements Layer5ApplicationMix {
 
 	@Override
 	public void begin() {
-		if (anonNode.IS_LAST_MIX) {
+		if (anonNode.ROUTING_MODE == RoutingMode.CASCADE) {
+			if (anonNode.IS_LAST_MIX) {
+				InsertLevel insertLevel = LoadGenerator.getInsertLevel(anonNode);
+				if (insertLevel == InsertLevel.APPLICATION_LEVEL) {
+					new ApplicationLevelHandler(anonNode);
+				} else if (insertLevel == InsertLevel.MIX_PACKET_LEVEL) {
+					new MixPacketLevelHandler(anonNode);
+				} else
+					throw new RuntimeException("unknown InsertLevel: " +insertLevel); 
+			}
+		} else {
 			InsertLevel insertLevel = LoadGenerator.getInsertLevel(anonNode);
 			if (insertLevel == InsertLevel.APPLICATION_LEVEL) {
 				new ApplicationLevelHandler(anonNode);

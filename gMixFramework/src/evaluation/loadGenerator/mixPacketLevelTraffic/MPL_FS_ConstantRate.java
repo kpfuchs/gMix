@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package evaluation.loadGenerator.mixPacketLevelRequestReplyGenerator;
+package evaluation.loadGenerator.mixPacketLevelTraffic;
 
 import java.util.concurrent.TimeUnit;
 
@@ -26,6 +26,7 @@ import evaluation.loadGenerator.scheduler.Scheduler;
 import framework.core.AnonNode;
 import framework.core.config.Settings;
 import framework.core.launcher.ToolName;
+import framework.core.routing.RoutingMode;
 import framework.core.socket.socketInterfaces.AnonSocketOptions.CommunicationMode;
 
 
@@ -63,7 +64,7 @@ public class MPL_FS_ConstantRate implements ClientTrafficScheduleWriter<MPL_Clie
 		CommunicationMode cm = client.IS_DUPLEX ? CommunicationMode.DUPLEX : CommunicationMode.SIMPLEX_SENDER;
 		for (int i=0; i<numberOfClients; i++) {
 			clientsArray[i] = new MPL_ClientWrapper(i);
-			clientsArray[i].socket = client.createDatagramSocket(cm, true, true, false); // TODO: free route
+			clientsArray[i].socket = client.createDatagramSocket(cm, true, true, client.ROUTING_MODE != RoutingMode.CASCADE);
 		}
 		if (client.IS_DUPLEX) {
 			this.replyReceiver = new MPL_ReplyReceiver(clientsArray, settings);

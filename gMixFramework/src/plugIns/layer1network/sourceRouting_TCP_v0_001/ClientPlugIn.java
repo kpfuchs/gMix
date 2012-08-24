@@ -15,15 +15,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package plugIns.layer1network.cascade_TCP_v0_001;
+package plugIns.layer1network.sourceRouting_TCP_v0_001;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
-import java.util.Vector;
+import java.util.concurrent.ArrayBlockingQueue;
 
 import framework.core.controller.Implementation;
 import framework.core.interfaces.Layer1NetworkClient;
@@ -33,26 +36,47 @@ import framework.core.message.MixMessage;
 import framework.core.message.Reply;
 import framework.core.message.Request;
 import framework.core.routing.MixList;
-import framework.core.routing.RoutingMode;
 import framework.core.util.Util;
 
 
 public class ClientPlugIn extends Implementation implements Layer1NetworkClient {
 	
 	private int timeout;
+	private int requestBufferSize;
+	private int replyBufferSize;
+	private ArrayBlockingQueue<Reply> replyCache;
 	private BufferedOutputStream mixOutputStream;
 	private BufferedInputStream mixInputStream;
+	private int nextHopId;
 	private Socket mix;
-	private int replyBufferSize;
-	private int requestBufferSize;
+	private ServerSocket replySocket;
+	private volatile boolean shutdownRequested = false;
+	private short RECEIVER_PORT;
+	private boolean serverSocketModeOn = false;
 	private int replyLength = Util.NOT_SET;
-	private Vector<Reply> replyCache;
+	
 	
 	@Override
 	public void constructor() {
 		this.requestBufferSize = settings.getPropertyAsInt("CLIENT_REQUEST_BUFFER_SIZE");
 		this.replyBufferSize = settings.getPropertyAsInt("CLIENT_REPLY_BUFFER_SIZE");
 		this.timeout = settings.getPropertyAsInt("CLIENT_CONNECTION_TIMEOUT");
+		if (!anonNode.IS_CONNECTION_BASED && anonNode.IS_DUPLEX) { // open serverSocket for replies 
+			serverSocketModeOn = true;
+			while (true) {
+				try {
+					this.RECEIVER_PORT = (short)Util.getRandomInt(11000, 15000);
+					InetAddress bindAddress = settings.getPropertyAsInetAddress("GLOBAL_MIX_BIND_ADDRESS");
+					this.replySocket = new ServerSocket(RECEIVER_PORT, 5, bindAddress);
+					new ReplyThread().start();
+				} catch (IOException e) {
+					System.err.println("could not create replySocket... try again"); 
+					try {Thread.sleep(5000);} catch (InterruptedException e1) {e1.printStackTrace();}
+					continue;
+				}
+				break;
+			}
+		}
 	}
 	
 
@@ -79,59 +103,87 @@ public class ClientPlugIn extends Implementation implements Layer1NetworkClient 
 	
 	@Override
 	public void connect(MixList mixList) {
-		mix = new Socket();
-		SocketAddress socketAddress = new InetSocketAddress(mixList.addresses[0], mixList.ports[0]);
-		try {
-			mix.connect(socketAddress, timeout);
-			mixOutputStream = new BufferedOutputStream(mix.getOutputStream(), requestBufferSize);
-			if (anonNode.IS_DUPLEX) {
-				mixInputStream = new BufferedInputStream(mix.getInputStream(), replyBufferSize);
-				replyCache = new Vector<Reply>();
-			}
-		} catch (IOException e) {
-			System.err.println("could not connect to mix... try again");
-			try {Thread.sleep(5000);} catch (InterruptedException e1) {e1.printStackTrace();}
-			connect();
-		}
-		
+		connect(mixList.mixIDs[0]);
 	}
 	
 	
 	@Override
 	public void connect() {
-		if (anonNode.ROUTING_MODE != RoutingMode.CASCADE)
-			throw new RuntimeException("for free route sockets, call connect(MixList mixList)"); 
-		connect(anonNode.mixList);
+		throw new RuntimeException("this plug-in only supports free routes, not cascades"); 
+	}
+	
+	
+	private void connect(int mixID) {
+		this.mix = new Socket();
+		this.nextHopId = mixID;
+		assert anonNode.mixList.getAddress(mixID) != null;
+		SocketAddress socketAddress = new InetSocketAddress(anonNode.mixList.getAddress(mixID), anonNode.mixList.getPort(mixID));
+		try {
+			if (anonNode.DISPLAY_ROUTE_INFO)
+				System.out.println("" +anonNode +" connecting to mix " +mixID +"("+anonNode.mixList.getAddress(mixID) +":" +anonNode.mixList.getPort(mixID) +")"); 
+			this.mix.connect(socketAddress, timeout);
+			this.mixOutputStream = new BufferedOutputStream(mix.getOutputStream(), requestBufferSize);
+			this.mixInputStream = new BufferedInputStream(mix.getInputStream(), replyBufferSize);
+			if (anonNode.IS_DUPLEX) {
+				this.replyCache = new ArrayBlockingQueue<Reply>(5);
+			}
+		} catch (IOException e) {
+			System.err.println("could not connect to mix... try again");
+			try {Thread.sleep(5000);} catch (InterruptedException e1) {e1.printStackTrace();}
+			connect(mixID);
+		}
 	}
 	
 	
 	@Override
 	public void sendMessage(Request request) {
-		//System.out.println(client +" sending (ciphertext): " +Util.md5(request.getByteMessage()));
-		//System.out.println("msgsize: " +request.getByteMessage().length); 
+		if (!anonNode.IS_CONNECTION_BASED)
+			connect(request.nextHopAddress);
+		assert request.nextHopAddress == this.nextHopId;
 		try {
+			if (anonNode.DISPLAY_ROUTE_INFO)
+				System.out.println("" +anonNode +" sending message to mix " +request.nextHopAddress +" (layer1)"); 
+			if (!anonNode.IS_CONNECTION_BASED && anonNode.IS_DUPLEX) // send port for reply
+				mixOutputStream.write(Util.shortToByteArray(RECEIVER_PORT));
 			mixOutputStream.write(Util.intToByteArray(request.getByteMessage().length));
 			mixOutputStream.write(request.getByteMessage());
 			mixOutputStream.flush(); 
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.err.println("connection lost... try again"); 
-			connect();
+			connect(request.nextHopAddress);
 		}
+		if (!anonNode.IS_CONNECTION_BASED)
+			disconnect();
 	}
 
 	
 	@Override
 	public Reply receiveReply() {
-		if (replyCache.size() > 0)
-			return replyCache.remove(0);
-		else
-			return forceReadReply();
+		if (serverSocketModeOn) {
+			try {
+				return replyCache.take();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+				return receiveReply();
+			}
+		} else {
+			if (replyCache.size() > 0) {
+				try {
+					return replyCache.take();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+					return receiveReply();
+				}
+			} else {
+				return forceReadReply();
+			}
+		}
 	}
 	
 
 	@Override
-	public void disconnect(){
+	public void disconnect() {
 		try {
 			mix.close();
 		} catch (IOException e) {
@@ -139,6 +191,56 @@ public class ClientPlugIn extends Implementation implements Layer1NetworkClient 
 		}
 	}
 
+	
+	@Override
+	public int availableReplies() {
+		if (serverSocketModeOn) {
+			return replyCache.size();
+		} else {
+			while (true) {
+				Reply reply = tryReadReply();
+				if (reply == null)
+					break;
+				else
+					putInReplyCache(reply);
+			}
+			return replyCache.size();
+		}
+	}	
+	
+	
+	private void putInReplyCache(Reply reply) {
+		try {
+			replyCache.put(reply);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+			putInReplyCache(reply);
+		}
+	}
+	
+	
+	private class ReplyThread extends Thread {
+		
+		@Override
+		public void run() {
+			while (!shutdownRequested) {
+				try {
+					Socket sock = replySocket.accept();
+					InputStream in = sock.getInputStream();
+					int len = Util.forceReadInt(in);
+					byte[] message = Util.forceRead(in, len);
+					replyCache.put(MixMessage.getInstanceReply(message));
+				} catch (IOException e) {
+					e.printStackTrace();
+					continue;
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+					continue;
+				}		
+			}
+		}
+	}
+	
 	
 	private Reply tryReadReply() {
 		try {
@@ -154,6 +256,8 @@ public class ClientPlugIn extends Implementation implements Layer1NetworkClient 
 				byte[] message = Util.forceRead(mixInputStream, replyLength);
 				//System.out.println("habe empfangen auf layer 0 (" +anonNode.toString() +"): " +Util.md5(message));
 				replyLength = Util.NOT_SET;
+				if (anonNode.DISPLAY_ROUTE_INFO)
+					System.out.println("" +anonNode +" received reply (layer1)"); 
 				return MixMessage.getInstanceReply(message);
 			} else {
 				return null;
@@ -174,6 +278,8 @@ public class ClientPlugIn extends Implementation implements Layer1NetworkClient 
 			}
 			byte[] message = Util.forceRead(mixInputStream, replyLength);
 			//System.out.println("habe empfangen auf layer 0 (" +anonNode.toString() +"): " +Util.md5(message));
+			if (anonNode.DISPLAY_ROUTE_INFO)
+				System.out.println("" +anonNode +" received reply (layer1)"); 
 			replyLength = Util.NOT_SET;
 			return MixMessage.getInstanceReply(message);
 		} catch (IOException e) {
@@ -184,16 +290,4 @@ public class ClientPlugIn extends Implementation implements Layer1NetworkClient 
 	}
 	
 	
-	@Override
-	public int availableReplies() {
-		while (true) {
-			Reply reply = tryReadReply();
-			if (reply == null)
-				break;
-			else
-				replyCache.add(reply);
-		}
-		return replyCache.size();
-	}
-
 }

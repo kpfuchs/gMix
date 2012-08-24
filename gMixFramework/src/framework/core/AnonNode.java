@@ -45,6 +45,8 @@ import framework.core.launcher.ToolName;
 import framework.core.message.MixMessage;
 import framework.core.message.Reply;
 import framework.core.message.Request;
+import framework.core.routing.MixList;
+import framework.core.routing.RoutingMode;
 import framework.core.socket.connectedDatagram.ConnectedDatagramAnonServerSocketImpl;
 import framework.core.socket.connectedDatagram.ConnectedDatagramAnonSocketClientImpl;
 import framework.core.socket.datagram.DatagramAnonServerSocketImpl;
@@ -63,7 +65,6 @@ import framework.core.socket.stream.StreamAnonSocketClientImpl;
 import framework.core.userDatabase.UserDatabase;
 import framework.core.util.Util;
 import framework.infoService.InfoServiceClient;
-import framework.infoService.MixList;
 
 
 public class AnonNode extends GMixTool {
@@ -85,9 +86,8 @@ public class AnonNode extends GMixTool {
 	protected Layer4TransportClientController transportLayerClient;
 	protected Layer5ApplicationMixController applicationLayerMix;
 	protected Layer5ApplicationClientController applicationLayerClient;
-
+	
 	// some settings
-	public final static int NOT_SET = -1;
 	public int PUBLIC_PSEUDONYM; // this anon node will be registered under this pseudonym at the info-service; the pseudonym can be used by other anon nodes for addressing
 	public boolean IS_CLIENT;
 	public boolean IS_MIX;
@@ -95,16 +95,18 @@ public class AnonNode extends GMixTool {
 	public boolean IS_LAST_MIX; // exit node
 	public boolean IS_FIRST_MIX;
 	public boolean RECORD_STATISTICS_ON;
+	public boolean DISPLAY_ROUTE_INFO;
 	public boolean DEBUG_MODE_ON;
 	public boolean LOCAL_MODE_ON;
 	public boolean REPLY_DETECTION_ON;
 	public boolean RS_DEBUG_OUTPUT_ON;
-	public String IS_MODE;
+	public RoutingMode ROUTING_MODE;
 	public int NUMBER_OF_MIXES;
+	public int FREE_ROUTE_LENGTH;
 	public int EXPECTED_NUMBER_OF_USERS;
 	public String CRYPTO_PROVIDER;
 	public int NUMBER_OF_THREADS;
-	public int MAX_PAYLOAD;	
+	public int MAX_PAYLOAD;
 	public boolean LAYER_1_LINKS_MESSAGES; // when true, layer one will tag messages of the same user with a pseudonym (this is required by some plug-ins; e.g. some recoding schemes will transmit symmetrically encrypted messages after an initial hybridly encrypted message; the recoder plug-in needs the pseudonym to choose the right decryption key in that example)
 	public int QUEUE_BLOCK_SIZE;
 	public int SOCKET_MIX_BACKEND_QUEUE_SIZE;
@@ -119,7 +121,6 @@ public class AnonNode extends GMixTool {
 	public boolean IS_RELIABLE;
 	public boolean IS_CONNECTION_BASED;
 	public boolean IS_ORDER_PRESERVING;
-	public boolean IS_FREE_ROUTE;
 	
 	// other
 	private Vector<Controller> components = new Vector<Controller>(); // instantiated controllers
@@ -144,7 +145,8 @@ public class AnonNode extends GMixTool {
 			infoService.waitForEndOfAddressExchangePhase();
 		
 		this.mixList = infoService.getMixList();
-		//if (!this.IS_FREE_ROUTE)
+		if (DISPLAY_ROUTE_INFO && ROUTING_MODE != RoutingMode.CASCADE)
+			System.out.println("" +this +" received " +mixList); 
 		
 		callConstructors();
 		if (IS_MIX)
@@ -154,7 +156,7 @@ public class AnonNode extends GMixTool {
 		if (IS_MIX)
 			infoService.waitForEndOfInitializationPhase();
 		else
-			infoService.waitTillCascadeIsUp();
+			infoService.waitTillMixesAreUp();
 		
 		// TODO write config to disk
 		
@@ -168,11 +170,9 @@ public class AnonNode extends GMixTool {
 
 	
 	private void callConstructors() {
-		for (Controller c:components) {
-			System.out.println("ALL: calling constructor of " +c.implementation); 
+		for (Controller c:components)
 			if (c.implementation != null)
 				c.implementation.constructor();
-		}
 	}
 	
 	
@@ -232,10 +232,9 @@ public class AnonNode extends GMixTool {
 		this.IS_RELIABLE = settings.getPropertyAsBoolean("GLOBAL_IS_RELIABLE");
 		this.IS_CONNECTION_BASED = settings.getPropertyAsBoolean("GLOBAL_IS_CONNECTION_BASED");
 		this.IS_ORDER_PRESERVING = settings.getPropertyAsBoolean("GLOBAL_IS_ORDER_PRESERVING");
-		this.IS_FREE_ROUTE = settings.getPropertyAsBoolean("GLOBAL_IS_FREE_ROUTE");
 		this.REPLY_DETECTION_ON = settings.getPropertyAsBoolean("GLOBAL_REPLY_DETECTION_ON");
 		this.RS_DEBUG_OUTPUT_ON = settings.getPropertyAsBoolean("GLOBAL_RS_DEBUG_OUTPUT_ON");
-		this.IS_MODE = settings.getProperty("GLOBAL_IS_MODE");
+		this.ROUTING_MODE = RoutingMode.getMode(settings);
 		this.EXPECTED_NUMBER_OF_USERS = settings.getPropertyAsInt("GLOBAL_EXPECTED_NUMBER_OF_USERS");
 		this.CRYPTO_PROVIDER = settings.getProperty("GLOBAL_CRYPTO_PROVIDER");
 		this.NUMBER_OF_THREADS = settings.getPropertyAsInt("GLOBAL_NUMBER_OF_THREADS");
@@ -243,6 +242,7 @@ public class AnonNode extends GMixTool {
 		this.QUEUE_BLOCK_SIZE = settings.getPropertyAsInt("GLOBAL_QUEUE_BLOCK_SIZE");
 		this.RECORD_STATISTICS_ON = settings.getPropertyAsBoolean("GLOBAL_RECORD_STATISTICS_ON");
 		MixMessage.recordStatistics = RECORD_STATISTICS_ON;
+		this.DISPLAY_ROUTE_INFO = settings.getPropertyAsBoolean("GLOBAL_DISPLAY_ROUTE_INFO");
 		this.LAYER_1_LINKS_MESSAGES = settings.getPropertyAsBoolean("GLOBAL_LAYER_1_LINKS_MESSAGES");
 		this.SOCKET_MIX_BACKEND_QUEUE_SIZE = settings.getPropertyAsInt("GLOBAL_SOCKET_MIX_BACKEND_QUEUE_SIZE");
 		this.SERVER_SOCKET_QUEUE_SIZE = settings.getPropertyAsInt("GLOBAL_SERVER_SOCKET_QUEUE_SIZE");
@@ -253,7 +253,12 @@ public class AnonNode extends GMixTool {
 
 		this.DEBUG_MODE_ON = infoService.getIsDuplexModeOn();
 		this.NUMBER_OF_MIXES = infoService.getNumberOfMixes();
-		
+		this.FREE_ROUTE_LENGTH = settings.getPropertyAsInt("GLOBAL_FREE_ROUTE_LENGTH");
+		if (ROUTING_MODE != RoutingMode.CASCADE && FREE_ROUTE_LENGTH > NUMBER_OF_MIXES)
+			throw new RuntimeException("FREE_ROUTE_LENGTH > NUMBER_OF_MIXES!");
+		if (ROUTING_MODE != RoutingMode.CASCADE && NUMBER_OF_MIXES == 1)
+			throw new RuntimeException("free route mode requires at least two mixes");
+			
 		if (commandLineParameters.gMixTool == ToolName.CLIENT) {
 			this.IS_CLIENT = true;
 		} else if (commandLineParameters.gMixTool == ToolName.MIX) {
@@ -461,15 +466,11 @@ public class AnonNode extends GMixTool {
 	
 	// called by layer 3 (output strategy) mix plug-ins
 	public void putOutRequest(Request request) {
-		boolean isFinalHop; // determine if this mix is the final hop for the request
-		if (IS_FREE_ROUTE) {
-			isFinalHop = request.nextHopAddress == MixMessage.NONE ? true : false; 
-		} else { // fixed route
-			isFinalHop = this.IS_LAST_MIX;
-		}
-		if (!isFinalHop) { // put request in output queue, from where it will be sent to the next hop (via layer 1)
+		if (!isFinalHop(request)) { // put request in output queue, from where it will be sent to the next hop (via layer 1)
 			putInRequestOutputQueue(request);
 		} else { // final hop: find desired socket and forward request to it
+			if (DISPLAY_ROUTE_INFO && ROUTING_MODE != RoutingMode.CASCADE)
+				System.out.println("" +this +": i'm the final hop");
 			int dstPort = Util.byteArrayToShort(Arrays.copyOf(request.getByteMessage(), 2)); // get desired socket
 			request.setByteMessage(Arrays.copyOfRange(request.getByteMessage(), 2, request.getByteMessage().length));
 			AdaptiveAnonServerSocket destSocket = sockets.get(dstPort);
@@ -488,15 +489,26 @@ public class AnonNode extends GMixTool {
 	
 	
 	public void putOutRequests(Request[] requests) {
-		if (IS_FREE_ROUTE) {
-			for (Request request:requests)
-				putOutRequest(request);
-		} else { // fixed route
+		if (ROUTING_MODE == RoutingMode.CASCADE) {
 			if (!IS_LAST_MIX) // put data in request output queue, from where it will be forwarded to the next mix via the layer 1 plug-in
 				putInRequestOutputQueue(requests);
 			else // forward data to the responsive socket
 				for (Request request:requests)
 					putOutRequest(request);	
+		} else {
+			for (Request request:requests)
+				putOutRequest(request);
+		}
+	}
+	
+	
+	private boolean isFinalHop(Request request) {
+		if (ROUTING_MODE == RoutingMode.FREE_ROUTE_DYNAMIC_ROUTING) {
+			return request.nextHopAddress == MixMessage.NONE ? true : false; 
+		} else if (ROUTING_MODE == RoutingMode.FREE_ROUTE_SOURCE_ROUTING) {
+			return request.nextHopAddress == MixMessage.NONE ? true : false; 
+		} else { // fixed route
+			return this.IS_LAST_MIX;
 		}
 	}
 	
@@ -575,7 +587,7 @@ public class AnonNode extends GMixTool {
 		assert requests != null;
 		assert requests.length != 0;
 		if (requests.length > QUEUE_BLOCK_SIZE) {
-			Request[][] splitted = Util.split(QUEUE_BLOCK_SIZE, requests);
+			Request[][] splitted = Util.splitInChunks(QUEUE_BLOCK_SIZE, requests);
 			for (Request[] block:splitted)
 				putInRequestInputQueue(block);
 		}
@@ -615,7 +627,7 @@ public class AnonNode extends GMixTool {
 		assert requests != null;
 		assert requests.length != 0;
 		if (requests.length > QUEUE_BLOCK_SIZE) {
-			Request[][] splitted = Util.split(QUEUE_BLOCK_SIZE, requests);
+			Request[][] splitted = Util.splitInChunks(QUEUE_BLOCK_SIZE, requests);
 			for (Request[] block:splitted)
 				putInRequestOutputQueue(block);
 		}
@@ -643,7 +655,7 @@ public class AnonNode extends GMixTool {
 		assert replies != null;
 		assert replies.length != 0;
 		if (replies.length > QUEUE_BLOCK_SIZE) {
-			Reply[][] splitted = Util.split(QUEUE_BLOCK_SIZE, replies);
+			Reply[][] splitted = Util.splitInChunks(QUEUE_BLOCK_SIZE, replies);
 			for (Reply[] block:splitted)
 				putInReplyInputQueue(block);
 		}
@@ -674,7 +686,7 @@ public class AnonNode extends GMixTool {
 		assert replies != null;
 		assert replies.length != 0;
 		if (replies.length > QUEUE_BLOCK_SIZE) {
-			Reply[][] splitted = Util.split(QUEUE_BLOCK_SIZE, replies);
+			Reply[][] splitted = Util.splitInChunks(QUEUE_BLOCK_SIZE, replies);
 			for (Reply[] block:splitted)
 				putInReplyOutputQueue(block);
 		}

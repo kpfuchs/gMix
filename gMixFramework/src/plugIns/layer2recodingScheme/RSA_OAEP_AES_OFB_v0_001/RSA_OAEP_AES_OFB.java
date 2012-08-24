@@ -30,6 +30,7 @@ import javax.crypto.spec.SecretKeySpec;
 import framework.core.AnonNode;
 import framework.core.message.Reply;
 import framework.core.message.Request;
+import framework.core.routing.RoutingMode;
 import framework.core.util.Util;
 
 
@@ -75,7 +76,7 @@ public class RSA_OAEP_AES_OFB {
 	
 	
 	public void initAsRecoder() {
-		assert !owner.IS_FREE_ROUTE;
+		assert owner.ROUTING_MODE == RoutingMode.CASCADE;
 		try {
 			this.asymmetricCipher = Cipher.getInstance(config.ASYM_CRYPTOGRAPHY_ALGORITHM, config.CRYPTO_PROVIDER);
 			this.asymmetricCipher.init(Cipher.DECRYPT_MODE, config.keyPair.getPrivate());
@@ -493,7 +494,6 @@ public class RSA_OAEP_AES_OFB {
 			return null;
 		}
 		
-		// TODO: hier weiter
 		// if owner.isFirstMix()
 			//Client reveiver = NetworkNode.getNode(address);
 			//receiver.addReply(msg);

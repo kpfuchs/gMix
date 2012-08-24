@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package plugIns.layer1network.cascade_UDP_v0_001;
+package plugIns.layer1network.sourceRouting_TCP_v0_001;
 
 import java.util.Vector;
 
@@ -28,7 +28,6 @@ import framework.core.routing.RoutingMode;
 
 public class MixPlugIn extends Implementation implements Layer1NetworkMix {
 	
-	protected enum POSITION_OF_MIX_IN_CASCADE {FIRST_MIX_OF_CASCADE, MIDDLE_MIX_OF_CASCADE, LAST_MIX_OF_CASCADE, SINGLE_MIX};
 	public SubImplementation clientComHandler;
 	public SubImplementation nextMixHandler;
 	public SubImplementation prevMixHandler;
@@ -37,26 +36,15 @@ public class MixPlugIn extends Implementation implements Layer1NetworkMix {
 	
 	@Override
 	public void constructor() {
-		if (anonNode.ROUTING_MODE != RoutingMode.CASCADE)
-			throw new RuntimeException("free route not supported");
-		
-		switch (this.getPosition()) {
-			case FIRST_MIX_OF_CASCADE:
-				instantiateNextMixComHandler();
-				instantiateClientComHandler();
-				break;
-			case MIDDLE_MIX_OF_CASCADE:
-				instantiateNextMixComHandler();
-				instantiatePrevMixComHandler();
-				break;
-			case LAST_MIX_OF_CASCADE:
-				instantiatePrevMixComHandler();
-				break;
-			case SINGLE_MIX:
-				instantiateClientComHandler();
-				break;
+		if (anonNode.ROUTING_MODE == RoutingMode.CASCADE)
+			throw new RuntimeException("cascade not supported");
+		if (anonNode.NUMBER_OF_MIXES > 1) {
+			instantiatePrevMixComHandler();
+			instantiateNextMixComHandler();
 		}
-		
+		instantiateClientComHandler();
+		if (anonNode.NUMBER_OF_MIXES > 1)
+			((ClientReplyReceiver)clientComHandler).setClientReplyProvider((ClientReplyProvider)prevMixHandler);
 		for (SubImplementation impl: implementations)
 			impl.constructor();
 	}
@@ -71,7 +59,7 @@ public class MixPlugIn extends Implementation implements Layer1NetworkMix {
 	
 	@Override
 	public void begin() {
-		for (SubImplementation impl: implementations)
+		for (SubImplementation impl: implementations) 
 			impl.begin();
 	}
 
@@ -101,20 +89,8 @@ public class MixPlugIn extends Implementation implements Layer1NetworkMix {
 				"plugIns.layer1network." +settings.getProperty("LAYER_1_PLUG-IN_MIX"), 
 				settings.getProperty("PREVIOUS_MIX_CONNECTION_HANLDER"),
 				anonNode
-				);
+				); 
 		implementations.add(prevMixHandler);
-	}
-	
-	
-	protected POSITION_OF_MIX_IN_CASCADE getPosition() {
-		if (anonNode.IS_FIRST_MIX && anonNode.IS_LAST_MIX)
-			return POSITION_OF_MIX_IN_CASCADE.SINGLE_MIX;
-		else if (anonNode.IS_FIRST_MIX)
-			return POSITION_OF_MIX_IN_CASCADE.FIRST_MIX_OF_CASCADE;
-		else if (!anonNode.IS_LAST_MIX)
-			return POSITION_OF_MIX_IN_CASCADE.MIDDLE_MIX_OF_CASCADE;
-		else
-			return POSITION_OF_MIX_IN_CASCADE.LAST_MIX_OF_CASCADE;
 	}
 	
 }

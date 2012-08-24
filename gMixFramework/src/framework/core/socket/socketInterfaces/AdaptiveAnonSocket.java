@@ -28,6 +28,7 @@ import framework.core.interfaces.Layer1NetworkClient;
 import framework.core.interfaces.Layer2RecodingSchemeClient;
 import framework.core.interfaces.Layer3OutputStrategyClient;
 import framework.core.message.Request;
+import framework.core.routing.RoutingMode;
 import framework.core.interfaces.ThreePhaseStart;
 
 
@@ -139,13 +140,17 @@ public abstract class AdaptiveAnonSocket implements AnonSocket, AnonSocketOption
 			) {
 		
 		if (communicationMode == CommunicationMode.DUPLEX && !owner.IS_DUPLEX)
-			throw new RuntimeException("the current plug-in config does not suport duplex sockets");
+			throw new RuntimeException("the current plug-in config does not support duplex sockets");
 		if (isConnectionBased && !owner.IS_CONNECTION_BASED)
-			throw new RuntimeException("the current plug-in config does not suport connection-based sockets"); 
+			throw new RuntimeException("the current plug-in config does not support connection-based sockets"); 
 		if (isReliable && !owner.IS_RELIABLE)
-			throw new RuntimeException("the current plug-in config does not suport reliable transfer"); 
+			throw new RuntimeException("the current plug-in config does not support reliable transfer"); 
 		if (isOrderPreserving && !owner.IS_ORDER_PRESERVING)
-			throw new RuntimeException("the current plug-in config does not suport order-preserving transfer"); 
+			throw new RuntimeException("the current plug-in config does not support order-preserving transfer"); 
+		if (isFreeRoute && owner.ROUTING_MODE == RoutingMode.CASCADE)
+			throw new RuntimeException("the current plug-in config does not support free routes transfer"); 
+		if (!isFreeRoute && owner.ROUTING_MODE != RoutingMode.CASCADE)
+			throw new RuntimeException("the current plug-in config does not support cascades"); 
 		
 		this.owner = owner;
 		this.settings = owner.getSettings();

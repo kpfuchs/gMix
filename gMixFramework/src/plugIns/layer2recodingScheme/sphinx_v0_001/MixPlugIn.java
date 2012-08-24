@@ -22,6 +22,7 @@ import framework.core.interfaces.Layer2RecodingSchemeMix;
 import framework.core.message.MixMessage;
 import framework.core.message.Reply;
 import framework.core.message.Request;
+import framework.core.routing.RoutingMode;
 import framework.core.userDatabase.User;
 
 
@@ -34,7 +35,7 @@ public class MixPlugIn extends Implementation implements Layer2RecodingSchemeMix
 	
 	@Override
 	public void constructor() {
-		if (anonNode.IS_FREE_ROUTE)
+		if (anonNode.ROUTING_MODE != RoutingMode.CASCADE)
 			throw new RuntimeException("not supported"); // TODO: support it...
 		this.config = new Sphinx_Config(anonNode, false);
 		this.messageCreator = new Sphinx(anonNode, config);
@@ -52,7 +53,6 @@ public class MixPlugIn extends Implementation implements Layer2RecodingSchemeMix
 	
 	@Override
 	public void initialize() {
-		assert !anonNode.IS_FREE_ROUTE;
 		config.loadPlubicKeysOfMixes(anonNode);
 		/*if (!anonNode.IS_LAST_MIX) {
 			config.publicKeysOfMixes = Arrays.copyOfRange(config.publicKeysOfMixes, (anonNode.PUBLIC_PSEUDONYM +1), config.publicKeysOfMixes.length); // TODO

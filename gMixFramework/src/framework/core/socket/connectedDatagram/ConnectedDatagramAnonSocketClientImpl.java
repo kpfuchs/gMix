@@ -28,7 +28,7 @@ import framework.core.util.Util;
 public class ConnectedDatagramAnonSocketClientImpl extends AdaptiveAnonSocket implements ConnectedDatagramAnonSocket {
 
 	private boolean isConnected = false;
-	
+
 	
 	public ConnectedDatagramAnonSocketClientImpl(
 			AnonNode owner,
@@ -49,8 +49,6 @@ public class ConnectedDatagramAnonSocketClientImpl extends AdaptiveAnonSocket im
 	
 	@Override
 	public void connect(int destinationPort) {
-		if (isFreeRoute)
-			throw new RuntimeException("this is a free route socket; you must specify a destination address; use \"connect(destinationPseudonym, destinationPort)\" instead"); 
 		layer3.connect();
 		this.destinationPort = destinationPort;
 		this.isConnected = true;
@@ -88,9 +86,9 @@ public class ConnectedDatagramAnonSocketClientImpl extends AdaptiveAnonSocket im
 		
 		if (!owner.LAYER_1_LINKS_MESSAGES) // add a pseudonym for the (final) receiver, so it can link the messages of this sender/socket 
 			payload = Util.concatArrays(Util.intToByteArray(endToEndPseudonym), payload);
+		
 		payload = Util.concatArrays(Util.shortToByteArray(destinationPort), payload); // add destination port (= which layer 5 service/ServerSocket shall be addressed)
 		Request request = MixMessage.getInstanceRequest(payload);
-		request.destinationPseudonym = destinationPseudonym;
 		layer3.sendMessage(request);
 	}
 

@@ -39,6 +39,7 @@ import java.security.SecureRandom;
 import java.security.Security;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Random;
 import java.util.Vector;
 import java.util.concurrent.TimeUnit;
 
@@ -53,6 +54,7 @@ public final class Util {
 	
 	
 	public static final int NOT_SET =-222222222;
+	private static SecureRandom random = new SecureRandom();
 	
 	
 	/**
@@ -525,7 +527,7 @@ public final class Util {
 	
 	
 	@SuppressWarnings("unchecked") // type safety is assured through generic method header; the need for "@SuppressWarnings" is a flaw/feature of java generics...
-	public static <T> T[][] split(int chunkSize, T[] source) {
+	public static <T> T[][] splitInChunks(int chunkSize, T[] source) {
 		if (source.length <= chunkSize)
 			throw new RuntimeException("cannot split the bypassed array (array is smaller than chunkSize)"); 
 		int chunks = (int) Math.ceil((double)source.length / (double)chunkSize);
@@ -539,6 +541,22 @@ public final class Util {
 		return (T[][]) result;
 	}
 
+	
+	public static byte[][] splitInChunks(int chunkSize, byte[] source) {
+		if (source.length <= chunkSize)
+			throw new RuntimeException("cannot split the bypassed array (array is smaller than chunkSize)"); 
+		int chunks = (int) Math.ceil((double)source.length / (double)chunkSize);
+		byte[][] result = new byte[chunks][];
+		int pointer = 0;
+		for (int i=0; i<result.length; i++)
+			if (i < result.length-1)
+				result[i] = Arrays.copyOfRange(source, pointer, pointer+=chunkSize);
+			else
+				result[i] = Arrays.copyOfRange(source, pointer, source.length);
+		return result;
+	}
+	
+	
 	
 	@SuppressWarnings("unchecked") // type safety is assured through generic method header; the need for "@SuppressWarnings" is a flaw/feature of java generics...
 	public static <T> T[][] splitAfter(int splitBefore, T[] source) {
@@ -619,6 +637,24 @@ public final class Util {
 		} else if (rootFolder.isFile() && rootFolder.getName().equalsIgnoreCase(filename)) {
 			found.add(rootFolder);
 		}
+	}
+	
+	
+	public static boolean contains(int searchFor, int[] in) {
+		for (int i=0; i<in.length; i++)
+			if (in[i] == searchFor)
+				return true;
+		return false;
+	}
+	
+	
+	public static int getRandomInt(int min, int max) {
+		return min + (int)(random.nextDouble()*(max-min)+1);
+	}
+	
+	
+	public static int getRandomInt(int min, int max, Random random) {
+		return min + (int)(random.nextDouble()*(max-min)+1);
 	}
 	
 }

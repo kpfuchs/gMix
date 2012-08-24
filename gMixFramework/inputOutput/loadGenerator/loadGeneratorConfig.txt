@@ -25,7 +25,7 @@ TOLERANCE = 2500
 #   options below tagged with [SUPPORTS_RANDOM_VARIABLE] can be set to one of 
 #	the following random variables:
 #   	- [RAND_VAR:Binomial(int numberOfTrials, double probabilityOfSuccess)]:
-          [int]
+#         [int]
 #   	- [RAND_VAR:Exponential(double mean)]:[double]
 #   	- [RAND_VAR:Gaussian(double mu, double sigma)]:[double]
 #   	- [RAND_VAR:Hypergeometric(int populationSize, int numberOfSuccesses, 
@@ -86,7 +86,7 @@ AL-CONSTANT_RATE-REPLY_PAYLOAD_SIZE = AUTO
 AL-CONSTANT_RATE-PERIOD = 1
 #	in seconds (float)
 #
-AL-CONSTANT_RATE-MESSAGES_PER_PERIOD = 2
+AL-CONSTANT_RATE-MESSAGES_PER_PERIOD = 0.5
 #	(float)
 #
 AL-CONSTANT_RATE-NUMBER_OF_CLIENTS = 2

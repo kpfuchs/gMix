@@ -23,6 +23,7 @@ import framework.core.controller.Implementation;
 import framework.core.controller.LocalClassLoader;
 import framework.core.controller.SubImplementation;
 import framework.core.interfaces.Layer1NetworkMix;
+import framework.core.routing.RoutingMode;
 
 
 public class MixPlugIn extends Implementation implements Layer1NetworkMix {
@@ -36,7 +37,7 @@ public class MixPlugIn extends Implementation implements Layer1NetworkMix {
 	
 	@Override
 	public void constructor() {
-		if (anonNode.IS_FREE_ROUTE)
+		if (anonNode.ROUTING_MODE != RoutingMode.CASCADE)
 			throw new RuntimeException("free route not supported");
 		
 		switch (this.getPosition()) {

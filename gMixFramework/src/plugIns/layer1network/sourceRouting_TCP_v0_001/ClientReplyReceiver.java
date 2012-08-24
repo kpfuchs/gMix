@@ -15,14 +15,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package framework.infoService;
+package plugIns.layer1network.sourceRouting_TCP_v0_001;
 
-import java.net.InetAddress;
+public interface ClientReplyReceiver {
 
-
-public class MixList {
-	public int numberOfMixes;
-	public int[] mixIDs;
-	public InetAddress[] addresses;
-	public int[] ports;
+	public void setClientReplyProvider(ClientReplyProvider provider);
+	
 }
