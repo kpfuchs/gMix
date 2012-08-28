@@ -33,6 +33,7 @@ import javax.crypto.spec.SecretKeySpec;
 import staticFunctions.layer2recodingScheme.curve25519.Curve25519;
 
 import framework.core.AnonNode;
+import framework.core.message.MixMessage;
 import framework.core.message.Reply;
 import framework.core.message.Request;
 import framework.core.routing.RoutingMode;
@@ -56,6 +57,8 @@ public class Sphinx {
 	public Sphinx(AnonNode owner, Sphinx_Config config) {
 		this.owner = owner;
 		this.config = config;
+		if (owner.ROUTING_MODE == RoutingMode.FREE_ROUTE_DYNAMIC_ROUTING)
+			throw new RuntimeException("unsupported routing mode: FREE_ROUTE_DYNAMIC_ROUTING"); 
 		try {
 			Sphinx.secureRandom = SecureRandom.getInstance(config.PRNG_ALGORITHM);
 		} catch (NoSuchAlgorithmException e) {
@@ -71,7 +74,7 @@ public class Sphinx {
 	
 	
 	public void initAsRecoder() {
-		assert owner.ROUTING_MODE == RoutingMode.CASCADE;
+		
 	}
 	
 	
@@ -80,14 +83,19 @@ public class Sphinx {
 		if (payload == null) {
 			payload = new byte[0];
 			System.out.println(owner +" creating dummy");
-			System.out.println(owner +" config.numberOfMixes: " +config.NUMBER_OF_MIXES); 
+			System.out.println(owner +" config.ROUTE_LENGTH: " +config.ROUTE_LENGTH); 
 		}
 		if (payload.length > config.MAX_PAYLOAD)
 			throw new RuntimeException("can't send more than " +config.MAX_PAYLOAD +" bytes in one message"); 
 		
 		EncryptedMessage em = new EncryptedMessage();
 		try {
-			MixHeader header = new MixHeader(config, secureRandom);
+			int[] route;
+			if (owner.ROUTING_MODE == RoutingMode.CASCADE)
+				route = owner.mixList.mixIDs;
+			else
+				route = request.route;
+			MixHeader header = new MixHeader(config, secureRandom, new Route(route, config));
 			byte[] addressForLastMix = new byte[config.SECURITY_PARAMETER_SIZE];
 			secureRandom.nextBytes(addressForLastMix);
 			addressForLastMix[0] = MixHeader.SPECIAL_DEST_PREFIX;
@@ -97,14 +105,14 @@ public class Sphinx {
 			body = Sphinx.padBody(body, config);
 			assert body.length == config.DELTA_SIZE;
 			
-			byte[][] deltas = new byte[config.NUMBER_OF_MIXES][];
+			byte[][] deltas = new byte[config.ROUTE_LENGTH][];
 			
 			// delta v-1
-			byte[] delta = Sphinx.pi(Sphinx.hashPi(header.getSecret(config.NUMBER_OF_MIXES-1), config.SECURITY_PARAMETER_SIZE), body, config.SECURITY_PARAMETER_SIZE);
-			deltas[config.NUMBER_OF_MIXES-1] = delta;
+			byte[] delta = Sphinx.pi(Sphinx.hashPi(header.getSecret(config.ROUTE_LENGTH-1), config.SECURITY_PARAMETER_SIZE), body, config.SECURITY_PARAMETER_SIZE);
+			deltas[config.ROUTE_LENGTH-1] = delta;
 			
 			// deltas for 0<=i<v-1
-			for (int i=config.NUMBER_OF_MIXES-2; i>=0; i--) {
+			for (int i=config.ROUTE_LENGTH-2; i>=0; i--) {
 				delta = Sphinx.pi(Sphinx.hashPi(header.getSecret(i), config.SECURITY_PARAMETER_SIZE), delta, config.SECURITY_PARAMETER_SIZE);
 				deltas[i] = delta;
 			}
@@ -130,31 +138,31 @@ public class Sphinx {
 	}
 
 	
-	private ReplyData createReplyData(byte[] replyId) throws Exception {
+	private ReplyData createReplyData(byte[] replyId, int[] route) throws Exception {
 		ReplyData replyData = new ReplyData();
 		replyData.replyId = replyId;
-
-		MixHeader header = new MixHeader(config, secureRandom);
+		Route routeObj = new Route(route, config);
+		MixHeader header = new MixHeader(config, secureRandom, routeObj);
 		replyData.alpBetaGam = header.createHeader(Sphinx.generateReplyAddress(config.id, replyId, config));
 		replyData.ktilde =  new byte[config.SECURITY_PARAMETER_SIZE];
 		secureRandom.nextBytes(replyData.ktilde);
-		replyData.keytuples = new byte[config.NUMBER_OF_MIXES][];
-		for (int i=0; i<config.NUMBER_OF_MIXES; i++) {
+		replyData.keytuples = new byte[config.ROUTE_LENGTH][];
+		for (int i=0; i<config.ROUTE_LENGTH; i++) {
 			try {
 				replyData.keytuples[i] = Sphinx.hashPi(header.getSecret(i), config.SECURITY_PARAMETER_SIZE);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
-		replyData.idMix0 = config.mixIdsSphinx[0];
+		replyData.idMix0 = routeObj.mixIdsSphinx[0];
 		return replyData;
 	}
 
 	
 	// "nym" is the pseudonym, the reply data is accessible under on the nymserver
-	public void publishNym(byte[] nym) {
+	public void publishNym(byte[] nym, int[] route) {
 		try {
-			ReplyData replyData = createReplyData(Sphinx.generateReplyID(config));
+			ReplyData replyData = createReplyData(Sphinx.generateReplyID(config), route);
 			config.replyDataTable.put(new String(replyData.replyId, "UTF-8"), replyData);
 			byte[] idMix0 = replyData.idMix0;
 			byte[][] alpBetaGam = replyData.alpBetaGam;
@@ -221,7 +229,33 @@ public class Sphinx {
 				return null;
 			}
 
-			byte[] B = Sphinx.xor(Util.concatArrays(msg.alpBetaGam[1], Sphinx.ZERO32), Sphinx.rho(Sphinx.hashRho(sharedSecret, config.SECURITY_PARAMETER_SIZE), config.NUMBER_OF_MIXES, config.SECURITY_PARAMETER_SIZE));
+			/*
+			 * if (anonNode.ROUTING_MODE == RoutingMode.CASCADE) {
+						outputStrategyLayerMix.addRequest(request);
+					} else if (anonNode.ROUTING_MODE == RoutingMode.FREE_ROUTE_SOURCE_ROUTING) {
+						byte[][] splitted = Util.split(getRouteHeaderSize(anonNode), request.getByteMessage());
+						UnpackedIdArray routeInfo = MixList.unpackIdArrayWithPos(splitted[0]);
+						if (routeInfo.pos >= routeInfo.route.length) {
+							if (anonNode.DISPLAY_ROUTE_INFO)
+								System.out.println(""+anonNode +" setting nextHopAddress to \"LAST HOP\" (pos: " +routeInfo.pos +")"); 
+							request.nextHopAddress = MixMessage.NONE;
+							request.setByteMessage(splitted[1]);
+						} else {
+							if (anonNode.DISPLAY_ROUTE_INFO)
+								System.out.println(""+anonNode +" setting nextHopAddress to " +routeInfo.route[routeInfo.pos] +", pos: " +routeInfo.pos); 
+							request.nextHopAddress = routeInfo.route[routeInfo.pos];
+							routeInfo.pos++;
+							System.arraycopy(MixList.packIdArray(routeInfo), 0, request.getByteMessage(), 0, getRouteHeaderSize(anonNode));
+						}
+						outputStrategyLayerMix.addRequest(request);
+					} else if (anonNode.ROUTING_MODE == RoutingMode.FREE_ROUTE_DYNAMIC_ROUTING) {
+						request.nextHopAddress = anonNode.mixList.getRandomMixId();
+						outputStrategyLayerMix.addRequest(request);
+					} else {
+						throw new RuntimeException("not supported routing mode: " +anonNode.ROUTING_MODE); 
+					}
+			 */
+			byte[] B = Sphinx.xor(Util.concatArrays(msg.alpBetaGam[1], Sphinx.ZERO32), Sphinx.rho(Sphinx.hashRho(sharedSecret, config.SECURITY_PARAMETER_SIZE), config.ROUTE_LENGTH, config.SECURITY_PARAMETER_SIZE));
 			
 			if (B[0] == MixHeader.MIX_PREFIX) { // this mix is not the final hop -> forward message to next hop
 				
@@ -233,7 +267,12 @@ public class Sphinx {
 				msg.alpBetaGam[1] = Arrays.copyOfRange(B, config.SECURITY_PARAMETER_SIZE * 2, B.length);
 				msg.delta = Sphinx.pii(Sphinx.hashPi(sharedSecret, config.SECURITY_PARAMETER_SIZE), msg.delta, config.SECURITY_PARAMETER_SIZE);
 				//System.out.println("this mix is not the final hop -> forward message to next hop"); 
-				message.nextHopAddress = config.getGlobalMixIdFor(nextMixId);
+				if (owner.ROUTING_MODE == RoutingMode.FREE_ROUTE_SOURCE_ROUTING) {
+					message.nextHopAddress = config.getGlobalMixIdFor(nextMixId);
+					assert message.nextHopAddress != -1;
+					if (owner.DISPLAY_ROUTE_INFO)
+						System.out.println(""+owner +" setting nextHopAddress to " +message.nextHopAddress); 
+				}
 				message.setByteMessage(msg.toByteArray(config));
 				return message;
 			
@@ -245,6 +284,12 @@ public class Sphinx {
 				byte[] payload = Arrays.copyOfRange(msg.delta, config.SECURITY_PARAMETER_SIZE, msg.delta.length);
 				//System.out.println("payload received by last mix: " +Util.md5(payload)); 
 				message.setByteMessage(payload);
+				if (owner.ROUTING_MODE == RoutingMode.FREE_ROUTE_SOURCE_ROUTING) {
+					message.nextHopAddress = MixMessage.NONE;
+					assert message.nextHopAddress != -1;
+					if (owner.DISPLAY_ROUTE_INFO)
+						System.out.println(""+owner +" setting nextHopAddress to \"LAST HOP\"");
+				}
 				return message;
 			
 			} else if (B[0] == MixHeader.CLIENT_PREFIX) { // this mix is the final hop; message is a reply
@@ -254,7 +299,7 @@ public class Sphinx {
 				byte[] clientId = Sphinx.extractClientId(addressData, config);
 				byte[] replyId = Sphinx.extractReplyId(addressData, config);
 				msg.delta = Sphinx.pii(Sphinx.hashPi(sharedSecret, config.SECURITY_PARAMETER_SIZE), msg.delta, config.SECURITY_PARAMETER_SIZE);
-				message.nextHopAddress = Util.byteArrayToInt(owner.getInfoService().getValue(new String(clientId, "UTF-8")));
+				message.nextHopAddress = Util.byteArrayToInt(owner.getInfoService().getValue(new String(clientId, "UTF-8"))); // TODO -> mechanism to forward replies...
 				message.setByteMessage(Util.concatArrays(replyId, msg.delta));
 				return message;
 			

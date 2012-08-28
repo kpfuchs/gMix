@@ -226,56 +226,10 @@ public class ClientHandler_TCP_RR_sync extends SubImplementation {
 					continue;
 				}
 				
+				// TODO: randomize list, if maxReadsPerChannelInARow == 1?
 				for (Vector<Request> requests:newRequests)
 					anonNode.putInRequestInputQueue(requests.toArray(new Request[0])); // might block
 			}
-			
-			/*try {
-				
-				
-			} catch
-							
-							if (ch.inputStream.available() >= 4) {
-								
-								
-								
-							if (userData.receivedData.position() == 0)
-								userData.receivedData.limit(4);
-							
-							if (userData.socketChannel.read(userData.receivedData) == -1) // read data
-								throw new IOException("warning: lost connection to user " +userData.getOwner());
-							
-							if (userData.receivedData.hasRemaining()) {
-								return null;
-							} else {
-								userData.receivedData.flip();
-								byte[] lengthHeader = new byte[4];
-								userData.receivedData.get(lengthHeader);
-								int messageLength = Util.byteArrayToInt(lengthHeader);
-								if (messageLength > maxRequestLength)
-									throw new IOException("warning: user " +userData.getOwner() +" sent a too large message");
-								userData.receivedData.clear();
-								userData.receivedData = ByteBuffer.allocate(messageLength);
-								userData.requestLengthHeaderRead = true;
-							}
-							
-						} 
-						
-						
-						if (ch.inputStream.available()>)
-					}
-					
-					
-					int messageLength = Util.forceReadInt(inputStream);
-					if (messageLength > maxRequestLength)
-						throw new IOException("warning: user " +user +" sent a too large message");
-					Request request = MixMessage.getInstanceRequest(Util.forceRead(inputStream, messageLength), user, settings);
-					inputOutputHandlerInternal.addUnprocessedRequests(new Request[]{request}); // might block
-				}
-			} catch (IOException e) {
-				System.err.println("warning: connection to " +user +" lost");
-				e.printStackTrace();
-			}*/
 		}
 	}
 	
@@ -304,7 +258,7 @@ public class ClientHandler_TCP_RR_sync extends SubImplementation {
 						System.err.println("warning: connection to " +reply.getOwner() +" lost");
 						e.printStackTrace();
 						System.exit(0);
-						// TODO: disconeect etc
+						// TODO: disconnect etc
 					}
 				}
 			}

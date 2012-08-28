@@ -35,8 +35,8 @@ public class MixPlugIn extends Implementation implements Layer2RecodingSchemeMix
 	
 	@Override
 	public void constructor() {
-		if (anonNode.ROUTING_MODE != RoutingMode.CASCADE)
-			throw new RuntimeException("not supported"); // TODO: support it...
+		if (anonNode.ROUTING_MODE == RoutingMode.FREE_ROUTE_DYNAMIC_ROUTING)
+			throw new RuntimeException("not supported");
 		this.config = new Sphinx_Config(anonNode, false);
 		this.messageCreator = new Sphinx(anonNode, config);
 		this.requestThreads = new RequestThread[config.NUMBER_OF_THREADS];

@@ -31,6 +31,7 @@ import framework.core.message.Reply;
 import framework.core.message.Request;
 import framework.core.routing.MixList;
 import framework.core.routing.RoutingMode;
+import framework.core.util.Util;
 
 
 //Kesdogan et. al. 1998: Stop-and-Go MIXes: Providing Probabilistic Anonymity in an Open System
@@ -123,6 +124,12 @@ public class ClientPlugIn extends Implementation implements Layer3OutputStrategy
 		if (anonNode.ROUTING_MODE == RoutingMode.CASCADE) {
 			numberOfMixes = anonNode.mixList.numberOfMixes;
 		} else { // free route
+			if (!anonNode.IS_CONNECTION_BASED) { // new route for every message
+				if (request.destinationPseudonym == Util.NOT_SET)
+					this.route = anonNode.mixList.getRandomRoute(anonNode.FREE_ROUTE_LENGTH);
+				else
+					this.route = anonNode.mixList.getRandomRoute(anonNode.FREE_ROUTE_LENGTH, request.destinationPseudonym);
+			} 
 			request.destinationPseudonym = this.route.mixIDs[route.mixIDs.length-1];
 			request.nextHopAddress = this.route.mixIDs[0];
 			request.route = this.route.mixIDs;

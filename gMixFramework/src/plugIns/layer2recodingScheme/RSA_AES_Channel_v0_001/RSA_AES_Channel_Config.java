@@ -26,6 +26,7 @@ import java.security.spec.X509EncodedKeySpec;
 import staticFunctions.layer2recodingScheme.basicReplayDetection_v0_001.ReplayDetectionBasic;
 import framework.core.AnonNode;
 import framework.core.config.Settings;
+import framework.core.routing.RoutingMode;
 import framework.infoService.InfoServiceClient;
 
 
@@ -58,6 +59,7 @@ public class RSA_AES_Channel_Config {
 	public int NUMBER_OF_THREADS;
 	public Key[] publicKeysOfMixes; 
 	public int numberOfMixes;
+	public int routeLength;
 	public KeyPair keyPair;
 	public ReplayDetectionBasic replayDetection;
 	
@@ -96,6 +98,10 @@ public class RSA_AES_Channel_Config {
 		if (isClientConfigObject) {
 			this.publicKeysOfMixes = getPublicKeysOfAllMixes();
 			this.numberOfMixes = publicKeysOfMixes.length;
+			if (owner.ROUTING_MODE == RoutingMode.CASCADE)
+				this.routeLength = numberOfMixes;
+			else
+				this.routeLength = owner.FREE_ROUTE_LENGTH;
 		} else { // mix
 			// publish public key:
 			this.keyPair = generateKeyPair(NAME_OF_ASYM_KEY_GENERATOR, ASYM_KEY_LENGTH * 8);

@@ -39,11 +39,13 @@ public class MixHeader {
 	private byte[][][] _asbTuples;
 	private Sphinx_Config config;
 	private SecureRandom secureRandom;
+	private Route route;
 
 	
-	public MixHeader(Sphinx_Config config, SecureRandom secureRandom) {
+	public MixHeader(Sphinx_Config config, SecureRandom secureRandom, Route route) {
 		this.config = config;
 		this.secureRandom = secureRandom;
+		this.route = route;
 		byte[][] keyPair = Sphinx.generateKeyPair(config);
 		_gX = keyPair[0]; // public
 		_x = keyPair[1]; // private
@@ -57,11 +59,11 @@ public class MixHeader {
 	public byte[][] createHeader(byte[] id) throws Exception {
 		assert id.length == config.SECURITY_PARAMETER_SIZE;
 		assert id[0] == MIX_PREFIX || id[0] == SPECIAL_DEST_PREFIX || id[0] == CLIENT_PREFIX;
-		this._betas = new byte[config.NUMBER_OF_MIXES][];
-		this._gammas = new byte[config.NUMBER_OF_MIXES][];
-		this._fillerStrings = new byte[config.NUMBER_OF_MIXES][];
-		this._secrets = new byte[config.NUMBER_OF_MIXES][];
-		this._asbTuples = new byte[config.NUMBER_OF_MIXES][][];
+		this._betas = new byte[config.ROUTE_LENGTH][];
+		this._gammas = new byte[config.ROUTE_LENGTH][];
+		this._fillerStrings = new byte[config.ROUTE_LENGTH][];
+		this._secrets = new byte[config.ROUTE_LENGTH][];
+		this._asbTuples = new byte[config.ROUTE_LENGTH][][];
 		computeTuples();
 		computeFillerStrings();
 		computeBetasGammas(id);
@@ -79,8 +81,8 @@ public class MixHeader {
 	// factor)
 	private void computeTuples() throws Exception {
 
-		byte[][] blinds = new byte[config.NUMBER_OF_MIXES+1][];
-		byte[][] alphas = new byte[config.NUMBER_OF_MIXES][];
+		byte[][] blinds = new byte[config.ROUTE_LENGTH+1][];
+		byte[][] alphas = new byte[config.ROUTE_LENGTH][];
 
 		byte[] alpha = new byte[32];
 		byte[] sharedSecret = new byte[32];
@@ -91,11 +93,11 @@ public class MixHeader {
 		// round 0
 		alpha = _gX;
 
-		assert config.publicKeysOfMixes[0] != null;
+		assert route.publicKeysOfMixes[0] != null;
 		assert blinds != null;
 		assert blinds[0] != null;
 		
-		sharedSecret = Sphinx.genSharedSecret(config.publicKeysOfMixes[0], blinds);
+		sharedSecret = Sphinx.genSharedSecret(route.publicKeysOfMixes[0], blinds);
 
 		blindingFactor = Sphinx.hashB(alpha, sharedSecret);
 		blinds[1] = blindingFactor;
@@ -111,29 +113,29 @@ public class MixHeader {
 			alpha = Sphinx.genSharedSecret(alphas[i-1], blinds[i]);
 
 			// base=public key of mix, exp= all blinds (including x)
-			sharedSecret = Sphinx.genSharedSecret(config.publicKeysOfMixes[i], blinds);
+			sharedSecret = Sphinx.genSharedSecret(route.publicKeysOfMixes[i], blinds);
 
 			blindingFactor = Sphinx.hashB(alpha, sharedSecret);
 
 			blinds[i+1] =  blindingFactor;
 			alphas[i] =  alpha;
 			_secrets[i] =  sharedSecret;
-			_asbTuples[i] =  new byte[][] { alpha, sharedSecret, blindingFactor };
+			_asbTuples[i] = new byte[][] { alpha, sharedSecret, blindingFactor };
 		}
 	}
 
 	private void computeFillerStrings() throws Exception {
 		_fillerStrings[0] = new byte[0]; // phi_0
 		// phi_1 ... phi_(v-1)
-		for (int i = 1; i < config.NUMBER_OF_MIXES; i++) {
+		for (int i = 1; i < config.ROUTE_LENGTH; i++) {
 			// previous phi padded with 2*_k zero bytes
 			byte[] paddedPhi = Util.concatArrays(_fillerStrings[i-1], Sphinx.ZERO32);
 
 			// The PRG generated with the shared secred s_(i-1)
-			byte[] prg = Sphinx.rho(Sphinx.hashRho(_secrets[i-1], config.SECURITY_PARAMETER_SIZE), config.NUMBER_OF_MIXES, config.SECURITY_PARAMETER_SIZE);
+			byte[] prg = Sphinx.rho(Sphinx.hashRho(_secrets[i-1], config.SECURITY_PARAMETER_SIZE), config.ROUTE_LENGTH, config.SECURITY_PARAMETER_SIZE);
 
-			int min = (2 * (config.NUMBER_OF_MIXES - i) + 3) * config.SECURITY_PARAMETER_SIZE;
-			int max = (2 * config.NUMBER_OF_MIXES + 3) * config.SECURITY_PARAMETER_SIZE; // exclusiv
+			int min = (2 * (config.ROUTE_LENGTH - i) + 3) * config.SECURITY_PARAMETER_SIZE;
+			int max = (2 * config.ROUTE_LENGTH + 3) * config.SECURITY_PARAMETER_SIZE; // exclusiv
 			byte[] prgTruncated = Arrays.copyOfRange(prg, min, max);
 			assert prgTruncated.length == paddedPhi.length;
 			_fillerStrings[i] = Sphinx.xor(paddedPhi, prgTruncated);
@@ -142,33 +144,33 @@ public class MixHeader {
 
 	
 	private void computeBetasGammas(byte[] id) throws Exception {
-		byte[] random = new byte[(2 * (config.NUMBER_OF_MIXES - config.NUMBER_OF_MIXES) + 2) * config.SECURITY_PARAMETER_SIZE];
+		byte[] random = new byte[(2 * (config.ROUTE_LENGTH - config.ROUTE_LENGTH) + 2) * config.SECURITY_PARAMETER_SIZE];
 		secureRandom.nextBytes(random);	// TODO: wieso wird hier gepadded? hat header 32 byte platz für dest-id?
 		
 		// Destination + ID padded with random bytes
 		byte[] paddedDestId = Util.concatArrays(id, random); // Destination + ID padded with random bytes 
 		
-		byte[] prg = Sphinx.rho(Sphinx.hashRho(_secrets[config.NUMBER_OF_MIXES-1], config.SECURITY_PARAMETER_SIZE), config.NUMBER_OF_MIXES, config.SECURITY_PARAMETER_SIZE); // The PRG generated with the shared secred s_(v-1)
-		byte[] prgTruncated = Arrays.copyOf(prg, (2 * (config.NUMBER_OF_MIXES - config.NUMBER_OF_MIXES) + 3) * config.SECURITY_PARAMETER_SIZE);
+		byte[] prg = Sphinx.rho(Sphinx.hashRho(_secrets[config.ROUTE_LENGTH-1], config.SECURITY_PARAMETER_SIZE), config.ROUTE_LENGTH, config.SECURITY_PARAMETER_SIZE); // The PRG generated with the shared secred s_(v-1)
+		byte[] prgTruncated = Arrays.copyOf(prg, (2 * (config.ROUTE_LENGTH - config.ROUTE_LENGTH) + 3) * config.SECURITY_PARAMETER_SIZE);
 
 		assert paddedDestId.length == prgTruncated.length;
 
 		// beta_v-1
-		byte[] beta = Util.concatArrays(Sphinx.xor(paddedDestId, prgTruncated), _fillerStrings[config.NUMBER_OF_MIXES-1]);
-		_betas[config.NUMBER_OF_MIXES-1] = beta;
+		byte[] beta = Util.concatArrays(Sphinx.xor(paddedDestId, prgTruncated), _fillerStrings[config.ROUTE_LENGTH-1]);
+		_betas[config.ROUTE_LENGTH-1] = beta;
 		
 		// gamma_v-1
-		byte[] gamma = Sphinx.mu(Sphinx.hashMu(_secrets[config.NUMBER_OF_MIXES-1], config.SECURITY_PARAMETER_SIZE), beta, config.SECURITY_PARAMETER_SIZE);
-		_gammas[config.NUMBER_OF_MIXES-1] = gamma;
+		byte[] gamma = Sphinx.mu(Sphinx.hashMu(_secrets[config.ROUTE_LENGTH-1], config.SECURITY_PARAMETER_SIZE), beta, config.SECURITY_PARAMETER_SIZE);
+		_gammas[config.ROUTE_LENGTH-1] = gamma;
 
 		// betas and gammas for 0<=i<v-1
-		for (int i=config.NUMBER_OF_MIXES-2; i>=0; i--) {
+		for (int i=config.ROUTE_LENGTH-2; i>=0; i--) {
 			// the first (2*r-1)_k bytes of the previous beta
-			byte[] betaTruncated = Arrays.copyOf(_betas[i+1], (2 * config.NUMBER_OF_MIXES - 1) * config.SECURITY_PARAMETER_SIZE);
+			byte[] betaTruncated = Arrays.copyOf(_betas[i+1], (2 * config.ROUTE_LENGTH - 1) * config.SECURITY_PARAMETER_SIZE);
 
-			prg = Sphinx.rho(Sphinx.hashRho(_secrets[i], config.SECURITY_PARAMETER_SIZE), config.NUMBER_OF_MIXES, config.SECURITY_PARAMETER_SIZE);
-			prgTruncated = Arrays.copyOf(prg, (2 * config.NUMBER_OF_MIXES + 1) * config.SECURITY_PARAMETER_SIZE); // the first (2*r+1)*_k bytes of the PRG
-			beta = Sphinx.xor(Util.concatArrays(new byte[][] {config.mixIdsSphinx[i+1], gamma, betaTruncated}), prgTruncated);
+			prg = Sphinx.rho(Sphinx.hashRho(_secrets[i], config.SECURITY_PARAMETER_SIZE), config.ROUTE_LENGTH, config.SECURITY_PARAMETER_SIZE);
+			prgTruncated = Arrays.copyOf(prg, (2 * config.ROUTE_LENGTH + 1) * config.SECURITY_PARAMETER_SIZE); // the first (2*r+1)*_k bytes of the PRG
+			beta = Sphinx.xor(Util.concatArrays(new byte[][] {route.mixIdsSphinx[i+1], gamma, betaTruncated}), prgTruncated);
 			gamma = Sphinx.mu(Sphinx.hashMu(_secrets[i], config.SECURITY_PARAMETER_SIZE), beta, config.SECURITY_PARAMETER_SIZE);
 
 			_betas[i] = beta;

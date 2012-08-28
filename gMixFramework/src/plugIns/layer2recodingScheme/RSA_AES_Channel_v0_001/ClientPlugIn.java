@@ -23,6 +23,7 @@ import framework.core.interfaces.Layer2RecodingSchemeClient;
 import framework.core.interfaces.Layer3OutputStrategyClient;
 import framework.core.message.Reply;
 import framework.core.message.Request;
+import framework.core.routing.RoutingMode;
 
 
 public class ClientPlugIn extends Implementation implements Layer2RecodingSchemeClient {
@@ -33,6 +34,8 @@ public class ClientPlugIn extends Implementation implements Layer2RecodingScheme
 	
 	@Override
 	public void constructor() {
+		if (anonNode.ROUTING_MODE == RoutingMode.FREE_ROUTE_DYNAMIC_ROUTING) 
+			throw new RuntimeException("RoutingMode FREE_ROUTE_DYNAMIC_ROUTING not supported, only CASADE and FREE_ROUTE_SOURCE_ROUTING"); 
 		this.config = new RSA_AES_Channel_Config(anonNode, true);
 		this.messageCreator = new RSA_AES_Channel(anonNode, config);
 		this.messageCreator.initAsClient();

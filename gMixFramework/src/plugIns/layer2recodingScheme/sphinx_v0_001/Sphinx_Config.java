@@ -26,6 +26,7 @@ import staticFunctions.layer2recodingScheme.basicReplayDetection_v0_001.ReplayDe
 import framework.core.AnonNode;
 import framework.core.config.Settings;
 import framework.core.routing.MixList;
+import framework.core.routing.RoutingMode;
 import framework.core.util.Util;
 import framework.infoService.InfoServiceClient;
 
@@ -62,7 +63,7 @@ public class Sphinx_Config {
 
 	private InfoServiceClient infoService;
 	private Settings settings;
-	
+
 	
 	public Sphinx_Config(AnonNode owner, boolean isClientConfigObject) {
 		this.settings = owner.getSettings();
@@ -75,7 +76,10 @@ public class Sphinx_Config {
 		
 		this.SECURITY_PARAMETER_SIZE = 16;  // k must be 16 bytes to work with ECC (curve25519)
 		this.NUMBER_OF_MIXES = owner.NUMBER_OF_MIXES;
-		this.ROUTE_LENGTH = NUMBER_OF_MIXES; // number of mixes to chose by clients // TODO
+		if (owner.ROUTING_MODE == RoutingMode.CASCADE)
+			this.ROUTE_LENGTH = this.NUMBER_OF_MIXES;
+		else
+			this.ROUTE_LENGTH = owner.FREE_ROUTE_LENGTH;
 		this.ALPHA_SIZE = 32;
 		this.BETA_SIZE = 16 + (ROUTE_LENGTH * 32);
 		this.GAMMA_SIZE = 16;

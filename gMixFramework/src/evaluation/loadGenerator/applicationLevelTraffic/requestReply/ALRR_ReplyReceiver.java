@@ -85,7 +85,7 @@ public class ALRR_ReplyReceiver extends Thread {
 								long delay = System.currentTimeMillis() - message.getAbsoluteSendTime();
 								System.out.println(
 										"LOAD_GENERATOR: received reply (" +
-										"transactionId:" +message.getTransactionId() 
+										"transactionId: " +message.getTransactionId() 
 										+"; replySize: " +message.getReplySize() +"bytes"
 										+"; delay: " +delay +"ms"
 										+")"

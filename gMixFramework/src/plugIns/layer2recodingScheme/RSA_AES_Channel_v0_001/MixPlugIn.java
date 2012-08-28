@@ -49,8 +49,8 @@ public class MixPlugIn extends Implementation implements Layer2RecodingSchemeMix
 	
 	@Override
 	public void constructor() {
-		if (anonNode.ROUTING_MODE != RoutingMode.CASCADE)
-			throw new RuntimeException("not supported"); // TODO: support it...
+		if (anonNode.ROUTING_MODE == RoutingMode.FREE_ROUTE_DYNAMIC_ROUTING) 
+			throw new RuntimeException("RoutingMode FREE_ROUTE_DYNAMIC_ROUTING not supported, only CASADE and FREE_ROUTE_SOURCE_ROUTING"); 
 		this.config = new RSA_AES_Channel_Config(anonNode, false);
 		this.channelsWithRequestsReady = new ArrayBlockingQueue<ChannelData>(config.NUMBER_OF_THREADS * 5);
 		this.requestWorkerThreads = new RequestWorkerThread[config.NUMBER_OF_THREADS];
@@ -143,10 +143,13 @@ public class MixPlugIn extends Implementation implements Layer2RecodingSchemeMix
 		ArrayBlockingQueue<Reply> replyQueue = new ArrayBlockingQueue<Reply>(config.RS_THREAD_QUEUE_LENGTH);
 		Object requestSynchronizer = new Object();
 		Object replySynchronizer = new Object();
+		int nextHopAddress;
+		
 		
 		public ChannelData(User owner) {
 			super(owner, getThis());
 		}
+		
 	}
 	
 	

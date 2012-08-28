@@ -33,6 +33,7 @@ import plugIns.layer2recodingScheme.RSA_AES_Channel_v0_001.MixPlugIn.ChannelData
 
 import framework.core.AnonNode;
 import framework.core.config.Settings;
+import framework.core.message.MixMessage;
 import framework.core.message.Reply;
 import framework.core.message.Request;
 import framework.core.routing.RoutingMode;
@@ -68,16 +69,14 @@ public class RSA_AES_Channel {
 	
 	
 	public void initAsClient() {
-		if (owner.ROUTING_MODE != RoutingMode.CASCADE)
-			throw new RuntimeException("not supported"); // TODO: support it...
-		this.macKeys = new SecretKey[config.numberOfMixes]; 
-		this.sessionKeysForRequestChannel = new SecretKey[config.numberOfMixes];
-		this.sessionKeysForReplyChannel = new SecretKey[config.numberOfMixes];
-		this.sessionIVsForRequestChannel = new IvParameterSpec[config.numberOfMixes];
-		this.sessionIVsForReplyChannel = new IvParameterSpec[config.numberOfMixes];
-		this.symmetricEncryptCiphers = new Cipher[config.numberOfMixes];
-		this.symmetricDecryptCiphers = new Cipher[config.numberOfMixes];
-		this.asymmetricCiphers = new Cipher[config.numberOfMixes];
+		this.macKeys = new SecretKey[config.routeLength]; 
+		this.sessionKeysForRequestChannel = new SecretKey[config.routeLength];
+		this.sessionKeysForReplyChannel = new SecretKey[config.routeLength];
+		this.sessionIVsForRequestChannel = new IvParameterSpec[config.routeLength];
+		this.sessionIVsForReplyChannel = new IvParameterSpec[config.routeLength];
+		this.symmetricEncryptCiphers = new Cipher[config.routeLength];
+		this.symmetricDecryptCiphers = new Cipher[config.routeLength];
+		this.asymmetricCiphers = new Cipher[config.routeLength];
 		// create key generators and ciphers
 		try {
 			this.secureRandom = SecureRandom.getInstance(config.PRNG_ALGORITHM);
@@ -92,7 +91,6 @@ public class RSA_AES_Channel {
 	
 	
 	public void initAsRecoder() {
-		assert owner.ROUTING_MODE == RoutingMode.CASCADE;
 		try {
 			this.secureRandom = SecureRandom.getInstance(config.PRNG_ALGORITHM);
 			this.asymmetricCipher = Cipher.getInstance(config.ASYM_CRYPTOGRAPHY_ALGORITHM, config.CRYPTO_PROVIDER);
@@ -131,6 +129,22 @@ public class RSA_AES_Channel {
 			
 			int pointer = 0;
 			mac = Arrays.copyOfRange(asymPlaintext, pointer, pointer += config.MAC_LENGTH);
+			
+			if (owner.ROUTING_MODE == RoutingMode.FREE_ROUTE_SOURCE_ROUTING) { // determine next hop if source routing is enabled
+				byte[] nextHopAddress = Arrays.copyOfRange(asymPlaintext, pointer, pointer += 4);
+				int address = Util.byteArrayToInt(nextHopAddress);
+				if (address == owner.PUBLIC_PSEUDONYM) { // this mix is the last hop
+					if (owner.DISPLAY_ROUTE_INFO)
+						System.out.println(""+owner +" setting nextHopAddress to \"LAST HOP\""); 
+					message.nextHopAddress = MixMessage.NONE;
+					channelData.nextHopAddress = MixMessage.NONE;
+				} else { // this mix is not the last hop
+					if (owner.DISPLAY_ROUTE_INFO)
+						System.out.println(""+owner +" setting nextHopAddress to " +address); 
+					message.nextHopAddress = address;
+					channelData.nextHopAddress = address;
+				}
+			}
 			
 			byte[] macKeyAsByteArray = Arrays.copyOfRange(asymPlaintext, pointer, pointer += config.MAC_KEY_LENGTH);
 			channelData.macKey = new SecretKeySpec(macKeyAsByteArray, config.MAC_ALGORITHM);
@@ -231,6 +245,18 @@ public class RSA_AES_Channel {
 			}
 			//System.out.println("0=0=0=0=0: cm@" +mix.toString() +": symPlaintext:"+Util.md5(plaintext) +" <- " +ct +", received mac:" +Util.md5(mac) +", locallyGeneratedMac: " +Util.md5(locallyGeneratedMac) +", signedData: " +Util.md5(signedData) +"; key: " +Util.md5(channelData.reqKey.getEncoded()) +"; iv: "+Util.md5(channelData.decryptCipher.getIV()) ); 
 			
+			if (owner.ROUTING_MODE == RoutingMode.FREE_ROUTE_SOURCE_ROUTING) { // set next hop address if source routing is enabled
+				if (channelData.nextHopAddress == owner.PUBLIC_PSEUDONYM) { // this mix is the last hop
+					if (owner.DISPLAY_ROUTE_INFO)
+						System.out.println(""+owner +" setting nextHopAddress to \"LAST HOP\""); 
+					message.nextHopAddress = MixMessage.NONE;
+				} else { // this mix is not the last hop
+					if (owner.DISPLAY_ROUTE_INFO)
+						System.out.println(""+owner +" setting nextHopAddress to " +channelData.nextHopAddress); 
+					message.nextHopAddress = channelData.nextHopAddress;
+				}
+			}
+			
 			return message;
 			
 		} catch (NoSuchAlgorithmException e) {
@@ -245,7 +271,12 @@ public class RSA_AES_Channel {
 
 	
 	public synchronized Reply recodeReply(Reply message, ChannelData channelData) {
-		if (owner.IS_LAST_MIX) {
+		boolean isLastMix = false;
+		if (owner.ROUTING_MODE == RoutingMode.CASCADE && owner.IS_LAST_MIX)
+			isLastMix = true;
+		else if (channelData.nextHopAddress == MixMessage.NONE)
+			isLastMix = true;
+		if (isLastMix) {
 			if (message.getByteMessage() == null) // dummy
 				message.setByteMessage(new byte[0]);
 			if (message.getByteMessage().length > config.MAX_PAYLOAD)
@@ -266,7 +297,7 @@ public class RSA_AES_Channel {
 		}
 		byte[] result = channelData.encryptCipher.update(message.getByteMessage());
 		// System.out.println(" oOoOo " +owner.toString() +" sende " +Util.md5(message.getByteMessage()) + " -> " +Util.md5(result) +"( for " +message.getOwner() +", " +channelData +")"); 
-		assert result.length == message.getByteMessage().length;
+		assert result.length == message.getByteMessage().length: "" +result.length +" != " +message.getByteMessage().length;
 		message.setByteMessage(result);
 		
 		return message;
@@ -294,10 +325,15 @@ public class RSA_AES_Channel {
 			throw new RuntimeException("can't send more than " +config.MAX_PAYLOAD +" bytes in one message"); 
 		
 		// generate keys, init ciphers etc.
-		for (int i=config.numberOfMixes-1; i>=0; i--) {
+		for (int i=config.routeLength-1; i>=0; i--) {
 			try {
 				this.asymmetricCiphers[i] = Cipher.getInstance(settings.getProperty("ASYM_CRYPTOGRAPHY_ALGORITHM"), owner.CRYPTO_PROVIDER);
-				this.asymmetricCiphers[i].init(Cipher.ENCRYPT_MODE, config.publicKeysOfMixes[i]);
+				if (owner.ROUTING_MODE == RoutingMode.CASCADE)
+					this.asymmetricCiphers[i].init(Cipher.ENCRYPT_MODE, config.publicKeysOfMixes[i]);
+				else {
+					this.asymmetricCiphers[i].init(Cipher.ENCRYPT_MODE, config.publicKeysOfMixes[request.route[i]]); // TODO: possible side-effect -> won't work anymore if mix-ids are chosen differently
+					System.out.println("" +owner +" using public key " +Util.md5(config.publicKeysOfMixes[request.route[i]].getEncoded()) +"for mix " +request.route[i]);
+				}
 				this.sessionKeysForRequestChannel[i] = symKeyGenerator.generateKey();
 				this.macKeys[i] = macKeyGenerator.generateKey();
 				byte[] ivReq = new byte[sessionKeysForRequestChannel[i].getEncoded().length];
@@ -320,7 +356,7 @@ public class RSA_AES_Channel {
 		
 		String s = "";
 		// add header and encryption layer for each mix
-		for (int i=config.numberOfMixes-1; i>=0; i--) {
+		for (int i=config.routeLength-1; i>=0; i--) {
 			try {
 				// generate header (without mac; must be added later)
 				byte[] mac;
@@ -348,8 +384,16 @@ public class RSA_AES_Channel {
 						});
 				}
 				
+				if (owner.ROUTING_MODE == RoutingMode.FREE_ROUTE_SOURCE_ROUTING) { // add route-info
+					if (i == config.routeLength-1) { // last mix
+						plaintext = Util.concatArrays(Util.intToByteArray(request.route[request.route.length-1]), plaintext);
+					} else {
+						plaintext = Util.concatArrays(Util.intToByteArray(request.route[i+1]), plaintext);
+					}
+				}
+					
 				// add padding for last mix' payload
-				if (i == config.numberOfMixes-1 && payload.length != config.MAX_PAYLOAD) {
+				if (i == config.routeLength-1 && payload.length != config.MAX_PAYLOAD) {
 					byte[] padding = new byte[config.MAX_PAYLOAD - payload.length];
 					secureRandom.nextBytes(padding);
 					plaintext = Util.concatArrays(plaintext, padding);
@@ -437,13 +481,13 @@ public class RSA_AES_Channel {
 		if (payload.length > config.MAX_PAYLOAD)
 			throw new RuntimeException("can't send more than " +config.MAX_PAYLOAD +" bytes in one message"); 
 		
-		for (int i=config.numberOfMixes-1; i>=0; i--) {
+		for (int i=config.routeLength-1; i>=0; i--) {
 			// add length-header
 			try {
 				byte[] payloadLength = Util.intToByteArray(payload.length);
 				payload = Util.concatArrays(payloadLength, payload);
 				// add padding for last mix' payload
-				if (i == config.numberOfMixes-1 && payload.length != config.MAX_PAYLOAD) {
+				if (i == config.routeLength-1 && payload.length != config.MAX_PAYLOAD) {
 					byte[] padding = new byte[(config.MAX_PAYLOAD + config.MAC_LENGTH) - payload.length];
 					secureRandom.nextBytes(padding);
 					payload = Util.concatArrays(payload, padding);
@@ -494,10 +538,9 @@ public class RSA_AES_Channel {
 
 
 	public Reply extractPayload(Reply reply) {
-		// TODO: extract iv; setup cipher...
 		byte[] result = reply.getByteMessage();
 		//byte[] forLater = reply.getByteMessage().clone();
-		for (int i=0; i<config.numberOfMixes; i++) {
+		for (int i=0; i<config.routeLength; i++) {
 			Cipher cipher = symmetricDecryptCiphers[i];
 			byte[] plaintext = cipher.update(result);
 			assert plaintext.length == result.length;

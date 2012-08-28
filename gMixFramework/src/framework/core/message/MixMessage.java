@@ -33,7 +33,7 @@ public abstract class MixMessage implements Message, ExternalMessage, Comparable
 	public static boolean recordStatistics = false;
 	public int nextHopAddress = Util.NOT_SET;
 
-	public int destinationPseudonym;
+	public int destinationPseudonym = Util.NOT_SET;
 	public int[] route;
 	public byte[][] headers;
 
