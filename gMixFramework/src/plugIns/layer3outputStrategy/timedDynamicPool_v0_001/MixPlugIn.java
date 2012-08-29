@@ -30,31 +30,65 @@ import framework.core.message.Reply;
 import framework.core.message.Request;
 
 
-//Cottrell 1995 ("Mixmaster & Remailer Attacks")
-//"The mix fires every t seconds, provided there are n + f(min) messages in the 
-//mix; however, instead of sending n messages (as in a timed- and-threshold
-//constant-pool mix), the mix sends the greater of 1 and m * frac messages,
-//and retains the rest in the pool, where m + fmin is the number of messages
-//in the mix (m >=n). If n = 1, this is the mix that has been used in the 
-//Mixmaster remailer system for years."
-//implemented as described in "Generalising Mixes" (Diaz)
+/**
+ * Output strategy used in Mixminion according to Mixminion spec (see 
+ * below). Based on Cottrell 1995 ("Mixmaster & Remailer Attacks")
+ * Note that the actual (29.08.2012) Mixminion implementation is slightly 
+ * different (see "https://github.com/mixminion/mixminion/blob/master/lib/
+ * mixminion/server/ServerQueue.py"). A Java port of the actual (29.08.2012) 
+ * Mixminion implementation can be found in mixminion_v0_001 plug-in.
+ * 
+ * implemented as described in:
+ * http://mixminion.net/minion-spec.txt ($Id: minion-spec.txt,v
+ * 1.31 2007/04/21 16:57:47 arma Exp $ ): 
+ * 
+ * "A.1. Appendix: A suggested pooling rule
+ * 
+ * In order to allow room for future experimentation, we do not require
+ * a single batching rule. Nonetheless, we describe a recommended rule
+ * (as used in Mixmaster) which is somewhat resistant to flooding
+ * attacks. Implementors are strongly encouraged to use this algorithm,
+ * or another equally robust against active and passive attacks. (Be
+ * sure to read \cite{batching-taxonomy}. [XXXX Ref])
+ * 
+ * PROCEDURE: Choose sets of messages to transmit ("Cottrell-style batching")
+ * 
+ * Inputs: 
+ *    Q (a queue of messages)
+ *    N (the number of messages in the queue).
+ *    MIX_INTERVAL (algorithm parameter; time to wait between batches of
+ *      messages. Should be around XXXXX. Must be >= 0.)
+ *    POOL_SIZE (algorithm parameter; minimum size of pool. Should be at least
+ *      XXXXXXXX. Must be >= 0.)
+ *    MAX_REPLACEMENT_RATE (algorithm parameter; largest allowable rate 
+ *      for messages to be removed from the pool. Should be between XXXX 
+ *      and XXXX. Must have 0.0 < MAX_REPLACEMENT_RATE <= 1.0)
+ * 
+ * Outputs: (A set of messages sent to the network).
+ * 1. Wait for MIX_INTERVAL seconds.
+ * 2. If N > POOL_SIZE, then let 'max_send' =
+ * FLOOR(N*MAX_REPLACEMENT_RATE). [If 'max_send' < 0, let max_send = 1.]
+ * Choose Min(N-POOL_SIZE, max_send) messages from Q. Transmit the
+ * selected messages.
+ * 3. Repeat indefinitely."
+ */
 public class MixPlugIn extends Implementation implements Layer3OutputStrategyMix {
 
 	private SecureRandom secureRandom;
 	private SimplexTimedDynamicPool requestPool;
 	private SimplexTimedDynamicPool replyPool;
 	private int DEFAULT_POOL_SIZE;
-	private int SENDING_RATE;
-	private double MIN_MESSAGES;
-	private double FRACTION;
+	private int MIX_INTERVAL;
+	private int POOL_SIZE;
+	private double MAX_REPLACEMENT_RATE;
 
 	
 	@Override
 	public void constructor() {
 		this.DEFAULT_POOL_SIZE = settings.getPropertyAsInt("TIMED_DYNAMIC_POOL_DEFAULT_POOL_SIZE");
-		this.SENDING_RATE = settings.getPropertyAsInt("TIMED_DYNAMIC_POOL_SENDING_RATE");
-		this.MIN_MESSAGES = settings.getPropertyAsDouble("TIMED_DYNAMIC_POOL_MIN_MESSAGES");
-		this.FRACTION = settings.getPropertyAsDouble("TIMED_DYNAMIC_POOL_FRACTION");
+		this.MIX_INTERVAL = settings.getPropertyAsInt("TIMED_DYNAMIC_POOL_MIX_INTERVAL");
+		this.POOL_SIZE = settings.getPropertyAsInt("TIMED_DYNAMIC_POOL_POOL_SIZE");
+		this.MAX_REPLACEMENT_RATE = settings.getPropertyAsDouble("TIMED_DYNAMIC_POOL_MAX_REPLACEMENT_RATE");
 		this.requestPool = new SimplexTimedDynamicPool(true);
 		this.replyPool = new SimplexTimedDynamicPool(false);
 		try {
@@ -89,7 +123,7 @@ public class MixPlugIn extends Implementation implements Layer3OutputStrategyMix
 		replyPool.addMessage((MixMessage) reply);
 	}
 
-	
+
 	public class SimplexTimedDynamicPool {
 
 		private boolean isRequestPool;
@@ -106,33 +140,69 @@ public class MixPlugIn extends Implementation implements Layer3OutputStrategyMix
 		
 		public void addMessage(MixMessage mixMessage) {
 			synchronized (collectedMessages) {
-				if (isFirstMessage) {
-					isFirstMessage = false;
-					timer.scheduleAtFixedRate(new TimeoutTask(this), SENDING_RATE, SENDING_RATE);
+				if (isFirstMessage) { // "1. Wait for MIX_INTERVAL seconds."
+					isFirstMessage = false; 
+					timer.scheduleAtFixedRate(
+							new TimeoutTask(this), 
+							MIX_INTERVAL, 
+							MIX_INTERVAL
+							); // "3. Repeat indefinitely."
 				}
 				collectedMessages.add(mixMessage);
 			}
 		}
 
-		
+		/*
+		 * from http://mixminion.net/minion-spec.txt ($Id: minion-spec.txt,v
+		 * 1.31 2007/04/21 16:57:47 arma Exp $ ): 
+		 * 
+		 * "Inputs: 
+		 *    Q (a queue of messages)
+		 *    N (the number of messages in the queue).
+		 *    MIX_INTERVAL (algorithm parameter; time to wait between batches of
+		 *      messages. Should be around XXXXX. Must be >= 0.)
+		 *    POOL_SIZE (algorithm parameter; minimum size of pool. Should be at
+		 *      least XXXXXXXX. Must be >= 0.)
+		 *    MAX_REPLACEMENT_RATE (algorithm parameter; largest allowable rate 
+		 *      for messages to be removed from the pool. Should be between XXXX 
+		 *      and XXXX. Must have 0.0 < MAX_REPLACEMENT_RATE <= 1.0)
+		 * 
+		 * Outputs: (A set of messages sent to the network).
+		 * 1. Wait for MIX_INTERVAL seconds.
+		 * 2. If N > POOL_SIZE, then let 'max_send' =
+		 * FLOOR(N*MAX_REPLACEMENT_RATE). [If 'max_send' < 0, let max_send = 1.]
+		 * Choose Min(N-POOL_SIZE, max_send) messages from Q. Transmit the
+		 * selected messages.
+		 * 3. Repeat indefinitely."
+		 * 
+		 * note that "Q" is named "collectedMessages" in this class
+		 * note that "max_send" is named "numberOfMessagesToSend" in this class
+		 */
 		public void putOutMessages() {
 			synchronized (collectedMessages) {
-				if (collectedMessages.size() > MIN_MESSAGES) {
-					int numberOfMessagesToPutOut = (int) Math.floor(FRACTION * (collectedMessages.size() - MIN_MESSAGES));
-					if (isRequestPool) {
-						Request[] requests = new Request[numberOfMessagesToPutOut];
-						for (int i=0; i<numberOfMessagesToPutOut; i++) {
-							int chosen = secureRandom.nextInt(collectedMessages.size());
-							requests[i] = (Request)collectedMessages.remove(chosen);
-						} 
-						anonNode.putOutRequests(requests);
-					} else {
-						Reply[] replies = new Reply[numberOfMessagesToPutOut];
-						for (int i=0; i<numberOfMessagesToPutOut; i++) {
-							int chosen = secureRandom.nextInt(collectedMessages.size());
-							replies[i] = (Reply)collectedMessages.remove(chosen);
-						} 
-						anonNode.putOutReplies(replies);
+				int N = collectedMessages.size();
+				if (N > POOL_SIZE) { // "2. If N > POOL_SIZE, then ..."
+					int numberOfMessagesToSend = (int) Math.floor(N * MAX_REPLACEMENT_RATE);
+					if (numberOfMessagesToSend < 0)
+						numberOfMessagesToSend = 1;
+					numberOfMessagesToSend = Math.min(N - POOL_SIZE, numberOfMessagesToSend);
+					// choose and transmit messages:
+					if (numberOfMessagesToSend > 0) {
+						if (isRequestPool) {
+							Request[] requests = new Request[numberOfMessagesToSend];
+							for (int i=0; i<numberOfMessagesToSend; i++) {
+								int chosen = secureRandom.nextInt(collectedMessages.size());
+								requests[i] = (Request)collectedMessages.remove(chosen);
+							} 
+							anonNode.putOutRequests(requests);
+						} else {
+							Reply[] replies = new Reply[numberOfMessagesToSend];
+							for (int i=0; i<numberOfMessagesToSend; i++) {
+								int chosen = secureRandom.nextInt(collectedMessages.size());
+								replies[i] = (Reply)collectedMessages.remove(chosen);
+							} 
+							anonNode.putOutReplies(replies);
+						}
 					}
 				}
 			}
