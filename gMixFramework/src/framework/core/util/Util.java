@@ -49,6 +49,9 @@ import javax.crypto.KeyGenerator;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
+import framework.core.message.Reply;
+import framework.core.message.Request;
+
 
 public final class Util {
 	
@@ -526,7 +529,38 @@ public final class Util {
 	}
 	
 	
-	@SuppressWarnings("unchecked") // type safety is assured through generic method header; the need for "@SuppressWarnings" is a flaw/feature of java generics...
+	public static Request[][] splitInChunks(int chunkSize, Request[] source) {
+		if (source.length <= chunkSize)
+			throw new RuntimeException("cannot split the bypassed array (array is smaller than chunkSize)"); 
+		int chunks = (int) Math.ceil((double)source.length / (double)chunkSize);
+		Request[][] result = new Request[chunks][];
+		int pointer = 0;
+		for (int i=0; i<result.length; i++)
+			if (i < result.length-1)
+				result[i] = Arrays.copyOfRange(source, pointer, pointer+=chunkSize);
+			else
+				result[i] = Arrays.copyOfRange(source, pointer, source.length);
+		return result;
+	}
+	
+	
+	public static Reply[][] splitInChunks(int chunkSize, Reply[] source) {
+		if (source.length <= chunkSize)
+			throw new RuntimeException("cannot split the bypassed array (array is smaller than chunkSize)"); 
+		int chunks = (int) Math.ceil((double)source.length / (double)chunkSize);
+		Reply[][] result = new Reply[chunks][];
+		int pointer = 0;
+		for (int i=0; i<result.length; i++)
+			if (i < result.length-1)
+				result[i] = Arrays.copyOfRange(source, pointer, pointer+=chunkSize);
+			else
+				result[i] = Arrays.copyOfRange(source, pointer, source.length);
+		return result;
+	}
+	
+	
+	
+	/*@SuppressWarnings("unchecked") // type safety is assured through generic method header; the need for "@SuppressWarnings" is a flaw/feature of java generics...
 	public static <T> T[][] splitInChunks(int chunkSize, T[] source) {
 		if (source.length <= chunkSize)
 			throw new RuntimeException("cannot split the bypassed array (array is smaller than chunkSize)"); 
@@ -539,7 +573,7 @@ public final class Util {
 			else
 				result[i] = Arrays.copyOfRange(source, pointer, source.length);
 		return (T[][]) result;
-	}
+	}*/
 
 	
 	public static byte[][] splitInChunks(int chunkSize, byte[] source) {
@@ -558,7 +592,7 @@ public final class Util {
 	
 	
 	
-	@SuppressWarnings("unchecked") // type safety is assured through generic method header; the need for "@SuppressWarnings" is a flaw/feature of java generics...
+	/*@SuppressWarnings("unchecked") // type safety is assured through generic method header; the need for "@SuppressWarnings" is a flaw/feature of java generics...
 	public static <T> T[][] splitAfter(int splitBefore, T[] source) {
 		if (source.length <= splitBefore)
 			throw new RuntimeException("cannot split the bypassed array (array too small)"); 
@@ -566,7 +600,7 @@ public final class Util {
 		result[0] = Arrays.copyOfRange(source, 0, splitBefore);
 		result[1] = Arrays.copyOfRange(source, splitBefore, source.length);
 		return (T[][]) result;
-	}
+	}*/
 	
 	
 	public static byte[][] split(int splitBefore, byte[] source) {
