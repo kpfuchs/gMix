@@ -42,7 +42,7 @@ TOLERANCE = 2500
 # ------------------------------------------------------------------------------
 # settings for APPLICATION_LEVEL load generation:
 #
-AL-MODE = CONSTANT_RATE
+AL-MODE = AFAP
 #	possible values:
 #		- TRACE_FILE: the load generator will replay traffic from a trace file 
 #		  (see property "TRACE_FILE_NAME" below)
@@ -67,7 +67,7 @@ AL-TRACE_FILE-USE_DYNAMIC_SCHEDULE = FALSE
 #	corresponding reply (before sending the next request)
 #
 # ---AFAP-options:
-AL-AFAP-NUMBER_OF_CLIENTS = 10
+AL-AFAP-NUMBER_OF_CLIENTS = 1
 #
 # ---CONSTANT_RATE-options:
 AL-CONSTANT_RATE-REQUEST_PAYLOAD_SIZE = AUTO

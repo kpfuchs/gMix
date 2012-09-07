@@ -1,0 +1,16 @@
+#
+LAYER_1_PLUG-IN_MIX = sourceRouting_TCP_v0_001
+LAYER_1_PLUG-IN_CLIENT = sourceRouting_TCP_v0_001
+#
+LAYER_2_PLUG-IN_MIX = RSA_AES_Channel_v0_001
+LAYER_2_PLUG-IN_CLIENT = RSA_AES_Channel_v0_001
+#
+LAYER_3_PLUG-IN_MIX = noDelay_v0_001
+LAYER_3_PLUG-IN_CLIENT = sendImmediately_v0_001
+#
+LAYER_4_PLUG-IN_MIX = 
+LAYER_4_PLUG-IN_CLIENT = 
+#
+LAYER_5_PLUG-IN_MIX = StatisticsPlugInStreamSocket_v0_001
+LAYER_5_PLUG-IN_CLIENT = StatisticsPlugInStreamSocket_v0_001
+#
