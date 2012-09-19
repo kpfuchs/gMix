@@ -231,7 +231,7 @@ public class RSA_AES_Channel {
 			byte[] locallyGeneratedMac = macGenerator.doFinal(signedData);
 			
 			if (!Arrays.equals(locallyGeneratedMac, mac)) {
-				System.err.println(owner.toString() +"wrong MAC cm! " +ct +" mac of " +Util.md5(signedData) +" is " +Util.md5(mac)); // TODO
+				System.err.println(owner.toString() +"wrong MAC cm! " +message +": " +ct +" mac of " +Util.md5(signedData) +" is " +Util.md5(mac)); // TODO
 				return null;
 			}
 			

@@ -208,7 +208,7 @@ public class Sphinx {
 
 	public synchronized Request recodeMessage(Request message) {
 		try {
-			EncryptedMessage msg = new EncryptedMessage(message.getByteMessage(), config);
+			EncryptedMessage msg = new EncryptedMessage(message, config);
 			// System.out.println("processing at " + new String(Hex.encode(_name)));
 			if (msg.alpBetaGam[0].length != 32) {
 				System.out.println("alpha is not an element of ECC group curve25519");
@@ -225,7 +225,7 @@ public class Sphinx {
 			}
 
 			if (!Arrays.equals(msg.alpBetaGam[2], Sphinx.mu(Sphinx.hashMu(sharedSecret, config.SECURITY_PARAMETER_SIZE), msg.alpBetaGam[1], config.SECURITY_PARAMETER_SIZE))) {
-				System.out.println("MAC mismatch");
+				System.err.println("MAC mismatch " +message +", " +Util.md5(message.getByteMessage()) +", " +message +", " +owner); // TODO: remove 
 				return null;
 			}
 

@@ -46,11 +46,13 @@ public class AFAP_Echo_ExitNodeRequestReceiver implements ExitNodeRequestReceive
 	
 	@Override
 	public void dataReceived(ClientData client, byte[] dataReceived) {
-		try {
-			client.socket.getOutputStream().write(dataReceived);
-			client.socket.getOutputStream().flush();
-		} catch (IOException e) {
-			e.printStackTrace();
+		if (anonNode.IS_DUPLEX) {
+			try {
+				client.socket.getOutputStream().write(dataReceived);
+				client.socket.getOutputStream().flush();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 

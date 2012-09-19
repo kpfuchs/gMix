@@ -588,14 +588,29 @@ public class AnonNode extends GMixTool {
 		assert requests.length != 0;
 		if (requests.length > QUEUE_BLOCK_SIZE) {
 			Request[][] splitted = Util.splitInChunks(QUEUE_BLOCK_SIZE, requests);
-			for (Request[] block:splitted)
-				putInRequestInputQueue(block);
+			for (Request[] block:splitted) {
+				putInRequestInputQueue(block, true);
+			}
+		} else {
+			try {
+				requestInputQueue.put(requests);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+				putInRequestInputQueue(requests);
+			}
 		}
+	}
+	
+	
+	private void putInRequestInputQueue(Request[] requests, boolean force) {
+		assert requests != null;
+		assert requests.length != 0;
+		assert requests.length <= QUEUE_BLOCK_SIZE;
 		try {
 			requestInputQueue.put(requests);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
-			putInRequestInputQueue(requests);
+			putInRequestInputQueue(requests, true);
 		}
 	}
 	
@@ -658,16 +673,17 @@ public class AnonNode extends GMixTool {
 			Reply[][] splitted = Util.splitInChunks(QUEUE_BLOCK_SIZE, replies);
 			for (Reply[] block:splitted)
 				putInReplyInputQueue(block);
+		} else {
+			try {
+				replyInputQueue.put(replies);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+				putInReplyInputQueue(replies);
+			}
 		}
-		try {
-			if (this.RECORD_STATISTICS_ON)
-				for (Reply reply:replies)
-					StatisticsRecorder.addReplyThroughputRecord(reply.getByteMessage().length, reply.getOwner());
-			replyInputQueue.put(replies);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-			putInReplyInputQueue(replies);
-		}
+		if (this.RECORD_STATISTICS_ON)
+			for (Reply reply:replies)
+				StatisticsRecorder.addReplyThroughputRecord(reply.getByteMessage().length, reply.getOwner());
 	}
 	
 	

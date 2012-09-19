@@ -180,7 +180,7 @@ public class NextMixHandler_TCP_RR_multiplexed_sync extends SubImplementation im
 							}	
 						}
 						if (anonNode.DISPLAY_ROUTE_INFO)
-							System.out.println("" +anonNode +" sending request on layer 1 to next mix (mix " +con.mixId +")");
+							System.out.println("" +anonNode +" sending request on layer 1 to next mix (mix " +con.mixId +"); " +Util.md5(requests[i].getByteMessage()));
 						synchronized (nextMixToThisIDs) {
 							con.nextMixOutputStream.write(Util.intToByteArray(thisToNextMixIDs.get(requests[i].getOwner())));
 						}

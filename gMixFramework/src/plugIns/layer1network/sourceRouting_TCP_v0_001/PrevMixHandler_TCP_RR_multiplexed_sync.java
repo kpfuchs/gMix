@@ -197,6 +197,8 @@ public class PrevMixHandler_TCP_RR_multiplexed_sync extends SubImplementation im
 									byte[] msg = new byte[con.currentRequestLength];
 									int read = con.previousMixInputStream.read(msg);
 									assert read == con.currentRequestLength; // should not be different due to buffered stream; check anyways...
+									//System.err.println("next mix received: id: " +con.currentUserIdentifier +"; msg-length: " +con.currentRequestLength +"; msg: " +Util.md5(msg)); 
+									
 									con.currentUserIdentifier = Util.NOT_SET;
 									con.currentRequestLength = Util.NOT_SET;
 									Request r = MixMessage.getInstanceRequest(msg, con.currentUser);
@@ -237,7 +239,7 @@ public class PrevMixHandler_TCP_RR_multiplexed_sync extends SubImplementation im
 				}
 				
 				for (Vector<Request> requests:newRequests)
-					anonNode.putInRequestInputQueue(requests.toArray(new Request[0])); // might block
+					anonNode.putInRequestInputQueue(requests.toArray(new Request[0])); // might block				}
 			}
 		}
 		

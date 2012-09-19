@@ -19,6 +19,7 @@ package plugIns.layer2recodingScheme.sphinx_v0_001;
 
 import java.util.Arrays;
 
+import framework.core.message.Request;
 import framework.core.util.Util;
 
 
@@ -33,7 +34,7 @@ public class EncryptedMessage {
 	}
 	
 	
-	public EncryptedMessage(byte[] message, Sphinx_Config config) {
+	public EncryptedMessage(Request message, Sphinx_Config config) {
 		toObject(message, config);
 	}
 	
@@ -47,14 +48,14 @@ public class EncryptedMessage {
 	}
 	
 	
-	public void toObject(byte[] message, Sphinx_Config config) {
-		assert message.length == config.getTotalMessageSize();
+	public void toObject(Request message, Sphinx_Config config) {
+		assert message.getByteMessage().length == config.getTotalMessageSize(): "wrong size: " +message;
 		this.alpBetaGam = new byte[3][];
 		int pointer = 0;
-		alpBetaGam[0] = Arrays.copyOfRange(message, pointer, pointer += config.ALPHA_SIZE);
-		alpBetaGam[1] = Arrays.copyOfRange(message, pointer, pointer += config.BETA_SIZE);
-		alpBetaGam[2] = Arrays.copyOfRange(message, pointer, pointer += 16);
-		delta = Arrays.copyOfRange(message, pointer, message.length);
+		alpBetaGam[0] = Arrays.copyOfRange(message.getByteMessage(), pointer, pointer += config.ALPHA_SIZE);
+		alpBetaGam[1] = Arrays.copyOfRange(message.getByteMessage(), pointer, pointer += config.BETA_SIZE);
+		alpBetaGam[2] = Arrays.copyOfRange(message.getByteMessage(), pointer, pointer += 16);
+		delta = Arrays.copyOfRange(message.getByteMessage(), pointer, message.getByteMessage().length);
 	}
 	
 }
