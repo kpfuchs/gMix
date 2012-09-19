@@ -81,10 +81,13 @@ public class LocalTest extends GMixTool implements EipEventListener {
 		for (int i=0; i<numberOfMixes; i++) {
 			mixStarters[i] = new MixStarter();
 			mixStarters[i].start();
+		}
+		for (int i=0; i<numberOfMixes; i++) {
 			try {
-				Thread.sleep(2000);	
+				mixStarters[i].join();
 			} catch (InterruptedException e) {
 				e.printStackTrace();
+				continue;
 			}
 		}
 	}
