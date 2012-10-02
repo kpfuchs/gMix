@@ -782,6 +782,15 @@ public class Simulator extends GMixTool {
 				}
 
 			} catch (Exception e) {
+				System.err.println(
+						"\nThe simulator could not plot the results as gnuplot was not found on your system\n" +
+						"or a gnuplot error occured (see the more detailed error log below.). Make sure you\n" +
+						"have gnuplot installed and set the variable \"GNUPLOT_FOLDER\" in \"(./inputOutput/\n" +
+						"simulator/config/simulatorConfig.txt\" to point at the gnuplot executable (e.g.\n" +
+						"\"GNUPLOT_FOLDER = gnuplot\" or \"GNUPLOT_FOLDER = /opt/local/bin/gnuplot\"\n" +
+						"Note that the results of this run (plotscripts, recorded statistics as txt and a\n" +
+						"config dump) are not lost, but stored in \"./inputOutput/simulator/output/\".\n\n\n" +
+						"Detailed error log:");
 				e.printStackTrace();
 				throw new RuntimeException("ERROR"); 
 			}
