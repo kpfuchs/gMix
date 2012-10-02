@@ -17,9 +17,6 @@
  */
 package evaluation.simulator.core;
 
-
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.util.*;
 
@@ -589,7 +586,7 @@ public class Simulator extends GMixTool {
 		String[] measurands = StatisticsType.getDistinctMeasurandsFromList(ep.statisticsType);
 	
 		for (int i=0; i<ep.values.length; i++) { // for each value of the parameter(s) to vary
-			
+
 			contentForFileExplainedResultsTxt += "\n";
 			
 			if (!ep.useSecondPropertyToVary)
@@ -662,13 +659,12 @@ public class Simulator extends GMixTool {
 	
 	private static void plotResults(BigDecimal[][][][] results, ExperimentConfig ep) {
 		
-		String contentForFilePlotOutput = "";
 		String[] measurands = StatisticsType.getDistinctMeasurandsFromList(ep.statisticsType);
 		
 		for (String measurand : measurands) { // generate diagram for each measurand
 			
-			String experimentDescription = "effect of " + ep.propertyToVary
-					+ " on " + measurand;
+			// modify plotscript template to match the current simulation:
+			String experimentDescription = "effect of " + ep.propertyToVary + " on " + measurand;
 			String plotScript = Util.getFileContent(Paths.SIM_PLOTSCRIPT_FOLDER_PATH
 					+ settings.getProperty("NAME_OF_PLOT_SCRIPT"));
 			plotScript = plotScript.replace(
@@ -679,13 +675,10 @@ public class Simulator extends GMixTool {
 					"varXLabel = \"" + ep.propertyToVary + "\"");
 			plotScript = plotScript.replace(
 					"varYLabel = \"WILL_BE_SET_AUTOMATICALLY\"",
-					"varYLabel = \"" + measurand + " in "
-							+ StatisticsType.getUnit(measurand) + "\"");
-
+					"varYLabel = \"" + measurand + " in " + StatisticsType.getUnit(measurand) + "\"");
 			plotScript = plotScript.replace(
 					"varInputFile = \"WILL_BE_SET_AUTOMATICALLY\"",
-					"varInputFile = \"" +Paths.SIM_OUTPUT_FOLDER_PATH +"all/" + ep.experimentStart + "-results-"
-							+ measurand + ".txt\"");
+					"varInputFile = \"" +ep.experimentStart + "-results-" + measurand + ".txt\"");
 
 			String plotInstruction = "plot";
 			String plotstyle = (ep.runs != 1 && ep.plotErrorBars) ? "yerrorlines" : "linespoints";
@@ -707,113 +700,35 @@ public class Simulator extends GMixTool {
 				}
 			}
 
-			plotInstruction += "xyz";
-			plotInstruction = plotInstruction.replace(",xyz", "");
-			plotScript = plotScript.replace(
-					"plot \"WILL_BE_SET_AUTOMATICALLY\"", plotInstruction);
+			plotInstruction += "xyz4325f";
+			plotInstruction = plotInstruction.replace(",xyz4325f", "");
+			plotScript = plotScript.replace("plot \"WILL_BE_SET_AUTOMATICALLY\"", plotInstruction);
 			plotScript = plotScript.replace(
 					"set output \"WILL_BE_SET_AUTOMATICALLY\"",
-					"set output \"" +Paths.SIM_OUTPUT_FOLDER_PATH +"all/" + ep.experimentStart + "-diagram-"
-							+ measurand + ".eps\"");
+					"set output \"" + ep.experimentStart + "-diagram-" + measurand + ".eps\"");
 
-			Util.writeToFile(plotScript, Paths.SIM_OUTPUT_FOLDER_PATH +"all/" + ep.experimentStart
-					+ "-plotscript-" + measurand + ".txt");	
+			Util.writeToFile(plotScript, Paths.SIM_OUTPUT_FOLDER_PATH +"all/" + ep.experimentStart + "-plotscript-" + measurand + ".txt");	
 
-			String gnuplotOutput = "";
-			String gnuplotErrorOutput = ""; 
 			
-			try {
-
-				String line;
-				String gnuPlotFolder = Settings.getPropertyFromFile(Paths.SIM_PROPERTY_FILE_PATH, "GNUPLOT_FOLDER");
-				
-				Process process = Runtime.getRuntime().exec(
-						gnuPlotFolder + "gnuplot"
-						+ " " +Paths.SIM_OUTPUT_FOLDER_PATH +"all/" + ep.experimentStart + "-plotscript-"
-						+ measurand + ".txt"); 
-				
-				process.waitFor(); // TODO: paralellisieren (auf ende warten und ausgaben lesen... außerdem: ausgaben gleich mit out.print ausgeben)
-				
-				BufferedReader input = new BufferedReader(
-						new InputStreamReader(process.getInputStream()));
-				BufferedReader errorInput = new BufferedReader(
-						new InputStreamReader(process.getErrorStream()));
-
-				while ((line = input.readLine()) != null)
-					gnuplotOutput += line;
-
-				while ((line = errorInput.readLine()) != null)
-					gnuplotErrorOutput += line;
-
-				input.close();
-
-				plotScript = plotScript.replace(
-						"varInputFile = \"" +Paths.SIM_OUTPUT_FOLDER_PATH +"all/" + ep.experimentStart + "-results-" + measurand + ".txt\""
-						,
-						"varInputFile = \"" + ep.experimentStart + "-results-" + measurand + ".txt\""
-					);
+			// store copy of the output files with "last"-tag instead of timestamp as tag
+			plotScript = plotScript.replace(
+					"varInputFile = \"" + ep.experimentStart + "-results-" + measurand + ".txt\"",
+					"varInputFile = \"last-results-" + measurand + ".txt\"");
 						
-				plotScript = plotScript.replace(
-						"set output \"" +Paths.SIM_OUTPUT_FOLDER_PATH +"all/" + ep.experimentStart + "-diagram-" + measurand + ".eps\""
-						,
-						"set output \"./" + ep.experimentStart + "-diagram-" + measurand + ".eps\""
-					);
-				
-				Util.writeToFile(plotScript, Paths.SIM_OUTPUT_FOLDER_PATH +"all/" + ep.experimentStart + "-plotscript-" + measurand + ".txt");
-
-				
-				plotScript = plotScript.replace(
-						"varInputFile = \"" + ep.experimentStart + "-results-" + measurand + ".txt\""
-						,
-						"varInputFile = \"last-results-" + measurand + ".txt\""
-					);
-				
-				plotScript = plotScript.replace(
-						"set output \"./" + ep.experimentStart + "-diagram-" + measurand + ".eps\""
-						,
-						"set output \"last-diagram-" + measurand + ".eps\""
-					);
-				
-				Util.writeToFile(plotScript, Paths.SIM_OUTPUT_FOLDER_PATH +"last-plotscript-" + measurand + ".txt");
-
-				try {
-					process = Runtime.getRuntime().exec(Paths.SIM_ETC_FOLDER_PATH +"activateAquaTerm.sh");
-				} catch (Exception e) {
-				}
-
-			} catch (Exception e) {
-				System.err.println(
-						"\nThe simulator could not plot the results as gnuplot was not found on your system\n" +
-						"or a gnuplot error occured (see the more detailed error log below.). Make sure you\n" +
-						"have gnuplot installed and set the variable \"GNUPLOT_FOLDER\" in \"(./inputOutput/\n" +
-						"simulator/config/simulatorConfig.txt\" to point at the gnuplot executable (e.g.\n" +
-						"\"GNUPLOT_FOLDER = gnuplot\" or \"GNUPLOT_FOLDER = /opt/local/bin/gnuplot\"\n" +
-						"Note that the results of this run (plotscripts, recorded statistics as txt and a\n" +
-						"config dump) are not lost, but stored in \"./inputOutput/simulator/output/\".\n\n\n" +
-						"Detailed error log:");
-				e.printStackTrace();
-				throw new RuntimeException("ERROR"); 
-			}
-
-			if (!gnuplotOutput.equals(""))
-				System.out.println("Gnuplot output (stdout):\n" + gnuplotOutput);
-			if (!gnuplotErrorOutput.equals(""))
-				System.err.println("Gnuplot output (error):\n" + gnuplotErrorOutput);
-
-			contentForFilePlotOutput += "\nGnuplot output (stdout):\n" + gnuplotOutput;
-			contentForFilePlotOutput += "\nGnuplot output (error):\n" + gnuplotErrorOutput;
-
+			plotScript = plotScript.replace(
+					"set output \"" + ep.experimentStart + "-diagram-" + measurand + ".eps\"",
+					"set output \"last-diagram-" + measurand + ".eps\"");
+						
+			Util.writeToFile(plotScript, Paths.SIM_OUTPUT_FOLDER_PATH +"last-plotscript-" + measurand + ".txt");
+						
+						
+			// let gnuplot plot the results
+			new GnuPlotTask(ep.experimentStart, measurand).start();
 		}
-
-		Util.writeToFile(	contentForFilePlotOutput,
-							Paths.SIM_OUTPUT_FOLDER_PATH +"last-gnuPlotOutput.txt");
-		
-		Util.writeToFile(	contentForFilePlotOutput, 
-							Paths.SIM_OUTPUT_FOLDER_PATH +"all/" +ep.experimentStart +"-gnuPlotOutput.txt");
 		
 	}
-
 	
+
 	private static BigDecimal[] getResultsForAllRuns(
 				int valueId,
 				StatisticsType statisticsType, 
