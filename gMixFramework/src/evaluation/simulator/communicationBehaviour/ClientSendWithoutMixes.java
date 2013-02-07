@@ -19,14 +19,14 @@ package evaluation.simulator.communicationBehaviour;
 
 import evaluation.simulator.core.Simulator;
 import evaluation.simulator.message.NetworkMessage;
-import evaluation.simulator.message.NoneMixMessage;
-import evaluation.simulator.networkComponent.Client;
+import evaluation.simulator.message.TransportMessage;
+import evaluation.simulator.networkComponent.AbstractClient;
 
 
 public class ClientSendWithoutMixes extends ClientCommunicationBehaviour {
 	
 	
-	protected ClientSendWithoutMixes(Client owner, Simulator simulator) {
+	protected ClientSendWithoutMixes(AbstractClient owner, Simulator simulator) {
 		
 		super(owner, simulator);
 		
@@ -34,7 +34,7 @@ public class ClientSendWithoutMixes extends ClientCommunicationBehaviour {
 
 	
 	@Override
-	public void incomingRequestFromUser(NoneMixMessage request) {
+	public void incomingRequestFromUser(TransportMessage request) {
 		owner.sendRequest(request);
 		
 	}
@@ -43,6 +43,12 @@ public class ClientSendWithoutMixes extends ClientCommunicationBehaviour {
 	@Override
 	public void incomingDecryptedReply(NetworkMessage reply) {
 		
+	}
+
+
+	@Override
+	public void messageReachedServer(TransportMessage request) {
+
 	}
 	
 

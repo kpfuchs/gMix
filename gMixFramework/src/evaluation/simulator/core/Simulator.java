@@ -28,7 +28,8 @@ import framework.core.util.Util;
 
 import evaluation.simulator.communicationBehaviour.ClientCommunicationBehaviour;
 import evaluation.simulator.delayBox.DelayBox;
-import evaluation.simulator.networkComponent.Client;
+import evaluation.simulator.delayBox.DelayBox.TypeOfNode;
+import evaluation.simulator.networkComponent.AbstractClient;
 import evaluation.simulator.networkComponent.DistantProxy;
 import evaluation.simulator.networkComponent.Mix;
 import evaluation.simulator.networkComponent.NetworkConnection;
@@ -44,18 +45,22 @@ public class Simulator extends GMixTool {
 
 	public static Settings settings;
 	public static boolean DEBUG_ON = false;
-	private static int now = 0;
+	private static long now = 0;
 	private static Simulator currentSimulator = null;
 	private static CommandLineParameters commandLineParameters;
-	private LinkedList<Event> eventQueue = new LinkedList<Event>();
-	private int correctPosition;
-	private Map<String, Client> clients = new HashMap<String, Client>();
+	private PriorityQueue<Event> eventQueue = new PriorityQueue<Event>();
+	private Map<String, AbstractClient> clients = new HashMap<String, AbstractClient>();
 	private Map<String, Mix> mixes = new HashMap<String, Mix>();
 	private Map<String, NetworkConnection> networkConnections = new HashMap<String, NetworkConnection>();
 	private DistantProxy distantProxy;
 	private TrafficSource trafficSource;
-	private Client[] clientByIdArray;
+	private AbstractClient[] clientByIdArray;
 	private static boolean firstRun = true;
+	private volatile boolean stopSimulation = false;
+	private int voteStopCounter = 0;
+	public long ts_recordStatisticsStart = Util.NOT_SET; // timestamp
+	public long ts_recordStatisticsEnd = Util.NOT_SET;
+	
 	
 	
 	public Simulator(CommandLineParameters params) {
@@ -100,23 +105,22 @@ public class Simulator extends GMixTool {
 			scriptClientDistantProxy();
 		else
 			throw new RuntimeException("ERROR: Simulation Script " +simulationScript +" not found!");
-		
-		clientByIdArray = new Client[clients.size()];
-		
-		for (Client c: clients.values())
+
+		trafficSource = new TrafficSource(this); 
+		clientByIdArray = new AbstractClient[clients.size()];
+		for (AbstractClient c: clients.values())
 			clientByIdArray[c.getClientId()] = c;
-			
 	}
 	
 	
 	private void scriptClientMixMixMixDistantProxy() {
 		
 		// create network nodes
-		mixes.put("Mix:Mix1", new Mix("Mix1", this, DelayBox.getInstance(100, 100, 7), true, false));
-		mixes.put("Mix:Mix2", new Mix("Mix2", this, DelayBox.getInstance(100, 100, 7), false, false));
-		mixes.put("Mix:Mix3", new Mix("Mix3", this, DelayBox.getInstance(100, 100, 7), false, true));
+		mixes.put("Mix:Mix1", new Mix("Mix1", this, DelayBox.getInstance(TypeOfNode.MIX), true, false));
+		mixes.put("Mix:Mix2", new Mix("Mix2", this, DelayBox.getInstance(TypeOfNode.MIX), false, false));
+		mixes.put("Mix:Mix3", new Mix("Mix3", this, DelayBox.getInstance(TypeOfNode.MIX), false, true));
 		
-		distantProxy = DistantProxy.getInstance("DistantProxy", this, DelayBox.getInstance(100, 100, 7));
+		distantProxy = DistantProxy.getInstance("DistantProxy", this, DelayBox.getInstance(TypeOfNode.DISTANT_PROXY));
 			
 		// create network lines
 		networkConnections.put("NetworkConnection:NetworkConnection1:Mix3<->DistantProxy", new NetworkConnection(mixes.get("Mix:Mix3"), distantProxy, this));
@@ -129,12 +133,12 @@ public class Simulator extends GMixTool {
 	private void scriptClientMixDistantProxy() {
 	
 		// create delay boxes
-		DelayBox delayBoxMix = DelayBox.getInstance(100, 100, 7);
+		DelayBox delayBoxMix = DelayBox.getInstance(TypeOfNode.MIX);
 	
 		// create network nodes
 		mixes.put("Mix:Mix1", new Mix("Mix1", this, delayBoxMix, true, true));
 	
-		distantProxy = DistantProxy.getInstance("DistantProxy", this, DelayBox.getInstance(100, 100, 7));
+		distantProxy = DistantProxy.getInstance("DistantProxy", this, DelayBox.getInstance(TypeOfNode.DISTANT_PROXY));
 	
 		// create network lines
 		networkConnections.put("NetworkConnection:NetworkConnection1:Mix<->DistantProxy", new NetworkConnection(mixes.get("Mix:Mix1"), distantProxy, this));
@@ -144,117 +148,76 @@ public class Simulator extends GMixTool {
 	
 	private void scriptClientDistantProxy() {
 		
-		distantProxy = DistantProxy.getInstance("DistantProxy", this, DelayBox.getInstance(100, 100, 7));
+		distantProxy = DistantProxy.getInstance("DistantProxy", this, DelayBox.getInstance(TypeOfNode.DISTANT_PROXY));
 
+	}
+	
+	
+	public int getNumberOfClients() {
+		return trafficSource.getNumberOfClients();
 	}
 	
 	
 	private void performSimulation() {
-		
 		Event event;
-		trafficSource = new TrafficSource(this); 
 		trafficSource.simulateTraffic();
-		
 		while (true) {
-			
-			event = eventQueue.pollFirst();
-			
-			if (event == null) {
-				System.out.println("### simulation finished");
+			event = eventQueue.poll(); // get next event
+			if (event == null || stopSimulation) { // stop simulation
+				if (event == null)
+					System.out.println("### simulation finished (no more events to simulate)");
+				else
+					System.out.println("### simulation finished");
+				if (ts_recordStatisticsEnd == Util.NOT_SET) // not yet determined
+					ts_recordStatisticsEnd = getNow();
+				ClientCommunicationBehaviour.stopSending();
+				OutputStrategy.stopReplying();
 				OutputStrategy.reset();
 				ClientCommunicationBehaviour.reset();
 				return;
+			} else if (event.isCanceled()) {
+				continue;
+			} else { // execute event
+				now = event.getExecutionTime();
+				assert event.getTarget() != null;
+				event.setExecuted();
+				event.getTarget().executeEvent(event);
 			}
-			
-			now = event.getExecutionTime();
-			 
-			if (event.getTarget() == null) {
-				System.out.println("event.getTarget() == null");
-				System.out.println(event.getEventType()); 
-				System.out.println(event.getAttachment()); 
-			}
-			
-			event.getTarget().executeEvent(event);
-
 		}
-		
 	}
 	
+	private long sequenceCounter = 0;
 	// callingInstance = DEBUG
 	public void scheduleEvent(Event e, Object callingInstance) {
-		
 		//System.out.println("Received ScheduleTask from " +callingInstance +" (now: " +e.getExecutionTime() +") " +e.getAttachment()); 
 		if (e.getExecutionTime() < now) {
-			
-			throw new RuntimeException("ERROR: executionTime < now");
-			
+			throw new RuntimeException("ERROR: executionTime < now (" +e.getExecutionTime() +" < " +now);
 		} else {
-			
-			findCorrectPosition(e);
-			eventQueue.add(correctPosition, e);
-			
+			if (sequenceCounter == Long.MAX_VALUE) {
+				System.out.println("RESETTING SEQUENCE_COUNTER"); 
+				sequenceCounter = eventQueue.size() + 1;
+				long diff = Long.MAX_VALUE - eventQueue.size();
+				for (Event event:eventQueue)
+					event.setSequenceNumber(event.getSequenceNumber() - diff);
+				 
+			}
+			sequenceCounter++;
+			e.setSequenceNumber(sequenceCounter);
+			eventQueue.add(e);
 		}
 		
 	}
 	
 	
 	public void unscheduleEvent(Event e) {
-		
-		eventQueue.removeFirstOccurrence(e);
-		
+		e.cancel();
 	}
-	
-	
-	private void findCorrectPosition(Event e) {
-		findCorrectPosition(e, 0, (eventQueue.size() - 1));
-	}
-	
-	
-	private void findCorrectPosition(Event e, int startIndex, int endIndex) {
-		
-		if (eventQueue.size() == 0) { // first message
 
-			correctPosition = 0;
 
-		} else {
-
-			if (startIndex <= endIndex) {
-
-				int mid = (startIndex + endIndex) / 2;
-
-				switch (e.compareTo(eventQueue.get(mid))) {
-				
-					case -1:
-						
-						correctPosition = mid;
-						findCorrectPosition(e, startIndex, mid - 1);
-						break;					
-						
-					case  0:
-						
-						correctPosition = mid;
-						startIndex = endIndex; // stop execution
-						break;						
-						
-					case  1:
-						
-						correctPosition = mid + 1;
-						findCorrectPosition(e, mid + 1, endIndex);
-						break;
-	
-				}
-
-			}
-
-		}
-		
-	}
-	
-	
 	/**
 	 * @return the now
 	 */
-	public static int getNow() {
+	public static long getNow() {
 		return now;
 	}
 
@@ -262,45 +225,17 @@ public class Simulator extends GMixTool {
 	public static Simulator getSimulator() {
 		return currentSimulator;
 	}
+
 	
-	
-	/**
-	 * @return the eventQueue
-	 */
-	public LinkedList<Event> getEventQueue() {
-		return eventQueue;
-	}
-
-	/**
-	 * @param eventQueue the eventQueue to set
-	 */
-	public void setEventQueue(LinkedList<Event> eventQueue) {
-		this.eventQueue = eventQueue;
-	}
-
-	/**
-	 * @return the correctPosition
-	 */
-	public int getCorrectPosition() {
-		return correctPosition;
-	}
-
-	/**
-	 * @param correctPosition the correctPosition to set
-	 */
-	public void setCorrectPosition(int correctPosition) {
-		this.correctPosition = correctPosition;
-	}
-
 	/**
 	 * @return the clients
 	 */
-	public Map<String, Client> getClients() {
+	public Map<String, AbstractClient> getClients() {
 		return clients;
 	}
 	
 	
-	public Client getClientById(int clientId) {
+	public AbstractClient getClientById(int clientId) {
 		return clientByIdArray[clientId];
 	}
 	
@@ -308,7 +243,7 @@ public class Simulator extends GMixTool {
 	/**
 	 * @param clients the clients to set
 	 */
-	public void setClients(Map<String, Client> clients) {
+	public void setClients(Map<String, AbstractClient> clients) {
 		this.clients = clients;
 	}
 
@@ -354,13 +289,7 @@ public class Simulator extends GMixTool {
 	public void setTrafficSource(TrafficSource trafficSource) {
 		this.trafficSource = trafficSource;
 	}
-
-	/**
-	 * @param now the now to set
-	 */
-	public static void setNow(int now) {
-		Simulator.now = now;
-	}
+	
 
 	/**
 	 * @return the distantProxy
@@ -377,7 +306,22 @@ public class Simulator extends GMixTool {
 		this.distantProxy = distantProxy;
 	}
 
+	
+	public void stopSimulation(String reason) {
+		if (stopSimulation) // ignore multiple calls
+			return;
+		this.stopSimulation = true;
+		System.out.println("### stopping simulation. reason: " +reason);
+	}
+	
 
+	public void voteForStop() {
+		voteStopCounter++;
+		if (voteStopCounter == clients.size())
+			stopSimulation("end of trace reached (variable SIMULATION_END in experiment config)");
+	}
+	
+	
 	/**
 	 * Comment
 	 *
@@ -436,9 +380,9 @@ public class Simulator extends GMixTool {
 							cur.isActivated = true;
 							break;
 						}
-				
 				this.statisticsType = tmp.toArray(new StatisticsType[0]);
-							
+				if (this.statisticsType.length == 0)
+					throw new RuntimeException("unknown StatisticsType specified in config file (parameter DESIRED_EVALUATIONS): " +settings.getProperty("DESIRED_EVALUATIONS")); 		
 			}
 
 			this.propertyToVary = settings.getProperty("PROPERTY_TO_VARY");
@@ -524,7 +468,7 @@ public class Simulator extends GMixTool {
 		BigDecimal[][][][] results = new BigDecimal[ep.runs][ep.values.length][StatisticsType.values().length][EvaluationType.values().length]; // [validation_run][variing_value][statisticsType][evaluationType]
 		long startOfExperiment = System.currentTimeMillis();
 		
-		// generate results and save them to BigDecimal[][][] results
+		// generate results and save them to BigDecimal[][][][] results
 		for (int i=0; i<ep.values.length; i++) { // for each value of the parameter(s) to vary
 			// set value(s) of the parameter(s) to vary
 			String value = ep.values[i];
@@ -565,7 +509,7 @@ public class Simulator extends GMixTool {
 				}
 				
 				GeneralStatistics.reset();
-				Client.reset();
+				AbstractClient.reset();
 				
 			} // end for each validation run
 	
@@ -748,7 +692,6 @@ public class Simulator extends GMixTool {
 
 	}
 	
-	// TODO: veriation mit string statt int (z.b. versch. sim-skripte)
 	/*private static void performExperiment(String simulationScript, 
 			StatisticsType[] statisticsType, String propertyToVary, 
 			int from, int to, int stepLength) {
@@ -770,8 +713,6 @@ public class Simulator extends GMixTool {
 	}*/
 	
 	
-	// TODO
-	// values mit komma trennen
 	/*public static void performExperiment(String experimentDescription, 
 			String simulationScript, StatisticsType statisticsType, 
 			String propertyToVary, String values) {
@@ -894,7 +835,6 @@ public class Simulator extends GMixTool {
 		
 		
 	}
-	
 
 	
 	/*private static double[] getValueListFromPropertyFile(String nameOfPropertyToLoadListFrom) {

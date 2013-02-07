@@ -20,11 +20,14 @@ package evaluation.simulator.core;
 
 public class Event implements Comparable<Event> {
 	
-	private int executionTime;
+	private long executionTime;
+	private long sequenceNumber; // used to preserver order for events with same execution time
 	private EventExecutor target;
 	private SimulationEvent eventType;
 	//private NetworkMessage networkMessage;
 	private Object attachment;
+	private boolean isCanceled = false;
+	private boolean wasExecuted = false;
 	
 	
 	/*public Event(EventExecutor target, int executionTime, SimulationEvent eventType, NetworkMessage networkMessage, Object attachment) {
@@ -46,7 +49,7 @@ public class Event implements Comparable<Event> {
 		
 	}*/
 
-	public Event(EventExecutor target, int executionTime, SimulationEvent eventType) {
+	public Event(EventExecutor target, long executionTime, SimulationEvent eventType) {
 		
 		this.target = target;
 		this.executionTime = executionTime;
@@ -54,7 +57,7 @@ public class Event implements Comparable<Event> {
 		
 	}
 	
-	public Event(EventExecutor target, int executionTime, SimulationEvent eventType, Object attachment) {
+	public Event(EventExecutor target, long executionTime, SimulationEvent eventType, Object attachment) {
 		
 		this.target = target;
 		this.executionTime = executionTime;
@@ -64,7 +67,7 @@ public class Event implements Comparable<Event> {
 	}
 	
 	
-	public Event reuse(EventExecutor target, int executionTime, SimulationEvent eventType) {
+	public Event reuse(EventExecutor target, long executionTime, SimulationEvent eventType) {
 		
 		this.target = target;
 		this.executionTime = executionTime;
@@ -76,7 +79,7 @@ public class Event implements Comparable<Event> {
 	}
 
 
-	public Event reuse(EventExecutor target, int executionTime, SimulationEvent eventType, Object attachment) {
+	public Event reuse(EventExecutor target, long executionTime, SimulationEvent eventType, Object attachment) {
 		
 		this.target = target;
 		this.executionTime = executionTime;
@@ -103,21 +106,29 @@ public class Event implements Comparable<Event> {
 	 */
 	@Override
 	public int compareTo(Event e) {
-		
-		if (this.executionTime < e.executionTime)
-			return -1;
-		else if (this.executionTime > e.executionTime)
-			return 1;
-		else
-			return 0;
-		
+		int res = comp(this.executionTime, e.executionTime);
+		return res == 0 ? comp(this.sequenceNumber, e.sequenceNumber) : res;
 	}
 
+	
+	private int comp(long x, long y) {
+		return (x < y) ? -1 : ((x == y) ? 0 : 1);
+	}
+	
+	
+	public void setSequenceNumber(long sequenceNumber) {
+		this.sequenceNumber = sequenceNumber;
+	}
+
+	
+	public long getSequenceNumber() {
+		return sequenceNumber;
+	}
 
 	/**
 	 * @return the executionTime
 	 */
-	public int getExecutionTime() {
+	public long getExecutionTime() {
 		return executionTime;
 	}
 
@@ -125,7 +136,7 @@ public class Event implements Comparable<Event> {
 	/**
 	 * @param executionTime the executionTime to set
 	 */
-	public void setExecutionTime(int executionTime) {
+	public void setExecutionTime(long executionTime) {
 		this.executionTime = executionTime;
 	}
 
@@ -195,6 +206,26 @@ public class Event implements Comparable<Event> {
 	@Override
 	public String toString() {
 		return eventType.toString();
+	}
+
+
+	public void cancel() {
+		this.isCanceled = true;
+	}
+	
+	
+	public boolean isCanceled() {
+		return this.isCanceled;
+	}
+
+	
+	public boolean wasExecuted() {
+		return wasExecuted;
+	}
+
+	
+	public void setExecuted() {
+		this.wasExecuted = true;
 	}
 	
 }

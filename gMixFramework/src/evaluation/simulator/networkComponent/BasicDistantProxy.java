@@ -19,7 +19,8 @@ package evaluation.simulator.networkComponent;
 
 import evaluation.simulator.core.Simulator;
 import evaluation.simulator.delayBox.DelayBox;
-import evaluation.simulator.message.NoneMixMessage;
+import evaluation.simulator.message.EndToEndMessage;
+import evaluation.simulator.message.TransportMessage;
 import evaluation.simulator.statistics.StatisticsType;
 
 
@@ -27,31 +28,35 @@ public class BasicDistantProxy extends DistantProxy {
 	
 	
 	protected BasicDistantProxy(String identifier, Simulator simulator, DelayBox delayBox) {
-		
-		super(identifier, simulator, delayBox, false);
-		
+		this(identifier, simulator, delayBox, false);
 	}
 
-
+	
+	protected BasicDistantProxy(String identifier, Simulator simulator, DelayBox delayBox, boolean supportsMixMessages) {
+		super(identifier, simulator, delayBox, supportsMixMessages);
+	}
+	
+	
+	
 	@Override
-	protected void incomingRequest(NoneMixMessage noneMixMessage) {
-		
-		noneMixMessage.setRequest(false);
+	protected void incomingRequest(TransportMessage tm) {
+		EndToEndMessage message = tm.reltedEndToEndMessage;
+		message.transportMessage = tm;
+		statistics.addValue(tm.getLength(), StatisticsType.DISTANTPROXY_DATAVOLUME_SENDANDRECEIVE);
+		server.incomingMessage(message);
+		tm.getOwner().messageReachedServer(message); // notify client that his message has now reached the server
+		/*noneMixMessage.setRequest(false);
 		noneMixMessage.setSource(this);
 		noneMixMessage.setDestination(noneMixMessage.getOwner());
 		noneMixMessage.setLength(noneMixMessage.getReplyLength());
-		statistics.addValue(noneMixMessage.getLength(), StatisticsType.DISTANTPROXY_DATAVOLUME_SENDANDRECEIVE);
 		statistics.addValue(noneMixMessage.getReplyLength(), StatisticsType.DISTANTPROXY_DATAVOLUME_SENDANDRECEIVE);
-		super.callRequestAnsweredIn(noneMixMessage.getResolveTimeAtDistantProxy(), noneMixMessage);
-		
+		super.callRequestAnsweredIn(noneMixMessage.getResolveTimeAtDistantProxy(), noneMixMessage);*/
 	}
 	
 
 	@Override
-	protected void requestAnswered(NoneMixMessage noneMixMessage) {
-		
-		sendReply(noneMixMessage, 0);
-		
+	protected void requestAnswered(TransportMessage noneMixMessage) {
+		//sendReply(noneMixMessage, 0);
 	}
 	
 }

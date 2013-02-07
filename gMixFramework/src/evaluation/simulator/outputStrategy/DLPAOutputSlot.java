@@ -25,7 +25,7 @@ import evaluation.simulator.core.EventExecutor;
 import evaluation.simulator.core.OutputStrategyEvent;
 import evaluation.simulator.core.Simulator;
 import evaluation.simulator.message.MixMessage;
-import evaluation.simulator.networkComponent.Client;
+import evaluation.simulator.networkComponent.AbstractClient;
 import evaluation.simulator.networkComponent.Mix;
 import evaluation.simulator.networkComponent.NetworkNode;
 import evaluation.simulator.statistics.StatisticsType;
@@ -33,8 +33,8 @@ import evaluation.simulator.statistics.StatisticsType;
 
 public class DLPAOutputSlot implements EventExecutor {
 
-	private HashMap<Client, MixMessage> messagesToSend;
-	private int timeOfOutput;
+	private HashMap<AbstractClient, MixMessage> messagesToSend;
+	private long timeOfOutput;
 	private boolean isRequestSlot;
 	private Simulator simulator;
 	private Mix mix;
@@ -47,7 +47,7 @@ public class DLPAOutputSlot implements EventExecutor {
 		this.dLPABasic = dLPABasic;
 		this.mix = mix;
 		this.simulator = simulator;
-		this.messagesToSend = new HashMap<Client, MixMessage>();
+		this.messagesToSend = new HashMap<AbstractClient, MixMessage>();
 		this.isRequestSlot = isRequestSlot;
 		this.setTimeOfOutput(Simulator.getNow() + maxDelay);
 		this.relatedOutputEvent = new Event(this, getTimeOfOutput(), OutputStrategyEvent.DLPA_TIMEOUT);
@@ -56,7 +56,7 @@ public class DLPAOutputSlot implements EventExecutor {
 	}
 	
 	
-	public boolean isUsedBy(Client client) {
+	public boolean isUsedBy(AbstractClient client) {
 		
 		return messagesToSend.containsKey(client);
 		
@@ -78,14 +78,20 @@ public class DLPAOutputSlot implements EventExecutor {
 			dLPABasic.removeReplyOutputslot(this);
 		
 		Vector<MixMessage> messages = new Vector<MixMessage>(); // TODO: ohne vector... debug
-
-		for (Client client: simulator.getClients().values()) {
+		int dummyCounter = 0;
+		int noneDummyCounter = 0;
+		for (AbstractClient client: simulator.getClients().values()) {
 			
 			MixMessage mixMessage = messagesToSend.get(client);
-			if (mixMessage == null)
+			if (mixMessage == null) {
 				mixMessage = createDummyMessage(client, isRequestSlot);
+				dummyCounter++;
+			} else {
+				noneDummyCounter++;
+			}
 
-			
+			//if (!isRequestSlot)
+			//	System.out.println("out: " +mixMessage); 
 			messages.add(mixMessage);
 			/*if (isRequestSlot)
 				mix.putOutRequest(mixMessage);	
@@ -110,7 +116,7 @@ public class DLPAOutputSlot implements EventExecutor {
 
 		
 		messagesToSend.clear();
-
+		
 		
 		for (MixMessage m:messages) {
 			
@@ -120,10 +126,8 @@ public class DLPAOutputSlot implements EventExecutor {
 				mix.putOutRequest(m);
 				
 			} else {
-				
 				dLPABasic.statistics.addValue(1, StatisticsType.DLPA_REPLY_SENDING_RATE);
 				mix.putOutReply(m);
-				
 			}
 			
 			dLPABasic.statistics.addValue(1, StatisticsType.DLPA_REQUEST_AND_REPLY_SENDING_RATE);
@@ -131,11 +135,16 @@ public class DLPAOutputSlot implements EventExecutor {
 		}
 		
 		messages.clear();
-
+		
+		if (isRequestSlot) {
+			double totalMessages = dummyCounter + noneDummyCounter;
+			dLPABasic.statistics.addValue(((double)dummyCounter/totalMessages)*100d, StatisticsType.DLPA_REQUEST_DUMMY_PERCENTAGE);
+			
+		}
 	}
 	
 	
-	private MixMessage createDummyMessage(Client owner, boolean isRequest) {
+	private MixMessage createDummyMessage(AbstractClient owner, boolean isRequest) {
 		
 		NetworkNode source = isRequest ? owner : mix;
 		NetworkNode destination = isRequest ? simulator.getDistantProxy() : owner;
@@ -156,12 +165,12 @@ public class DLPAOutputSlot implements EventExecutor {
 	}
 
 
-	public void setTimeOfOutput(int timeOfOutput) {
+	public void setTimeOfOutput(long timeOfOutput) {
 		this.timeOfOutput = timeOfOutput;
 	}
 
 
-	public int getTimeOfOutput() {
+	public long getTimeOfOutput() {
 		return timeOfOutput;
 	}
 

@@ -18,20 +18,21 @@
 package evaluation.simulator.message;
 
 import evaluation.simulator.core.Simulator;
-import evaluation.simulator.networkComponent.Client;
+import evaluation.simulator.networkComponent.AbstractClient;
 import evaluation.simulator.networkComponent.NetworkNode;
 
 
 public abstract class MixMessage extends NetworkMessage {
 
-	protected  int creationTime;
-	protected Client owner;
+	protected long creationTime;
+	protected AbstractClient owner;
 	protected int replyCounter = 0;
 	protected boolean isDummy;
+	public long timeOfArrival;
 	
 	
 	public static MixMessage getInstance(boolean isRequest, NetworkNode source,
-			NetworkNode destination, Client owner, int creationTime,
+			NetworkNode destination, AbstractClient owner, long creationTime,
 			boolean isDummy) {
 		
 		String type = Simulator.settings.getProperty("MESSAGE_FORMAT");
@@ -46,7 +47,7 @@ public abstract class MixMessage extends NetworkMessage {
 	}
 	
 
-	protected MixMessage(boolean isRequest, NetworkNode source, NetworkNode destination, Client owner, int creationTime, boolean isDummy, Object payload) {
+	protected MixMessage(boolean isRequest, NetworkNode source, NetworkNode destination, AbstractClient owner, long creationTime, boolean isDummy, Object payload) {
 		super(isRequest, source, destination, payload);
 		
 		this.creationTime = creationTime;
@@ -59,7 +60,7 @@ public abstract class MixMessage extends NetworkMessage {
 	/**
 	 * @return the creationTime
 	 */
-	public int getCreationTime() {
+	public long getCreationTime() {
 		return creationTime;
 	}
 
@@ -93,7 +94,7 @@ public abstract class MixMessage extends NetworkMessage {
 	/**
 	 * @return the owner
 	 */
-	public Client getOwner() {
+	public AbstractClient getOwner() {
 		return owner;
 	}
 
@@ -101,22 +102,22 @@ public abstract class MixMessage extends NetworkMessage {
 	/**
 	 * @param owner the owner to set
 	 */
-	public void setOwner(Client owner) {
+	public void setOwner(AbstractClient owner) {
 		this.owner = owner;
 	}
 	
 	
-	public String toString() {
+	/*public String toString() {
 		String replyOrRequest = super.isRequest() ? "Request" : "Reply";
 		return "MixMessage ("+replyOrRequest +", owner: "+owner +")";
-	}
+	}*/
 	
 	
 	public abstract int getPayloadLength();
 	public abstract int getMaxPayloadLength();
 	public abstract int getNumberOfMessagesContained();
 	public abstract PayloadObject[] getPayloadObjectsContained();
-	public abstract NoneMixMessage[] getNoneMixMessagesContained();
+	public abstract TransportMessage[] getTransportMessagesContained();
 	public abstract boolean addPayloadObject(PayloadObject payloadObject);
 	
 	

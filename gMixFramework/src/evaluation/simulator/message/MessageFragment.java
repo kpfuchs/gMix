@@ -20,12 +20,12 @@ package evaluation.simulator.message;
 
 public class MessageFragment extends NetworkMessage implements PayloadObject {
 
-	private NoneMixMessage associatedNoneMixMessage;
+	private TransportMessage associatedNoneMixMessage;
 	private int length;
 	private boolean isLastFragment;
 	
 	
-	public MessageFragment(NoneMixMessage associatedNoneMixMessage, int desiredLength, boolean isLastFragment) {
+	public MessageFragment(TransportMessage associatedNoneMixMessage, int desiredLength, boolean isLastFragment) {
 		
 		super(associatedNoneMixMessage.isRequest, associatedNoneMixMessage.getSource(), associatedNoneMixMessage.getDestination(), null);
 		
@@ -46,7 +46,7 @@ public class MessageFragment extends NetworkMessage implements PayloadObject {
 	}
 
 
-	public NoneMixMessage getAssociatedNoneMixMessage() {
+	public TransportMessage getAssociatedTransportMessage() {
 		return associatedNoneMixMessage;
 	}
 

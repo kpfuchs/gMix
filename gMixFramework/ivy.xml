@@ -35,7 +35,8 @@
 		<dependency org="org.apache.commons" name="commons-math" rev="2.2"/>
 		<dependency org="javax.mail" name="mail" rev="1.4.5"/>
 		<dependency org="org.apache.mina" name="mina-core" rev="2.0.4"/>
-		<dependency org="io.netty" name="netty" rev="3.3.1.Final"/>
+		<dependency org="io.netty" name="netty" rev="3.5.8.Final"/>
 		<dependency org="net.sf.trove4j" name="trove4j" rev="2.0.2"/>
+		<dependency org="org.jooq" name="joou" rev="0.9.1"/>
 	</dependencies>
 </ivy-module>

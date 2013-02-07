@@ -24,12 +24,16 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.RandomAccessFile;
+import java.math.BigInteger;
+import java.nio.channels.Channels;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.KeyPairGenerator;
@@ -42,6 +46,8 @@ import java.util.Arrays;
 import java.util.Random;
 import java.util.Vector;
 import java.util.concurrent.TimeUnit;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.ZipInputStream;
 
 import javax.crypto.Cipher;
 import javax.crypto.CipherOutputStream;
@@ -207,6 +213,16 @@ public final class Util {
 	}
 	
 	
+	public static byte[] charToByteArray(char value) {       
+    	return shortToByteArray(value);
+    }
+	
+	
+	public static char byteArrayToChar(byte[] byteArray) {
+		return (char) byteArrayToShort(byteArray);
+	}
+	
+
 	public static byte[] concatArrays(byte[][] arrays) {
 		
 		byte[] result = concatArrays(arrays[0], arrays[1]);
@@ -288,6 +304,8 @@ public final class Util {
 		int read;
 		while (remaining > 0) {
 			read = inputStream.read(result, bytesRead, remaining);
+			if (read == -1) // EOF
+				return null;
 			remaining -= read;
 			bytesRead += read;
 		}
@@ -303,6 +321,8 @@ public final class Util {
 		int read;
 		while (remaining > 0) {
 			read = inputStream.read(result, bytesRead, remaining);
+			if (read == -1) // EOF
+				return null;
 			remaining -= read;
 			bytesRead += read;
 		}
@@ -484,6 +504,7 @@ public final class Util {
 			String line;
 			while ((line = br.readLine()) != null)
 				result += line + "\n";
+			br.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException(	"ERROR: could not read from file " 
@@ -527,6 +548,43 @@ public final class Util {
 		int positionB = source.indexOf(b, positionA);
 		return source.substring(positionA + a.length(), positionB);
 	}
+	
+	
+	public static int getIthIndexOf(char searchFor, String searchIn, int i) {
+		int ctr = 0;
+		for (int j=0; j<searchIn.length(); j++)
+			if (searchIn.charAt(j) == searchFor)
+				if (++ctr == i)
+					return j;
+		return -1;
+	}
+	
+	
+	/*public static int getIthIndexOf(char searchFor, String searchIn, int i, int startIndex) {
+		searchIn = searchIn.substring(startIndex);
+		int ctr = 0;
+		for (int j=0; j<searchIn.length(); j++)
+			if (searchIn.charAt(j) == searchFor)
+				if (++ctr == i)
+					return j;
+		return -1;
+	}*/
+	
+	
+	public static String[][] splitInChunks(int chunkSize, String[] source) {
+		if (source.length <= chunkSize)
+			return new String[][] {source};
+		int chunks = (int) Math.ceil((double)source.length / (double)chunkSize);
+		String[][] result = new String[chunks][];
+		int pointer = 0;
+		for (int i=0; i<result.length; i++)
+			if (i < result.length-1)
+				result[i] = Arrays.copyOfRange(source, pointer, pointer+=chunkSize);
+			else
+				result[i] = Arrays.copyOfRange(source, pointer, source.length);
+		return result;
+	}
+	
 	
 	
 	public static Request[][] splitInChunks(int chunkSize, Request[] source) {
@@ -640,16 +698,12 @@ public final class Util {
 	    return String.format("%.1f %sB", bytes / Math.pow(unit, exp), pre);
 	}
 	
-	/**
-	 * Comment
-	 *
-	 * @param args Not used.
-	 */
-	public static void main(String[] args) {
+
+	/*public static void main(String[] args) {
 		for (File f:getFilePaths(".", "StaticFinctionSettings.txt"))
 			System.out.println(f); 
 		
-	} 
+	} */
 	
 	
 	// example:
@@ -689,6 +743,347 @@ public final class Util {
 	
 	public static int getRandomInt(int min, int max, Random random) {
 		return min + (int)(random.nextDouble()*(max-min)+1);
+	}
+	
+	
+	public static short unsignedByteToShort(byte source) {
+		return (short) (0x000000FF & ((int)source));
+    }
+
+	
+	public static int unsignedShortToInt(byte[] source) {
+	    
+		return ((int)((0x00FF & source[0]) << 8 
+				| (0x00FF & source[1])) & 0xFFFF
+				);
+
+    }
+	
+	
+	public static long unsignedIntToLong(byte[] source) {
+	    
+		return ((long)((0x000000FF & source[0]) << 24 
+				| ((0x000000FF & source[1]) << 16)
+				| ((0x000000FF & source[2]) << 8)
+				| (0x000000FF & source[3])) & 0xFFFFFFFFL
+				);
+
+    }
+	
+	
+	public static BigInteger unsignedLongToBigInteger(byte[] source) {
+	    
+		byte[] result = new byte[source.length+1];
+		result[0] = 0;
+		
+		for (int i=1; i<result.length; i++)
+			result[i] = source[i-1];
+        
+		return new BigInteger(result);
+
+    }
+
+
+	public static byte[] signedLongToUnsignedLong(long signedLong) {
+		
+	    if (signedLong < 0)
+	    	throw new ArithmeticException("a signed long < 0 can't be converted to an unsigned long");
+
+		return longToByteArray(signedLong);
+
+    }
+	
+	
+	public static byte[] signedIntToUnsignedInt(int signedInt) {
+		
+	    if (signedInt < 0)
+	    	throw new ArithmeticException("a signed int < 0 can't be converted to an unsigned int");
+
+		return intToByteArray(signedInt);
+
+    }
+
+
+	public static byte[] signedShortToUnsignedShort(short signedShort) {
+		
+	    if (signedShort < 0)
+	    	throw new ArithmeticException("a signed short < 0 can't be converted to an unsigned short");
+
+		return shortToByteArray(signedShort);
+
+    }
+	
+	
+	public static String toHex(byte[] bytes) {
+	    BigInteger b = new BigInteger(1, bytes);
+	    return String.format("%0" + (bytes.length << 1) + "X", b);
+	}
+	
+	
+	public static String toBinary(byte[] bytes) {
+	    BigInteger b = new BigInteger(1, bytes);
+	    return b.toString(2);
+	}
+
+	
+	/**
+	 * for byte b = "00000001 base 2", result[0] will be 1 (true) and result[7] will be 0 (false)
+	 * 
+	 * boolean[] arr = byteToBooleanArray((byte)1); // binary: 00000001
+	 * System.out.println(arr[0]); // will display "true" 
+	 * System.out.println(arr[1]); // will display "false"
+	 */
+	public static boolean[] byteToBooleanArray(byte b) {
+		boolean[] result = new boolean[8];
+		for (int i=0; i<result.length; i++)
+			result[i] = (b & (1 << i)) != 0;
+		return result;
+	}
+	
+	
+	/**
+	 * for byte b = "00000001 base 2", result[0] will be 0 (false) and result[7] will be 1 (true)
+	 * 
+	 * boolean[] arr = byteToReverseBooleanArray((byte)1); // binary: 00000001
+	 * System.out.println(arr[0]); // will display "false" 
+	 * System.out.println(arr[7]); // will display "true"
+	 */
+	public static boolean[] byteToReverseBooleanArray(byte b) {
+		boolean[] result = new boolean[8];
+		for (int i=0; i<result.length; i++)
+			result[result.length-1-i] = (b & (1 << i)) != 0;
+		return result;
+	}
+	
+	
+
+	/**
+	 * bitIndex from right to left (0 = least significant = rightmost bit)
+	 */
+	public static boolean getBitAt(int bitIndex, byte b) {
+		return ((int)b & (1 << (bitIndex & 31))) != 0;
+	}
+	
+	
+	/**
+	 * bitIndex from right to left (0 = least significant = rightmost bit)
+	 */
+	public static byte setBitAt(int bitIndex, boolean value, byte b) {
+		if (value)
+			return (byte) ((int)b | (1 << (bitIndex & 31)));
+		else 
+			return (byte) ((int)b & ~(1 << (bitIndex & 31)));
+	}
+	
+	
+	/**
+	 * bitIndex from right to left (0 = least significant = rightmost bit)
+	 */
+	public static byte flipBitAt(int bitIndex, byte b) {
+		return (byte) ((int)b ^ (1 << (bitIndex & 31)));
+	}
+	
+	
+	/**
+	 * bitIndex from right to left (0 = least significant = rightmost bit)
+	 */
+	public static byte reverseByte(byte b) {
+		byte result = 0;
+		for (int i=0; i<8; i++) {
+			result = setBitAt(i, getBitAt(i, b), result);
+		}
+		return result;
+	}
+	
+	/**
+	 * will modify the bypassed array!
+	 * @param array
+	 * @return
+	 */
+	public static byte[] reverse(byte[] array) {
+		for (int i=0; i<array.length/2; i++) {
+			byte tmp = array[i];
+			array[i] = array[array.length-1-i];
+			array[array.length-1-i] = tmp;
+		}
+		return array;
+	}
+
+	
+	
+	public static InputStream tryDetectCompressionMethod(String pathToFile) {
+		// gzip:
+		boolean isGzip = true;
+		try {
+			InputStream is = new FileInputStream(pathToFile);
+			is = new GZIPInputStream(is);
+			is.read(new byte[10]);
+		} catch (IOException e) {
+			isGzip = false;
+		}
+		if (isGzip) {
+			System.out.println("detected gzip compression"); 
+			try {
+				return new GZIPInputStream(new FileInputStream(pathToFile));
+			} catch (IOException e) {
+				e.printStackTrace();
+				try {Thread.sleep(1000);} catch (InterruptedException e1) {}
+				return tryDetectCompressionMethod(pathToFile);
+			}
+		}
+		// zip:
+		boolean isZip = true;
+		try {
+			InputStream is = new FileInputStream(pathToFile);
+			is = new ZipInputStream(is);
+			int len = is.read(new byte[10]);
+			if (len == -1) // ZipInputStream accepts uncompressed streams but than can't read it...
+				isZip = false;
+		} catch (IOException e) {
+			isZip = false;
+		}
+		if (isZip) {
+			System.out.println("detected zip compression"); 
+			try {
+				return new ZipInputStream(new FileInputStream(pathToFile));
+			} catch (IOException e) {
+				e.printStackTrace();
+				try {Thread.sleep(1000);} catch (InterruptedException e1) {}
+				return tryDetectCompressionMethod(pathToFile);
+			}
+		}
+		// assume raw file:
+		System.out.println("detected no compression"); 
+		try {
+			return new FileInputStream(pathToFile);
+		} catch (IOException e) {
+			try {Thread.sleep(1000);} catch (InterruptedException e1) {}
+			return tryDetectCompressionMethod(pathToFile);
+		}
+	}
+	
+	
+	public static String removeFileExtension(String fileNameOrPath) {
+		int suffixStart = fileNameOrPath.lastIndexOf(".");
+		if (suffixStart != -1) { 
+			fileNameOrPath = fileNameOrPath.substring(0, suffixStart);
+			removeFileExtension(fileNameOrPath);
+		}
+		return fileNameOrPath;
+	}
+	
+	public static String removeLineBreakAtEnd(String string) {
+		if (string.endsWith("\r\n"))
+			return string.substring(0, string.length() - 2);
+		else if (string.endsWith("\n"))
+			return string.substring(0, string.length() - 1);
+		else if (string.endsWith("\r"))
+			return string.substring(0, string.length() - 1);
+		else 
+			return string;
+	}
+	
+	
+	private static boolean warningDisplayed = false;
+	
+	
+	public static synchronized void displayWarningOnLowReservedMemory() {
+		if (warningDisplayed)
+			return;
+		warningDisplayed = true;
+		long maxMem = Runtime.getRuntime().maxMemory();
+		if (maxMem < 500000000)
+			System.err.println("WARNING: this program may be slow as only " +Util.humanReadableByteCount(maxMem, false) +" RAM are allocated. Run with -Xms<size> -Xmx<size> to associate more RAM (Java heap size). E.g. run with \"-Xms1024m -Xmx1024m\" to associate 1024 MB."); 
+	}
+	
+	
+	public static int[] toIntArray(Vector<Integer> source) {
+		int[] result = new int[source.size()];
+		for (int i=0; i<result.length; i++)
+			result[i] = source.get(i);
+		return result;
+	}
+	
+	
+	public static long[] toLongArray(Vector<Long> source) {
+		long[] result = new long[source.size()];
+		for (int i=0; i<result.length; i++)
+			result[i] = source.get(i);
+		return result;
+	}
+	
+	
+	public static float[] toFloatArray(Vector<Float> source) {
+		float[] result = new float[source.size()];
+		for (int i=0; i<result.length; i++)
+			result[i] = source.get(i);
+		return result;
+	}
+	
+	
+	// see http://stackoverflow.com/questions/686231/java-quickly-read-the-last-line-of-a-text-file
+	public static String readLastLine(String fileName) {
+	    try {
+	    	File file = new File(fileName);
+	        RandomAccessFile fileHandler = new RandomAccessFile(file, "r");
+	        long fileLength = file.length() - 1;
+	        StringBuilder sb = new StringBuilder();
+	        for(long filePointer=fileLength; filePointer!=-1; filePointer--) {
+	            fileHandler.seek(filePointer);
+	            int readByte = fileHandler.readByte();                
+	            if( readByte == 0xA ) {
+	                if(filePointer == fileLength) {
+	                    continue;
+	                } else {
+	                    break;
+	                }
+	            } else if(readByte == 0xD) {
+	                if(filePointer == fileLength - 1) {
+	                    continue;
+	                } else {
+	                    break;
+	                }                    
+	            }
+	            sb.append((char)readByte);
+	        }
+	        String lastLine = sb.reverse().toString();
+	        return lastLine;
+	    } catch(FileNotFoundException e) {
+	        e.printStackTrace();
+	        return null;
+	    } catch(IOException e) {
+	        e.printStackTrace();
+	        return null;
+	    }
+	}
+	
+	
+	public static String extractField(int position, String regex, String source) {
+		String[] splitted = source.split(regex, position + 2);
+		return splitted[position];
+	}
+	
+	
+	public static double norm(	double value, 
+								double minObserved, 
+								double maxObserved, 
+								double minNorm, 
+								double maxNorm
+							) {
+		double intervalZeroOne = (value - minObserved) / (maxObserved - minObserved);
+		return (intervalZeroOne * (maxNorm - minNorm)) + minNorm;
+	}
+	
+	
+	public static String readLine(long offset, String filePointer) throws IOException {
+		String result;
+		RandomAccessFile raf = new RandomAccessFile(filePointer, "r");
+		raf.seek(offset);
+		// use BufferedReader to read line instead of raf.readLine() for performance reasons:
+		BufferedReader reader = new BufferedReader(Channels.newReader(raf.getChannel(), "ISO-8859-1"));
+		result = reader.readLine();			
+		raf.close();
+		return result;
 	}
 	
 }

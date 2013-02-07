@@ -20,7 +20,7 @@ package evaluation.simulator.core;
 
 public enum DistantProxyEvent implements SimulationEvent {
 
-	INCOMING_REQUEST,
-	REQUEST_ANSWERED;
+	INCOMING_REQUEST;//,
+	//REQUEST_ANSWERED;
 	
 }

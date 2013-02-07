@@ -1,8 +1,26 @@
+/*
+ * gMix open source project - https://svs.informatik.uni-hamburg.de/gmix/
+ * Copyright (C) 2012  Karl-Peter Fuchs
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package evaluation.loadGenerator.applicationLevelTraffic.requestReply;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Writer;
 import java.nio.ByteBuffer;
 import java.security.SecureRandom;
 import java.util.Arrays;
@@ -37,7 +55,7 @@ public class ApplicationLevelMessage {
 	
 	
 	/**
-	 * (client-side) create ApplicationLevelTraceEntry_RequestReply_v_001 from 
+	 * (client-side) create ApplicationLevelMessage from 
 	 * trace file
 	 * 
 	 * @param traceFile
@@ -45,40 +63,25 @@ public class ApplicationLevelMessage {
 	 */
 	public ApplicationLevelMessage(
 			BufferedReader traceFile,
-			int lineCounter
+			int transactionId
 			) throws EndOfFileReachedException {
-		String[] columns;
+		String line;
 		try {
-			columns = traceFile.readLine().split("(,|;|\\s)");
+			line = traceFile.readLine();
 		} catch (Exception e) {
 			throw new EndOfFileReachedException();
 		}
-		if (columns.length != 6)
-			System.err.println("unrecognized trace file format"); 
-		this.sendDelay = Float.parseFloat(columns[0]);
-		this.clientId = Integer.parseInt(columns[1]);
-		this.serverId = Integer.parseInt(columns[2]);
-		this.requestSize = Integer.parseInt(columns[3]);
-		if (this.requestSize < REQUEST_HEADER_SIZE) {
-			System.out.println(
-					"warning: the request size specifed is too " +
-					"small and will be adjusted");
-			this.requestSize = REQUEST_HEADER_SIZE;
-		}
-		this.replySize = Integer.parseInt(columns[4]);
-		if (this.replySize < REPLY_HEADER_SIZE) {
-			System.out.println(
-					"warning: the reply size specifed is too " +
-					"small and will be adjusted");
-			this.replySize = REPLY_HEADER_SIZE;
-		}
-		this.replyDelay = Float.parseFloat(columns[5]);
-		this.transactionId = lineCounter;
+		initThroughTraceRecordAsString(line, transactionId);
+	}
+	
+	
+	public ApplicationLevelMessage(String traceRecord) {
+		initThroughTraceRecordAsString(traceRecord);
 	}
 	
 	
 	/**
-	 * (client-side) create ApplicationLevelTraceEntry_RequestReply_v_001 from 
+	 * (client-side) create ApplicationLevelMessage from 
 	 * the parameters specified (duplex mode)
 	 * 
 	 * @param sendDelay
@@ -102,16 +105,16 @@ public class ApplicationLevelMessage {
 		this.serverId = serverId;
 		this.requestSize = requestSize;
 		if (this.requestSize < REQUEST_HEADER_SIZE) {
-			System.out.println(
-					"warning: the request size specifed is too " +
-					"small and will be adjusted");
+			//System.out.println(
+			//		"warning: the request size specifed is too " +
+			//		"small and will be adjusted");
 			this.requestSize = REQUEST_HEADER_SIZE;
 		}
 		this.replySize = replySize;
 		if (this.replySize < REPLY_HEADER_SIZE) {
-			System.out.println(
-					"warning: the reply size specifed is too " +
-					"small and will be adjusted");
+			//System.out.println(
+			//		"warning: the reply size specifed is too " +
+			//		"small and will be adjusted");
 			this.replySize = REPLY_HEADER_SIZE;
 		}
 		this.replyDelay = replyDelay;
@@ -122,7 +125,7 @@ public class ApplicationLevelMessage {
 
 	
 	/**
-	 * (client-side) create ApplicationLevelTraceEntry_RequestReply_v_001 from 
+	 * (client-side) create ApplicationLevelMessage from 
 	 * the parameters specified (simplex mode)
 	 * 
 	 * @param sendDelay
@@ -142,9 +145,9 @@ public class ApplicationLevelMessage {
 		this.serverId = serverId;
 		this.requestSize = requestSize;
 		if (this.requestSize < REQUEST_HEADER_SIZE) {
-			System.out.println(
-					"warning: the request size specifed is too " +
-					"small and will be adjusted");
+			//System.out.println(
+			//		"warning: the request size specifed is too " +
+			//		"small and will be adjusted");
 			this.requestSize = REQUEST_HEADER_SIZE;
 		}
 		synchronized (random) {
@@ -154,7 +157,7 @@ public class ApplicationLevelMessage {
 	
 	
 	/**
-	 * (server/mix-side) create ApplicationLevelTraceEntry_RequestReply_v_001 
+	 * (server/mix-side) create ApplicationLevelMessage 
 	 * from InputStream
 	 * 
 	 * @param inputStream
@@ -174,7 +177,7 @@ public class ApplicationLevelMessage {
 	
 	
 	/**
-	 * (server/mix-side) create ApplicationLevelTraceEntry_RequestReply_v_001 
+	 * (server/mix-side) create ApplicationLevelMessage 
 	 * and add message chunks later via "addChunk(byte[] payloadChunk)"
 	 * see "addChunk(byte[] payloadChunk)"
 	 * see "needMore()"
@@ -186,12 +189,46 @@ public class ApplicationLevelMessage {
 		this.headerCache = ByteBuffer.allocate(REQUEST_HEADER_SIZE);
 	}
 	
+	
+	public void initThroughTraceRecordAsString(String traceRecord, int transactionId) {
+		String[] columns = traceRecord.split("(,|;|\\s)");
+		if (columns.length != 6)
+			System.err.println("unrecognized trace file format"); 
+		this.sendDelay = Float.parseFloat(columns[0]);
+		this.clientId = Integer.parseInt(columns[1]);
+		this.serverId = Integer.parseInt(columns[2]);
+		this.requestSize = Integer.parseInt(columns[3]);
+		if (this.requestSize < REQUEST_HEADER_SIZE) {
+			//System.out.println(
+			//		"warning: the request size specifed is too " +
+			//		"small and will be adjusted");
+			this.requestSize = REQUEST_HEADER_SIZE;
+		}
+		this.replySize = Integer.parseInt(columns[4]);
+		if (this.replySize < REPLY_HEADER_SIZE) {
+			//System.out.println(
+			//		"warning: the reply size specifed is too " +
+			//		"small and will be adjusted");
+			this.replySize = REPLY_HEADER_SIZE;
+		}
+		this.replyDelay = Float.parseFloat(columns[5]);
+		this.transactionId = transactionId;
+	}
+	
+	
+	public void initThroughTraceRecordAsString(String traceRecord) {
+		synchronized (random) {
+			this.transactionId = idCounter++;
+		}
+		initThroughTraceRecordAsString(traceRecord, transactionId);
+	}
+	
 		
 	/**
 	 * (server/mix-side) returns whether further chunks are needed or if the 
 	 * message is already received completely
 	 * see "addChunk(byte[] payloadChunk)"
-	 * see "ApplicationLevelTraceEntry_RequestReply_v_001()"
+	 * see "ApplicationLevelMessage()"
 	 * @return
 	 */
 	public boolean needMoreRequestChunks() {
@@ -203,7 +240,7 @@ public class ApplicationLevelMessage {
 	
 	/**
 	 * (server/mix-side) add a message chunk
-	 * see "ApplicationLevelTraceEntry_RequestReply_v_001()"
+	 * see "ApplicationLevelMessage()"
 	 * see "needMore()"
 	 * @return returns null if the complete payloadChunk was required or a 
 	 * fraction of the payloadChunk otherwise
@@ -545,6 +582,49 @@ public class ApplicationLevelMessage {
 
 	public void setAbsoluteSendTime(long sendTime) {
 		this.absoluteSendTime = sendTime;
+	}
+
+
+	@Override
+	public String toString() {
+		return serialize();
+	}
+	
+	
+	public String serialize() {
+		StringBuffer sb = new StringBuffer();
+		serialize(sb);
+		return sb.toString();
+	}
+	
+	public StringBuffer serialize(StringBuffer bufferToAppend) {
+		bufferToAppend.append(sendDelay);
+		bufferToAppend.append(";");
+		bufferToAppend.append(clientId);
+		bufferToAppend.append(";");
+		bufferToAppend.append(serverId);
+		bufferToAppend.append(";");
+		bufferToAppend.append(requestSize);
+		bufferToAppend.append(";");
+		bufferToAppend.append(replySize);
+		bufferToAppend.append(";");
+		bufferToAppend.append(replyDelay);
+		return bufferToAppend;
+	}
+	
+	
+	public void serialize(Writer destination) throws IOException {
+		destination.write(Float.toString(sendDelay));
+		destination.write(";");
+		destination.write(Integer.toString(clientId));
+		destination.write(";");
+		destination.write(Integer.toString(serverId));
+		destination.write(";");
+		destination.write(Integer.toString(requestSize));
+		destination.write(";");
+		destination.write(Integer.toString(replySize));
+		destination.write(";");
+		destination.write(Float.toString(replyDelay));
 	}
 	
 }

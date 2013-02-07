@@ -147,7 +147,7 @@ public class NetworkConnection implements EventExecutor, Identifiable {
 			}
 			*/
 			
-			if (event.getAttachment() instanceof NoneMixMessage && !((NoneMixMessage)event.getAttachment()).isRequest() && event.getEventType() == DistantProxyEvent.INCOMING_REQUEST && event.getTarget() instanceof Mix) {
+			if (event.getAttachment() instanceof TransportMessage && !((TransportMessage)event.getAttachment()).isRequest() && event.getEventType() == DistantProxyEvent.INCOMING_REQUEST && event.getTarget() instanceof Mix) {
 				System.out.println(event + " -- " +event.getAttachment()); 
 				System.out.println(event.getTarget()); 
 				System.out.println(source); 
@@ -162,7 +162,7 @@ public class NetworkConnection implements EventExecutor, Identifiable {
 	
 	private void networkNodeHasSentMessage(NetworkMessage messageSent, NetworkNode sender) {
 		
-		if (sender instanceof Client) {
+		if (sender instanceof AbstractClient) {
 			
 			sender.getStatistics().addValue(messageSent.getLength(), StatisticsType.CLIENT_DATAVOLUME_SEND);
 			sender.getStatistics().addValue(messageSent.getLength(), StatisticsType.CLIENT_DATAVOLUME_SENDANDRECEIVE);
@@ -184,7 +184,7 @@ public class NetworkConnection implements EventExecutor, Identifiable {
 				sender.getStatistics().addValue(1, StatisticsType.CLIENT_MIXMESSAGES_SENT);
 				sender.getStatistics().addValue(1, StatisticsType.CLIENT_MIXMESSAGES_SENTANDRECEIVED);
 				
-			} else if (messageSent instanceof NoneMixMessage) {
+			} else if (messageSent instanceof TransportMessage) {
 				
 				sender.getStatistics().addValue(1, StatisticsType.CLIENT_NONEMIXMESSAGES_SENT);
 				sender.getStatistics().addValue(1, StatisticsType.CLIENT_NONEMIXMESSAGES_SENTANDRECEIVED);
@@ -208,7 +208,7 @@ public class NetworkConnection implements EventExecutor, Identifiable {
 	
 	private void networkNodeHasReceivedMessage(NetworkMessage messageReceived, NetworkNode receiver) {
 		
-		if (receiver instanceof Client) {
+		if (receiver instanceof AbstractClient) {
 			
 			receiver.getStatistics().addValue(messageReceived.getLength(), StatisticsType.CLIENT_DATAVOLUME_RECEIVE);
 			receiver.getStatistics().addValue(messageReceived.getLength(), StatisticsType.CLIENT_DATAVOLUME_SENDANDRECEIVE);
@@ -230,7 +230,7 @@ public class NetworkConnection implements EventExecutor, Identifiable {
 				receiver.getStatistics().addValue(1, StatisticsType.CLIENT_MIXMESSAGES_RECEIVED);
 				receiver.getStatistics().addValue(1, StatisticsType.CLIENT_MIXMESSAGES_SENTANDRECEIVED);
 				
-			} else if (messageReceived instanceof NoneMixMessage) {
+			} else if (messageReceived instanceof TransportMessage) {
 				
 				receiver.getStatistics().addValue(1, StatisticsType.CLIENT_NONEMIXMESSAGES_RECEIVED);
 				

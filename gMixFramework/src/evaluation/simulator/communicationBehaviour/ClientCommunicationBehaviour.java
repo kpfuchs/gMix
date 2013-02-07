@@ -19,19 +19,20 @@ package evaluation.simulator.communicationBehaviour;
 
 import evaluation.simulator.core.*;
 import evaluation.simulator.message.*;
-import evaluation.simulator.networkComponent.Client;
+import evaluation.simulator.networkComponent.AbstractClient;
 import evaluation.simulator.statistics.Statistics;
 
 
 public abstract class ClientCommunicationBehaviour implements EventExecutor {
 
-	protected Client owner;
+	protected AbstractClient owner;
 	protected Simulator simulator;
 	protected Statistics statistics;
+	protected final boolean simulateReplyChannel; 
 	protected static boolean stopSending = false;
 	
 	
-	public static ClientCommunicationBehaviour getInstance(Client owner, Simulator simulator) {
+	public static ClientCommunicationBehaviour getInstance(AbstractClient owner, Simulator simulator) {
 		
 		String simulationScript = Simulator.settings.getProperty("SIMULATION_SCRIPT");
 		String outputStrategy = Simulator.settings.getProperty("OUTPUT_STRATEGY");
@@ -53,31 +54,31 @@ public abstract class ClientCommunicationBehaviour implements EventExecutor {
 	}
 	
 	
-	protected ClientCommunicationBehaviour(Client owner, Simulator simulator) {
-		
+	protected ClientCommunicationBehaviour(AbstractClient owner, Simulator simulator) {
 		this.simulator = simulator;
 		this.owner = owner;
 		this.statistics = owner.getStatistics();
-		
+		this.simulateReplyChannel = Simulator.settings.getPropertyAsBoolean("SIMULATE_REPLY_CHANNEL");
 	}
 	
 	
 	// must call owner.sendRequest(NetworkMessage);
-	// if request shall be sent to first mix, NetworkMessage must be of type "MixMessage"
-	// if request shall be sent to ditantProxy directly, NetworkMessage must be of type "NoneMixMessage"
-	public abstract void incomingRequestFromUser(NoneMixMessage request);
+	public abstract void incomingRequestFromUser(TransportMessage request);
+	
+	
+	public abstract void messageReachedServer(TransportMessage request);
 	
 	
 	public abstract void incomingDecryptedReply(NetworkMessage reply);
 
 	
 	
-	public void setOwner(Client owner) {
+	public void setOwner(AbstractClient owner) {
 		this.owner = owner;
 	}
 
 
-	public Client getOwner() {
+	public AbstractClient getOwner() {
 		return owner;
 	}
 	

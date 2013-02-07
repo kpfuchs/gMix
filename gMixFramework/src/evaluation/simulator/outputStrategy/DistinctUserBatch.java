@@ -27,8 +27,8 @@ import evaluation.simulator.core.OutputStrategyEvent;
 import evaluation.simulator.core.Simulator;
 import evaluation.simulator.message.MessageFragment;
 import evaluation.simulator.message.MixMessage;
-import evaluation.simulator.message.NoneMixMessage;
-import evaluation.simulator.networkComponent.Client;
+import evaluation.simulator.message.TransportMessage;
+import evaluation.simulator.networkComponent.AbstractClient;
 import evaluation.simulator.networkComponent.Mix;
 
 
@@ -45,7 +45,7 @@ public class DistinctUserBatch extends OutputStrategy implements EventExecutor {
 	private int replyCounter = 0;
 	private int timeout;
 	private Event timeoutEvent = null;
-	private Map<String, Vector<NoneMixMessage>> clientReplyWaitingQueues;
+	private Map<String, Vector<TransportMessage>> clientReplyWaitingQueues;
 	private boolean outputAllowed = false;
 	
 	private final static int HAS_SENT_DUMMY = 0;
@@ -67,7 +67,7 @@ public class DistinctUserBatch extends OutputStrategy implements EventExecutor {
 	private void setup() {
 		
 		setupComplete = true;
-		batchSize = Client.getNumberOfClients();
+		batchSize = Simulator.getSimulator().getNumberOfClients();
 		collectedRequests = new MixMessage[batchSize];
 		
 		if (Simulator.settings.getPropertyAsBoolean("SIMULATE_REPLY_CHANNEL")) {
@@ -76,12 +76,12 @@ public class DistinctUserBatch extends OutputStrategy implements EventExecutor {
 			
 			if (mix.isLastMix()) {
 				
-				this.replyInfo = new int[Client.getNumberOfClients()][2];
+				this.replyInfo = new int[batchSize][2];
 				
-				clientReplyWaitingQueues = new HashMap<String, Vector<NoneMixMessage>>();
+				clientReplyWaitingQueues = new HashMap<String, Vector<TransportMessage>>();
 				
-				for (Client c: simulator.getClients().values()) {
-					clientReplyWaitingQueues.put(c.getIdentifier(), new Vector<NoneMixMessage>(10,10));
+				for (AbstractClient c: simulator.getClients().values()) {
+					clientReplyWaitingQueues.put(c.getIdentifier(), new Vector<TransportMessage>(10,10));
 				}
 				
 			}
@@ -191,9 +191,9 @@ public class DistinctUserBatch extends OutputStrategy implements EventExecutor {
 		
 		outputAllowed = false;
 		
-		for (Client client: simulator.getClients().values()) {
+		for (AbstractClient client: simulator.getClients().values()) {
 			
-			Vector<NoneMixMessage> replyWaitingQueue =  clientReplyWaitingQueues.get(client.getIdentifier());
+			Vector<TransportMessage> replyWaitingQueue =  clientReplyWaitingQueues.get(client.getIdentifier());
 			boolean isDummy =  replyWaitingQueue.size() == 0 ? true: false;
 			
 			MixMessage mixMessage = MixMessage.getInstance(false, mix, client, client, Simulator.getNow(), isDummy);
@@ -206,7 +206,7 @@ public class DistinctUserBatch extends OutputStrategy implements EventExecutor {
 
 				for (int i=0; i<replyWaitingQueue.size(); i++) {
 					
-					NoneMixMessage noneMixMessage = replyWaitingQueue.get(i);
+					TransportMessage noneMixMessage = replyWaitingQueue.get(i);
 					
 					if (mixMessage.getFreeSpace() >= noneMixMessage.getLength() && !noneMixMessage.isFragmented()) { // noneMixMessage fits in mixMessage completely
 						
@@ -253,7 +253,7 @@ public class DistinctUserBatch extends OutputStrategy implements EventExecutor {
 
 
 	@Override
-	public void incomingReply(NoneMixMessage noneMixMessage) {
+	public void incomingReply(TransportMessage noneMixMessage) {
 		
 		if (!mix.isLastMix())
 			throw new RuntimeException("ERROR: BasicSynchronousBatch only supports NoneMixMessages as reply from distant proxy!");

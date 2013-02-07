@@ -24,8 +24,8 @@ import evaluation.simulator.core.Simulator;
 import evaluation.simulator.message.MessageFragment;
 import evaluation.simulator.message.MixMessage;
 import evaluation.simulator.message.NetworkMessage;
-import evaluation.simulator.message.NoneMixMessage;
-import evaluation.simulator.networkComponent.Client;
+import evaluation.simulator.message.TransportMessage;
+import evaluation.simulator.networkComponent.AbstractClient;
 
 
 public class ClientWaitForFurtherDataBeforeSend extends ClientCommunicationBehaviour implements EventExecutor {
@@ -35,7 +35,7 @@ public class ClientWaitForFurtherDataBeforeSend extends ClientCommunicationBehav
 	private Event timeoutEvent;
 	
 	
-	protected ClientWaitForFurtherDataBeforeSend(Client owner, Simulator simulator) {
+	protected ClientWaitForFurtherDataBeforeSend(AbstractClient owner, Simulator simulator) {
 		
 		super(owner, simulator);
 		this.timeToWaitForFurtherDataFromUser = Simulator.settings.getPropertyAsInt("TIME_TO_WAIT_FOR_FURTHER_DATA_FROM_USER"); // in ms
@@ -45,7 +45,7 @@ public class ClientWaitForFurtherDataBeforeSend extends ClientCommunicationBehav
 	
 	
 	@Override
-	public void incomingRequestFromUser(NoneMixMessage request) {
+	public void incomingRequestFromUser(TransportMessage request) {
 		
 		if (mixMessage == null) {
 			mixMessage = MixMessage.getInstance(true, owner, simulator.getDistantProxy(), owner, Simulator.getNow(), false);
@@ -94,6 +94,12 @@ public class ClientWaitForFurtherDataBeforeSend extends ClientCommunicationBehav
 
 	
 	@Override
+	public void messageReachedServer(TransportMessage request) {
+
+	}
+	
+	
+	@Override
 	public void executeEvent(Event event) {
 		
 		if ((CommunicationBehaviourEvent)event.getEventType() == CommunicationBehaviourEvent.TIMEOUT_SEND_CURRENT_MIX_REQUEST) {
@@ -105,5 +111,8 @@ public class ClientWaitForFurtherDataBeforeSend extends ClientCommunicationBehav
 			throw new RuntimeException("ERROR: ClientWaitForFurtherDataBeforeSend received unknown Event: " +event.toString());
 		
 	}
+
+
+
 	
 }

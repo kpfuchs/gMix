@@ -18,7 +18,7 @@
 package evaluation.simulator.communicationBehaviour;
 
 import evaluation.simulator.core.Simulator;
-import evaluation.simulator.message.NoneMixMessage;
+import evaluation.simulator.message.TransportMessage;
 import evaluation.simulator.networkComponent.NetworkNode;
 import evaluation.simulator.statistics.Statistics;
 
@@ -59,6 +59,6 @@ public abstract class LastMixCommunicationBehaviour {
 	
 	
 	// must call replyReceiver.addReply(MixMessage mixMessage)
-	public abstract void incomingDataFromDistantProxy(NoneMixMessage noneMixMessage);
+	public abstract void incomingDataFromDistantProxy(TransportMessage noneMixMessage);
 
 }

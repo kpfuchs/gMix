@@ -1,0 +1,11 @@
+This folder ("./inputOutput/simulator") contains input and output files required by 
+the discrete-event network simulator included with the framework. The simulator 
+config file is stored in "./inputOutput/config". It can be used to select the 
+experiments to perform on the next run of the simulator. Experiments must be defined 
+in config files in folder "./inputOutput/simulator/experimentDefinitions".
+The folder "./inputOutput/simulator/plotscripts" contains the basic plot scripts 
+used to visualize results. The plotscripts can be modified between the "# BEGIN 
+modify" and "# END modify" tags (e.g. to select different pointsizes, scales, 
+grids etc.). The simulator writes the results (plotscripts, recorded statistics as 
+txt, config dump, graphs as eps) of each simulation run to 
+"./inputOutput/simulator/output".

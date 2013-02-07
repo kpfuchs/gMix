@@ -23,14 +23,14 @@ import org.apache.commons.math.MathException;
 import org.apache.commons.math.distribution.ExponentialDistributionImpl;
 
 import evaluation.simulator.core.Simulator;
-import evaluation.simulator.networkComponent.Client;
+import evaluation.simulator.networkComponent.AbstractClient;
 import evaluation.simulator.networkComponent.NetworkNode;
 
 
 public class StopAndGoMessage extends BasicMixMessage {
 
-	private int[] tsMin; // 0: first mix; 1: second mix...
-	private int[] tsMax;
+	private long[] tsMin; // 0: first mix; 1: second mix...
+	private long[] tsMax;
 	public int[] delay;
 	private int tsMinCounter = 0;
 	private int tsMaxCounter = 0;
@@ -42,7 +42,7 @@ public class StopAndGoMessage extends BasicMixMessage {
 	
 	
 	protected StopAndGoMessage(boolean isRequest, NetworkNode source,
-			NetworkNode destination, Client owner, int creationTime,
+			NetworkNode destination, AbstractClient owner, long creationTime,
 			boolean isDummy) {
 		
 		super(isRequest, source, destination, owner, creationTime, isDummy);
@@ -77,8 +77,8 @@ public class StopAndGoMessage extends BasicMixMessage {
 			int maxClientMixDelay = Simulator.settings.getPropertyAsInt("SGMIX_MAX_CLIENT_MIX_DELAY");
 			int maxClockDeviation = Simulator.settings.getPropertyAsInt("SGMIX_MAX_CLOCK_DEVITION");
 			
-			tsMin = new int[numberOfMixes];
-			tsMax = new int[numberOfMixes];
+			tsMin = new long[numberOfMixes];
+			tsMax = new long[numberOfMixes];
 				
 			for (int i=0; i<numberOfMixes; i++) {
 				if (isRequest) {
@@ -97,7 +97,7 @@ public class StopAndGoMessage extends BasicMixMessage {
 
 	
 	// mixNumer: 0,1,...,numberOfMixes
-	public static int getMinTimestampForRequest(	int mixNumber, 
+	public static long getMinTimestampForRequest(	int mixNumber, 
 													int maxClockDeviation,
 													int[] sgDelays, 
 													int minInterMixDelay, 
@@ -115,7 +115,7 @@ public class StopAndGoMessage extends BasicMixMessage {
 	}
 	
 	
-	public static int getMaxTimestampForRequest(	int mixNumber, 
+	public static long getMaxTimestampForRequest(	int mixNumber, 
 													int maxClockDeviation,
 													int[] sgDelays, 
 													int maxInterMixDelay, 
@@ -133,14 +133,14 @@ public class StopAndGoMessage extends BasicMixMessage {
 	}
 	
 	
-	public static int getMinTimestampForReply(	int mixNumber, 
+	public static long getMinTimestampForReply(	int mixNumber, 
 												int maxClockDeviation,
 												int[] sgDelays, 
 												int minInterMixDelay, 
 												int minClientMixDelay) {
 
 		if (mixNumber == 0)
-			return Integer.MIN_VALUE; 
+			return Long.MIN_VALUE; 
 		
 		int sumOfSgDelays = 0;
 		for (int i=0; i<mixNumber; i++)
@@ -157,14 +157,14 @@ public class StopAndGoMessage extends BasicMixMessage {
 	}
 	
 	
-	public static int getMaxTimestampForReply(	int mixNumber, 
+	public static long getMaxTimestampForReply(	int mixNumber, 
 												int maxClockDeviation,
 												int[] sgDelays, 
 												int maxInterMixDelay, 
 												int maxClientMixDelay) {
 
 		if (mixNumber == 0)
-			return Integer.MAX_VALUE;  
+			return Long.MAX_VALUE;  
 
 		int sumOfSgDelays = 0;
 		for (int i=0; i<mixNumber; i++)
@@ -182,12 +182,12 @@ public class StopAndGoMessage extends BasicMixMessage {
 
 	
 	// call only once per mix!
-	public int getTsMin() {
+	public long getTsMin() {
 		return tsMin[tsMinCounter++];
 	}
 	
 	// call only once per mix!
-	public int getTsMax() {
+	public long getTsMax() {
 		return tsMax[tsMaxCounter++];
 	}
 

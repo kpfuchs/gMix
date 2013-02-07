@@ -20,7 +20,7 @@ package evaluation.simulator.communicationBehaviour;
 import evaluation.simulator.core.Simulator;
 import evaluation.simulator.message.MessageFragment;
 import evaluation.simulator.message.MixMessage;
-import evaluation.simulator.message.NoneMixMessage;
+import evaluation.simulator.message.TransportMessage;
 import evaluation.simulator.networkComponent.Mix;
 import evaluation.simulator.networkComponent.NetworkNode;
 
@@ -37,23 +37,26 @@ public class LastMixReplyImmediately extends LastMixCommunicationBehaviour {
 	
 	// must call mix.addReply(MixMessage mixMessage)
 	@Override
-	public void incomingDataFromDistantProxy(NoneMixMessage noneMixMessage) {
+	public void incomingDataFromDistantProxy(TransportMessage transportMessage) {
 		
 		if (owner instanceof Mix && !((Mix)owner).isLastMix())
-			throw new RuntimeException("ERROR: Batch only supports NoneMixMessages as reply from distant proxy! " +noneMixMessage); 
+			throw new RuntimeException("ERROR: Batch only supports TransportMessage as reply from distant proxy! " +transportMessage); 
 		
-		MixMessage mixMessage = MixMessage.getInstance(false, owner, noneMixMessage.getOwner(), noneMixMessage.getOwner(), Simulator.getNow(), false);
+		MixMessage mixMessage = MixMessage.getInstance(false, owner, transportMessage.getOwner(), transportMessage.getOwner(), Simulator.getNow(), false);
 		
-		if (mixMessage.getFreeSpace() >= noneMixMessage.getLength()) { // noneMixMessage fits in mixMessage completely
+		if (mixMessage.getFreeSpace() >= transportMessage.getLength()) { // transportMessage fits in mixMessage completely
 			
-			mixMessage.addPayloadObject(noneMixMessage);
+			mixMessage.addPayloadObject(transportMessage);
 			replyReceiver.incomingReply(mixMessage);
 			
 		} else {
+			MessageFragment fragment = null;
+			assert transportMessage.hasNextFragment();
 			
-			while (noneMixMessage.hasNextFragment()) {
-			
-				MessageFragment fragment = noneMixMessage.getFragment(mixMessage.getFreeSpace());
+			while (transportMessage.hasNextFragment()) {
+				
+				fragment = transportMessage.getFragment(mixMessage.getFreeSpace());
+				//System.out.println("adding fragment to mix message " +fragment); 
 				mixMessage.addPayloadObject(fragment);
 				
 				if (fragment.isLastFragment()) { // last fragment -> send message (even if it is not "full")
@@ -63,11 +66,12 @@ public class LastMixReplyImmediately extends LastMixCommunicationBehaviour {
 				} else if (mixMessage.getFreeSpace() == 0) { // still data to send, but no more space -> send last and create new mixMessage
 					
 					replyReceiver.incomingReply(mixMessage);
-					mixMessage = MixMessage.getInstance(false, owner, noneMixMessage.getOwner(), noneMixMessage.getOwner(), Simulator.getNow(), false);
+					mixMessage = MixMessage.getInstance(false, owner, transportMessage.getOwner(), transportMessage.getOwner(), Simulator.getNow(), false);
 					
 				}
 
 			}
+			assert fragment.isLastFragment() : ""+fragment.getAssociatedTransportMessage().reltedEndToEndMessage.getPayload().getTransactionId();
 				
 		}
 		

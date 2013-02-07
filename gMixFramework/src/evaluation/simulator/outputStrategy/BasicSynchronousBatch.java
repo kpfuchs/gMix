@@ -27,8 +27,8 @@ import evaluation.simulator.core.OutputStrategyEvent;
 import evaluation.simulator.core.Simulator;
 import evaluation.simulator.message.MessageFragment;
 import evaluation.simulator.message.MixMessage;
-import evaluation.simulator.message.NoneMixMessage;
-import evaluation.simulator.networkComponent.Client;
+import evaluation.simulator.message.TransportMessage;
+import evaluation.simulator.networkComponent.AbstractClient;
 import evaluation.simulator.networkComponent.Mix;
 
 
@@ -45,20 +45,20 @@ public class BasicSynchronousBatch extends OutputStrategy implements EventExecut
 	private SimplexSynchronousBatch replyBatch;
 	private int replyRate;
 	private boolean setupComplete = false;
-	private Map<String, Vector<NoneMixMessage>> clientReplyWaitingQueues;
+	private Map<String, Vector<TransportMessage>> clientReplyWaitingQueues;
 	
 	
 	protected BasicSynchronousBatch(Mix mix, Simulator simulator) {
 		
 		super(mix, simulator);
 		
-		int batchSize = Simulator.settings.getPropertyAsInt("NUMBER_OF_CLIENTS_TO_SIMULATE");
+		int batchSize = Simulator.getSimulator().getNumberOfClients();
 		requestBatch = new SimplexSynchronousBatch(batchSize, true);
 		replyBatch = new SimplexSynchronousBatch(batchSize, false);
 		this.replyRate = Simulator.settings.getPropertyAsInt("REPLY_RATE");
 		
 		if (mix.isLastMix())
-			clientReplyWaitingQueues = new HashMap<String, Vector<NoneMixMessage>>();
+			clientReplyWaitingQueues = new HashMap<String, Vector<TransportMessage>>();
 	
 	}
 
@@ -118,7 +118,7 @@ public class BasicSynchronousBatch extends OutputStrategy implements EventExecut
 	}
 	
 	
-	public void incomingReply(NoneMixMessage noneMixMessage) {
+	public void incomingReply(TransportMessage noneMixMessage) {
 		
 		if (!mix.isLastMix())
 			throw new RuntimeException("ERROR: BasicSynchronousBatch only supports NoneMixMessages as reply from distant proxy!");
@@ -137,8 +137,8 @@ public class BasicSynchronousBatch extends OutputStrategy implements EventExecut
 		
 		if (Simulator.settings.getPropertyAsBoolean("SIMULATE_REPLY_CHANNEL")) {
 			
-			for (Client c: simulator.getClients().values())
-				clientReplyWaitingQueues.put(c.getIdentifier(), new Vector<NoneMixMessage>(10,10));
+			for (AbstractClient c: simulator.getClients().values())
+				clientReplyWaitingQueues.put(c.getIdentifier(), new Vector<TransportMessage>(10,10));
 			
 			Event putOutNextReplyBatchEvent = new Event(this, Simulator.getNow() + replyRate, OutputStrategyEvent.PUT_OUT_REPLY_BATCH);
 			simulator.scheduleEvent(putOutNextReplyBatchEvent, this);
@@ -150,9 +150,9 @@ public class BasicSynchronousBatch extends OutputStrategy implements EventExecut
 	
 	private void putOutReplyBatch() {
 		 
-		for (Client client: simulator.getClients().values()) {
+		for (AbstractClient client: simulator.getClients().values()) {
 			
-			Vector<NoneMixMessage> replyWaitingQueue =  clientReplyWaitingQueues.get(client.getIdentifier());
+			Vector<TransportMessage> replyWaitingQueue =  clientReplyWaitingQueues.get(client.getIdentifier());
 			boolean isDummy =  replyWaitingQueue.size() == 0 ? true: false;
 			
 			MixMessage mixMessage = MixMessage.getInstance(false, mix, client, client, Simulator.getNow(), isDummy);
@@ -165,7 +165,7 @@ public class BasicSynchronousBatch extends OutputStrategy implements EventExecut
 
 				for (int i=0; i<replyWaitingQueue.size(); i++) {
 					
-					NoneMixMessage noneMixMessage = replyWaitingQueue.get(i);
+					TransportMessage noneMixMessage = replyWaitingQueue.get(i);
 					
 					if (mixMessage.getFreeSpace() >= noneMixMessage.getLength() && !noneMixMessage.isFragmented()) { // noneMixMessage fits in mixMessage completely
 						

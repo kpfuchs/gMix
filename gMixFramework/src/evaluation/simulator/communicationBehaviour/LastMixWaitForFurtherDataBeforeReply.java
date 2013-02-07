@@ -23,8 +23,7 @@ import evaluation.simulator.core.EventExecutor;
 import evaluation.simulator.core.Simulator;
 import evaluation.simulator.message.MessageFragment;
 import evaluation.simulator.message.MixMessage;
-import evaluation.simulator.message.NoneMixMessage;
-import evaluation.simulator.networkComponent.Client;
+import evaluation.simulator.message.TransportMessage;
 import evaluation.simulator.networkComponent.NetworkNode;
 
 
@@ -45,7 +44,7 @@ public class LastMixWaitForFurtherDataBeforeReply extends LastMixCommunicationBe
 	
 	
 	@Override
-	public void incomingDataFromDistantProxy(NoneMixMessage noneMixMessage) {
+	public void incomingDataFromDistantProxy(TransportMessage noneMixMessage) {
 		
 		if (!setupComplete)
 			setup();
@@ -97,8 +96,8 @@ public class LastMixWaitForFurtherDataBeforeReply extends LastMixCommunicationBe
 	protected void setup() {
 		
 		setupComplete = true;
-		replies = new MixMessage[Client.getNumberOfClients()];
-		timeoutEvents = new Event[Client.getNumberOfClients()];
+		replies = new MixMessage[simulator.getNumberOfClients()];
+		timeoutEvents = new Event[simulator.getNumberOfClients()];
 
 	}
 	

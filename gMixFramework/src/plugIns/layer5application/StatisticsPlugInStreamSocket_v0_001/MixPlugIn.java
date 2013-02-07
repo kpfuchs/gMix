@@ -86,10 +86,11 @@ public class MixPlugIn extends Implementation implements Layer5ApplicationMix {
 		public void run() {
 			try {
 				while (true) {
-					byte[] data = new byte[outputStream.getMTU()];
-					data = Util.forceRead(inputStream, data);
+					byte[] data = new byte[512];
+					int read = inputStream.read(data);
+					//data = Util.forceRead(inputStream, data);
 					if (anonNode.IS_DUPLEX && data.length != 0) {
-						outputStream.write(data);
+						outputStream.write(data, 0, read);
 					}
 				}
 			} catch (IOException e) {

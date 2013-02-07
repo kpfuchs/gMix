@@ -37,12 +37,12 @@ public enum StatisticsType {
 	CLIENT_PAYLOADVOLUME_PER_SECOND_SEND("datavolume_per_second", new EvaluationType[]{ EvaluationType.VOLUME_PER_SECOND }), // per client!
 	CLIENT_PAYLOADVOLUME_PER_SECOND_RECEIVE("datavolume_per_second", new EvaluationType[]{ EvaluationType.VOLUME_PER_SECOND }), // per client!
 	CLIENT_PAYLOADVOLUME_PER_SECOND_SENDANDRECEIVE("datavolume_per_second", new EvaluationType[]{ EvaluationType.VOLUME_PER_SECOND }), // per client!
-	CLIENT_PAYLOADPERCENTAGE_SEND("messageUtilization", new EvaluationType[]{ EvaluationType.AVG }),
-	CLIENT_PAYLOADPERCENTAGE_RECEIVE("messageUtilization", new EvaluationType[]{ EvaluationType.AVG }),
-	CLIENT_PAYLOADPERCENTAGE_SENDANDRECEIVE("messageUtilization", new EvaluationType[]{ EvaluationType.AVG }),
-	CLIENT_PADDINGPERCENTAGE_SEND("messageUtilization", new EvaluationType[]{ EvaluationType.AVG }),
-	CLIENT_PADDINGPERCENTAGE_RECEIVE("messageUtilization", new EvaluationType[]{ EvaluationType.AVG }),
-	CLIENT_PADDINGPERCENTAGE_SENDANDRECEIVE("messageUtilization", new EvaluationType[]{ EvaluationType.AVG }),
+	CLIENT_PAYLOADPERCENTAGE_SEND("utilization", new EvaluationType[]{ EvaluationType.AVG }),
+	CLIENT_PAYLOADPERCENTAGE_RECEIVE("utilization", new EvaluationType[]{ EvaluationType.AVG }),
+	CLIENT_PAYLOADPERCENTAGE_SENDANDRECEIVE("utilization", new EvaluationType[]{ EvaluationType.AVG }),
+	CLIENT_PADDINGPERCENTAGE_SEND("utilization", new EvaluationType[]{ EvaluationType.AVG }),
+	CLIENT_PADDINGPERCENTAGE_RECEIVE("utilization", new EvaluationType[]{ EvaluationType.AVG }),
+	CLIENT_PADDINGPERCENTAGE_SENDANDRECEIVE("utilization", new EvaluationType[]{ EvaluationType.AVG }),
 	//CLIENT_PADDINGOVERHEAD_SEND("overhead", new EvaluationType[]{ EvaluationType.AVG }),
 	//CLIENT_PADDINGOVERHEAD_RECEIVE("overhead", new EvaluationType[]{ EvaluationType.AVG }),
 	//CLIENT_PADDINGOVERHEAD_SENDANDRECEIVE("overhead", new EvaluationType[]{ EvaluationType.AVG }),
@@ -52,6 +52,10 @@ public enum StatisticsType {
 	CLIENT_NONEMIXMESSAGES_SENT("MessagesSent", new EvaluationType[]{ EvaluationType.SUM }),
 	CLIENT_NONEMIXMESSAGES_RECEIVED("MessagesSent", new EvaluationType[]{ EvaluationType.SUM }),
 	CLIENT_NONEMIXMESSAGES_SENTANDRECEIVED("MessagesSent", new EvaluationType[]{ EvaluationType.SUM }),
+	
+	ADU_SIZE_SEND("aduSize", new EvaluationType[]{ EvaluationType.VALUE_LIST }),
+	ADU_SIZE_RECEIVE("aduSize", new EvaluationType[]{ EvaluationType.VALUE_LIST }),
+	ADU_SIZE_SENDANDRECEIVE("aduSize", new EvaluationType[]{ EvaluationType.VALUE_LIST }),
 	
 	MIX_DATAVOLUME_SEND("datavolume", new EvaluationType[]{ EvaluationType.SUM }),
 	MIX_DATAVOLUME_RECEIVE("datavolume", new EvaluationType[]{ EvaluationType.SUM }),
@@ -64,10 +68,22 @@ public enum StatisticsType {
 	
 	DLPA_REQUEST_SENDING_RATE_PER_CLIENT("events_per_second", new EvaluationType[]{ EvaluationType.EVENTS_PER_SECOND_AND_CLIENT }),
 	
+	DLPA_REQUEST_DUMMY_PERCENTAGE("utilization", new EvaluationType[]{ EvaluationType.AVG }),
+
+	REQUEST_MESSAGE_DROP_PERCENTAGE("packetDrop", new EvaluationType[]{ EvaluationType.PERCENTAGE }),
+	REPLY_MESSAGE_DROP_PERCENTAGE("packetDrop", new EvaluationType[]{ EvaluationType.PERCENTAGE }),
+	MESSAGE_DROP_PERCENTAGE("packetDrop", new EvaluationType[]{ EvaluationType.PERCENTAGE }),
+	
+	REQUEST_MESSAGE_DROP_PERCENTAGE_INCL_DUMMIES("packetDrop", new EvaluationType[]{ EvaluationType.PERCENTAGE }),
+	REPLY_MESSAGE_DROP_PERCENTAGE_INCL_DUMMIES("packetDrop", new EvaluationType[]{ EvaluationType.PERCENTAGE }),
+	MESSAGE_DROP_PERCENTAGE_INCL_DUMMIES("packetDrop", new EvaluationType[]{ EvaluationType.PERCENTAGE }),
+	
 	DISTANTPROXY_DATAVOLUME_SENDANDRECEIVE("datavolume", new EvaluationType[]{ EvaluationType.SUM }),
 	DISTANTPROXY_MIXMESSAGES_RECEIVED("MessagesSent", new EvaluationType[]{ EvaluationType.SUM }),
 	
-	TRAFFICSOURCE_SENDING_RATE_PER_CLIENT("events_per_second", new EvaluationType[]{ EvaluationType.EVENTS_PER_SECOND_AND_CLIENT })
+	TRAFFICSOURCE_SENDING_RATE_PER_CLIENT("events_per_second", new EvaluationType[]{ EvaluationType.EVENTS_PER_SECOND_AND_CLIENT }),
+	MIXMESSAGE_SENDING_RATE_PER_CLIENT("events_per_second", new EvaluationType[]{ EvaluationType.EVENTS_PER_SECOND_AND_CLIENT })
+	
 	;
 	
 /*	public static final int DATA_TYPE_DOUBLE = 1;
@@ -90,7 +106,7 @@ public enum StatisticsType {
 			unit = "ms";
 		else if (measurand.equals("datavolume"))
 			unit = "byte";
-		else if (measurand.equals("messageUtilization"))
+		else if (measurand.equals("utilization"))
 			unit = "%";
 		else if (measurand.equals("MessagesSent"))
 			unit = "NumberOfMessages";
@@ -100,6 +116,10 @@ public enum StatisticsType {
 			unit = "events/sec";
 		else if (measurand.equals("datavolume_per_second"))
 			unit = "datavolume_per_second";
+		else if (measurand.equals("packetDrop"))
+			unit = "%";
+		else if (measurand.equals("aduSize"))
+			unit = "byte";
 		else
 			throw new RuntimeException("ERROR: unknown measurand " +measurand);
 		
@@ -115,7 +135,7 @@ public enum StatisticsType {
 			return "ms";
 		else if (measurand.equals("datavolume"))
 			return "byte";
-		else if (measurand.equals("messageUtilization"))
+		else if (measurand.equals("utilization"))
 			return "%";
 		else if (measurand.equals("MessagesSent"))
 			return "NumberOfMessages";
@@ -125,6 +145,10 @@ public enum StatisticsType {
 			return "events/sec";
 		else if (measurand.equals("datavolume_per_second"))
 			return "kbyte/sec";
+		else if (measurand.equals("packetDrop"))
+			return "% (1=100%)";
+		else if (measurand.equals("aduSize"))
+			return "byte";
 		else  
 			throw new RuntimeException("ERROR: unknown measurand " +measurand);
 		

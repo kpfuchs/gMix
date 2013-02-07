@@ -2,9 +2,8 @@
 # a seperate property file must exist for each experiment
 # specify the filenames of the property files here
 # (property files must be in folder "./inputOutput/simulator/experimentDefinitions")
-# example: EXPERIMENTS_TO_PERFORM = example_badewannenkurve.txt,example_dlpa_paper_fig7_m10.txt
-# default_settings.txt, example_badewannenkurve.txt, example_dlpa_paper_fig7_m10.txt, example_sync.txt
-EXPERIMENTS_TO_PERFORM = example_badewannenkurve.txt
+# example: EXPERIMENTS_TO_PERFORM = lgpaper_dlpaDummyPercentagePoi.txt
+EXPERIMENTS_TO_PERFORM = lgpaper_dlpaDummyPercentagePoi.txt
 #
 # GNUPLOT_FOLDER
 GNUPLOT_FOLDER = 

@@ -51,6 +51,7 @@
 	<target name="compile" depends="retrieve">
 		<mkdir dir="${build.dir}/classes"/>
 		<javac includeantruntime="false" srcdir="${src.dir}" destdir="${build.dir}/classes" classpathref="build.path"/>
+		<!-- <javac source="1.6" target="1.6" includeantruntime="false" srcdir="${src.dir}" destdir="${build.dir}/classes" classpathref="build.path"/> -->
 	</target>
 
 	
@@ -80,7 +81,7 @@
 		<copy todir="${tmp-dist.dir}"><fileset dir="." includes="*.txt"/></copy>
 		<copy todir="${tmp-dist.dir}"><fileset dir="." includes="inputOutput/**" excludes="**/**.**"/></copy> <!-- folder structure -->
 		<copy todir="${tmp-dist.dir}"><fileset dir="." includes="inputOutput/anonNode/**" /></copy>
-		<copy todir="${tmp-dist.dir}"><fileset dir="." includes="inputOutput/global/**" /></copy>
+		<copy todir="${tmp-dist.dir}"><fileset dir="." includes="inputOutput/global/**" excludes="inputOutput/global/traces/"/></copy>
 		<copy todir="${tmp-dist.dir}"><fileset dir="." includes="inputOutput/infoService/**" /></copy>			
 		<copy todir="${tmp-dist.dir}"><fileset dir="." includes="inputOutput/loadGenerator/**" /></copy>	
 		<copy todir="${tmp-dist.dir}"><fileset dir="." includes="inputOutput/localTest/**" /></copy>	

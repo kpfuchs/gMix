@@ -21,7 +21,7 @@ package evaluation.simulator.outputStrategy;
 import evaluation.simulator.communicationBehaviour.LastMixCommunicationBehaviour;
 import evaluation.simulator.core.Simulator;
 import evaluation.simulator.message.MixMessage;
-import evaluation.simulator.message.NoneMixMessage;
+import evaluation.simulator.message.TransportMessage;
 import evaluation.simulator.networkComponent.Mix;
 
 
@@ -59,7 +59,7 @@ public class Batch extends OutputStrategy {
 
 
 	@Override
-	public void incomingReply(NoneMixMessage noneMixMessage) {
+	public void incomingReply(TransportMessage noneMixMessage) {
 		lastMixCommunicationBehaviour.incomingDataFromDistantProxy(noneMixMessage);
 	}
 	

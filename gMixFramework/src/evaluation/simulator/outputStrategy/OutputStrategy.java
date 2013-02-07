@@ -20,7 +20,7 @@ package evaluation.simulator.outputStrategy;
 import evaluation.simulator.communicationBehaviour.ReplyReceiver;
 import evaluation.simulator.core.Simulator;
 import evaluation.simulator.message.MixMessage;
-import evaluation.simulator.message.NoneMixMessage;
+import evaluation.simulator.message.TransportMessage;
 import evaluation.simulator.networkComponent.Mix;
 
 
@@ -53,6 +53,10 @@ public abstract class OutputStrategy implements ReplyReceiver {
 			return new StopAndGo(mix, simulator);
 		else if (type.equals("BASIC_DLPA"))
 			return new DLPABasic(mix, simulator);
+		else if (type.equals("HEURISTIC_DLPA"))
+			return new DLPAHeuristic(mix, simulator);
+		else if (type.equals("LOSSY_SYNCHRONOUS_BATCH"))
+			return new LossySynchronousBatch(mix, simulator);
 		else
 			throw new RuntimeException("ERROR: unknown OUTPUT_STRATEGY specified: " +type);
 		
@@ -85,7 +89,7 @@ public abstract class OutputStrategy implements ReplyReceiver {
 	 * reply from distant proxy
 	 * must call mix.putOutReply(MixMessage mixMessage)
 	 */
-	public abstract void incomingReply(NoneMixMessage noneMixMessage);
+	public abstract void incomingReply(TransportMessage noneMixMessage);
 	
 	
 	// called when no more traffic will be generated

@@ -19,5 +19,5 @@ package evaluation.simulator.trafficSource;
 
 
 public enum TrafficModel {
-		LOGFILE, POISSONDISTRIBUTED
+		TRACE_FILE, POISSON, PARETO
 	}

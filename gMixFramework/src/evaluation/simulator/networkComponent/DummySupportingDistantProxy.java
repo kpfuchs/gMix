@@ -26,67 +26,45 @@ import evaluation.simulator.core.Simulator;
 import evaluation.simulator.delayBox.DelayBox;
 import evaluation.simulator.message.MessageFragment;
 import evaluation.simulator.message.MixMessage;
-import evaluation.simulator.message.NoneMixMessage;
+import evaluation.simulator.message.TransportMessage;
 import evaluation.simulator.message.PayloadObject;
 import evaluation.simulator.statistics.StatisticsType;
 
 
-public class DummySupportingDistantProxy extends DistantProxy implements EventExecutor, ReplyReceiver {
+public class DummySupportingDistantProxy extends BasicDistantProxy implements EventExecutor, ReplyReceiver {
 	
 	private LastMixCommunicationBehaviour lastMixCommunicationBehaviour = null;
 	
 	
 	protected DummySupportingDistantProxy(String identifier, Simulator simulator, DelayBox delayBox) {
-		
 		super(identifier, simulator, delayBox, true);
 		this.lastMixCommunicationBehaviour = LastMixCommunicationBehaviour.getInstance(this, simulator, this);
-		
 	}
 
 
 	protected void incomingRequest(MixMessage mixMessage) {
-		
 		statistics.addValue(1, StatisticsType.DISTANTPROXY_MIXMESSAGES_RECEIVED);
-		
 		if (!mixMessage.isDummy())
 			for (PayloadObject payloadObject:mixMessage.getPayloadObjectsContained())
-				if (payloadObject instanceof NoneMixMessage)
-					incomingRequest((NoneMixMessage)payloadObject);
+				if (payloadObject instanceof TransportMessage)
+					incomingRequest((TransportMessage)payloadObject);
 				else if (payloadObject instanceof MessageFragment) {
 					if (((MessageFragment)payloadObject).isLastFragment())
-						incomingRequest(((MessageFragment)payloadObject).getAssociatedNoneMixMessage());
+						incomingRequest(((MessageFragment)payloadObject).getAssociatedTransportMessage());
 				} else {
 					throw new RuntimeException("ERROR: unknown PayloadObject type! " +payloadObject); 
 				}
-		
 	}
 	
 	
 	@Override
-	protected void incomingRequest(NoneMixMessage noneMixMessage) {
-		
-		noneMixMessage.setRequest(false);
-		noneMixMessage.setSource(this);
-		noneMixMessage.setDestination(noneMixMessage.getOwner());
-		noneMixMessage.setLength(noneMixMessage.getReplyLength());
-		statistics.addValue(noneMixMessage.getLength(), StatisticsType.DISTANTPROXY_DATAVOLUME_SENDANDRECEIVE);
-		statistics.addValue(noneMixMessage.getReplyLength(), StatisticsType.DISTANTPROXY_DATAVOLUME_SENDANDRECEIVE);
-		super.callRequestAnsweredIn(noneMixMessage.getResolveTimeAtDistantProxy(), noneMixMessage);
-
-	}
-
-	
-	@Override
-	protected void requestAnswered(NoneMixMessage noneMixMessage) {
-		
-		lastMixCommunicationBehaviour.incomingDataFromDistantProxy(noneMixMessage);
-		
+	protected void requestAnswered(TransportMessage transportMessage) {
+		lastMixCommunicationBehaviour.incomingDataFromDistantProxy(transportMessage);
 	}
 
 
 	@Override
 	public void incomingReply(MixMessage mixMessage) {
-		
 		sendToPreviousHop(mixMessage, 0, MixEvent.INCOMING_MIX_MESSAGE_OF_TYPE_REPLY);
 	}
 	

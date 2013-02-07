@@ -26,17 +26,17 @@ import evaluation.simulator.core.Simulator;
 import evaluation.simulator.message.MessageFragment;
 import evaluation.simulator.message.MixMessage;
 import evaluation.simulator.message.NetworkMessage;
-import evaluation.simulator.message.NoneMixMessage;
-import evaluation.simulator.networkComponent.Client;
+import evaluation.simulator.message.TransportMessage;
+import evaluation.simulator.networkComponent.AbstractClient;
 
 
 public class ClientBasicSynchronous extends ClientCommunicationBehaviour implements EventExecutor {
 
 	private int sendingRate;
-	private Vector<NoneMixMessage> requestWaitingQueue = new Vector<NoneMixMessage>(10,10);
+	private Vector<TransportMessage> requestWaitingQueue = new Vector<TransportMessage>(10,10);
 	
 	
-	protected ClientBasicSynchronous(Client owner, Simulator simulator) {
+	protected ClientBasicSynchronous(AbstractClient owner, Simulator simulator) {
 		
 		super(owner, simulator);
 		this.sendingRate = new Integer(Simulator.settings.getProperty("SENDING_RATE"));
@@ -45,14 +45,8 @@ public class ClientBasicSynchronous extends ClientCommunicationBehaviour impleme
 
 	
 	@Override
-	public void incomingRequestFromUser(NoneMixMessage request) {
+	public void incomingRequestFromUser(TransportMessage request) {
 		requestWaitingQueue.add(request);
-	}
-
-
-	@Override
-	public void incomingDecryptedReply(NetworkMessage reply) {
-		
 	}
 	
 	
@@ -68,7 +62,7 @@ public class ClientBasicSynchronous extends ClientCommunicationBehaviour impleme
 
 			for (int i=0; i<requestWaitingQueue.size(); i++) {
 				
-				NoneMixMessage noneMixMessage = requestWaitingQueue.get(i);
+				TransportMessage noneMixMessage = requestWaitingQueue.get(i);
 				
 				if (mixMessage.getFreeSpace() >= noneMixMessage.getLength() && !noneMixMessage.isFragmented()) { // noneMixMessage fits in mixMessage completely
 					
@@ -117,6 +111,18 @@ public class ClientBasicSynchronous extends ClientCommunicationBehaviour impleme
 
 		sendMessage();	
 		
+	}
+
+	
+	@Override
+	public void incomingDecryptedReply(NetworkMessage reply) {
+		
+	}
+	
+
+	@Override
+	public void messageReachedServer(TransportMessage request) {
+
 	}
 
 }

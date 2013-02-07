@@ -23,7 +23,7 @@ import java.util.Vector;
 import evaluation.simulator.communicationBehaviour.LastMixCommunicationBehaviour;
 import evaluation.simulator.core.Simulator;
 import evaluation.simulator.message.MixMessage;
-import evaluation.simulator.message.NoneMixMessage;
+import evaluation.simulator.message.TransportMessage;
 import evaluation.simulator.networkComponent.IdGenerator;
 import evaluation.simulator.networkComponent.Identifiable;
 import evaluation.simulator.networkComponent.Mix;
@@ -35,8 +35,8 @@ public class DLPABasic extends OutputStrategy implements Identifiable {
 
 	private int maxRequestDelay;
 	private int maxReplyDelay;
-	public Vector<DLPAOutputSlot> requestOutputSlots = new Vector<DLPAOutputSlot>(); // TODO: private
-	public Vector<DLPAOutputSlot> replyOutputSlots = new Vector<DLPAOutputSlot>(); // TODO: private
+	public Vector<DLPAOutputSlot> requestOutputSlots = new Vector<DLPAOutputSlot>();
+	public Vector<DLPAOutputSlot> replyOutputSlots = new Vector<DLPAOutputSlot>();
 	public Statistics statistics;
 	private int numericIdentifier;
 	private LastMixCommunicationBehaviour lastMixCommunicationBehaviour;
@@ -73,7 +73,7 @@ public class DLPABasic extends OutputStrategy implements Identifiable {
 	public DLPAOutputSlot getUnusedOutputSlot(MixMessage mixMessage) {
 
 		int maxDelay = mixMessage.isRequest() ? this.maxRequestDelay : this.maxReplyDelay;
-		int latestOutputPossible = Simulator.getNow() + maxDelay;
+		long latestOutputPossible = Simulator.getNow() + maxDelay;
 		Vector<DLPAOutputSlot> outputSlots = mixMessage.isRequest() ? this.requestOutputSlots : this.replyOutputSlots;
 		
 		for (DLPAOutputSlot outputSlot:outputSlots) {
@@ -135,11 +135,16 @@ public class DLPABasic extends OutputStrategy implements Identifiable {
 		
 		outputSlot.addMessage(mixMessage);
 		
+		if (outputSlot.getNumerOfMessagesContained() == simulator.getClients().size()) { // TODO
+			outputSlot.putOutMessages();
+			simulator.unscheduleEvent(outputSlot.getTimeoutEvent());
+		}
+		
 	}
 
 
 	@Override
-	public void incomingReply(NoneMixMessage noneMixMessage) {
+	public void incomingReply(TransportMessage noneMixMessage) {
 		
 		lastMixCommunicationBehaviour.incomingDataFromDistantProxy(noneMixMessage);
 		

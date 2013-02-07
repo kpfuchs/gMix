@@ -28,11 +28,13 @@ import evaluation.simulator.core.Simulator;
 import evaluation.simulator.networkComponent.Identifiable;
 
 
-
 public class Statistics implements EventExecutor {
 
 	private static final int INITIAL_SIZE = 10000;
 	private static GetSumHelper getSumHelper = new GetSumHelper();
+	private static DisplayAllHelper displayAllHelper = new DisplayAllHelper(false);
+	private static DisplayAllHelper displayAllSeparatedHelper = new DisplayAllHelper(true);
+	private static GetPercentageHelper getPercentageHelper = new GetPercentageHelper();
 	
 	private boolean isCumulativeStatisticsObject = false; // statistics object used to calculate EvaluationTypes (e.g. average or minimum) from recorded statistics 
 	
@@ -63,19 +65,20 @@ public class Statistics implements EventExecutor {
 	
 	
 	public static void setSimulator(Simulator simulator) {
-		
 		Statistics.simulator = simulator;
-		int recordStatisticsFrom = Simulator.settings.getPropertyAsInt("RECORD_STATISTICS_FROM");
-		int recordStatisticsTo = Simulator.settings.getPropertyAsInt("RECORD_STATISTICS_TO");
+		simulator.ts_recordStatisticsStart = Simulator.settings.getPropertyAsInt("RECORD_STATISTICS_FROM_IN_MS");
 		Statistics s = new Statistics(0);
-		
-		if (recordStatisticsFrom == 0)
+		// set start
+		if (simulator.ts_recordStatisticsStart == 0) {
 			recordStatistics = true;
-		else
-			simulator.scheduleEvent(new Event(s, recordStatisticsFrom, StatisticsEvent.START_RECORDING), s);
-		
-		simulator.scheduleEvent(new Event(s, recordStatisticsTo, StatisticsEvent.STOP_RECORDING), s);
-	
+		} else {
+			simulator.scheduleEvent(new Event(s, simulator.ts_recordStatisticsStart, StatisticsEvent.START_RECORDING), s);
+		}
+		// set fixed end (if specified)
+		if (Simulator.settings.getProperty("SIMULATION_END").equals("SIMULATION_TIME_END")) {
+			int recordStatisticsEnd = Simulator.settings.getPropertyAsInt("SIMULATION_TIME_LIMIT_IN_MS");
+			simulator.scheduleEvent(new Event(s, recordStatisticsEnd, StatisticsEvent.STOP_RECORDING), s);
+		}
 	}
 	
 	
@@ -142,6 +145,32 @@ public class Statistics implements EventExecutor {
 					else
 						return recordedValues[statisticsType.ordinal()].get(mid-1);
 				
+				case PERCENTAGE:
+					if (isCumulativeStatisticsObject) {
+						sum = getSumHelper.getSum(recordedValues[statisticsType.ordinal()]);
+						avg = sum.divide(new BigDecimal(recordedValues[statisticsType.ordinal()].size()), 5, BigDecimal.ROUND_HALF_UP);
+						return avg.doubleValue();
+					} else
+						return getPercentageHelper.getPercentage(recordedValues[statisticsType.ordinal()]);
+					
+				case VALUE_LIST:
+					if (isCumulativeStatisticsObject) {
+						System.out.println(statisticsType); 
+						return 0d; // dummy
+					} else {
+						displayAllHelper.displayAll(recordedValues[statisticsType.ordinal()]);
+						return 0d; // dummy
+					}
+					
+				case SEPARATED_VALUE_LIST:
+					if (isCumulativeStatisticsObject) {
+						System.out.println(statisticsType); 
+						return 0d; // dummy
+					} else {
+						displayAllSeparatedHelper.displayAll(recordedValues[statisticsType.ordinal()]);
+						return 0d; // dummy
+					}
+					
 				default:
 					throw new RuntimeException("ERROR: unknown or not allowed evaluation type!");
 				
@@ -157,6 +186,7 @@ public class Statistics implements EventExecutor {
 		
 	}
 
+	private boolean displayPerClient = true; // TODO
 	
 	public BigDecimal getResultBigDecimal(	StatisticsType statisticsType, 
 											EvaluationType evaluationType 
@@ -174,34 +204,36 @@ public class Statistics implements EventExecutor {
 
 				case EVENTS_PER_SECOND:
 					if (isCumulativeStatisticsObject) {
-						int recordStatisticsFrom = Simulator.settings.getPropertyAsInt("RECORD_STATISTICS_FROM");
-						int recordStatisticsTo = Simulator.settings.getPropertyAsInt("RECORD_STATISTICS_TO");
 						BigDecimal numberOfEvents = summedUpValues[statisticsType.ordinal()];
-						BigDecimal simulationTime = new BigDecimal(recordStatisticsTo - recordStatisticsFrom);
-						return numberOfEvents.divide(simulationTime.divide(new BigDecimal(1000), 5, BigDecimal.ROUND_HALF_UP), 5, BigDecimal.ROUND_HALF_UP);
+						BigDecimal simulationTime = new BigDecimal(simulator.ts_recordStatisticsEnd - simulator.ts_recordStatisticsStart).divide(new BigDecimal(1000), 5, BigDecimal.ROUND_HALF_UP); // to sec;
+						return numberOfEvents.divide(simulationTime, 5, BigDecimal.ROUND_HALF_UP);
 					} else 
 						return summedUpValues[statisticsType.ordinal()];
 				
 				case EVENTS_PER_SECOND_AND_CLIENT:
 					if (isCumulativeStatisticsObject) {
-						int recordStatisticsFrom = Simulator.settings.getPropertyAsInt("RECORD_STATISTICS_FROM");
-						int recordStatisticsTo = Simulator.settings.getPropertyAsInt("RECORD_STATISTICS_TO");
 						BigDecimal numberOfEvents = summedUpValues[statisticsType.ordinal()];
-						BigDecimal simulationTime = new BigDecimal(recordStatisticsTo - recordStatisticsFrom);
-						return (numberOfEvents.divide(simulationTime.divide(new BigDecimal(1000), 5, BigDecimal.ROUND_HALF_UP), 5, BigDecimal.ROUND_HALF_UP)).divide(new BigDecimal(simulator.getClients().size()), 5, BigDecimal.ROUND_HALF_UP);
+						BigDecimal simulationTime = new BigDecimal(simulator.ts_recordStatisticsEnd - simulator.ts_recordStatisticsStart).divide(new BigDecimal(1000), 5, BigDecimal.ROUND_HALF_UP); // to sec;
+						BigDecimal eventsPerSecond = numberOfEvents.divide(simulationTime, 5, BigDecimal.ROUND_HALF_UP);
+						return eventsPerSecond.divide(new BigDecimal(simulator.getClients().size()), 5, BigDecimal.ROUND_HALF_UP); // divide number of clients
 					} else 
 						return summedUpValues[statisticsType.ordinal()];
 					
 				case VOLUME_PER_SECOND:
-					
 					if (isCumulativeStatisticsObject) {
-						int recordStatisticsFrom = Simulator.settings.getPropertyAsInt("RECORD_STATISTICS_FROM");
-						int recordStatisticsTo = Simulator.settings.getPropertyAsInt("RECORD_STATISTICS_TO");
-						BigDecimal byteCounter = summedUpValues[statisticsType.ordinal()];
-						BigDecimal simulationTime = new BigDecimal(recordStatisticsTo - recordStatisticsFrom);
-						return byteCounter.divide(simulationTime, 5, BigDecimal.ROUND_HALF_UP).divide(new BigDecimal(simulator.getClients().size()), 5, BigDecimal.ROUND_HALF_UP);
-					} else
+						BigDecimal byteCounter = summedUpValues[statisticsType.ordinal()].divide(new BigDecimal(1024), 5, BigDecimal.ROUND_HALF_UP); // to kbyte
+						System.out.println("byteCounter (kbyte): " +byteCounter); 
+						BigDecimal simulationTime = new BigDecimal(simulator.ts_recordStatisticsEnd - simulator.ts_recordStatisticsStart).divide(new BigDecimal(1000), 5, BigDecimal.ROUND_HALF_UP); // to sec;
+						return byteCounter.divide(simulationTime, 5, BigDecimal.ROUND_HALF_UP);
+					} else {
+						if (displayPerClient) {
+							BigDecimal byteCounter = summedUpValues[statisticsType.ordinal()].divide(new BigDecimal(1024), 5, BigDecimal.ROUND_HALF_UP); // to kbyte
+							BigDecimal simulationTime = new BigDecimal(simulator.ts_recordStatisticsEnd - simulator.ts_recordStatisticsStart).divide(new BigDecimal(1000), 5, BigDecimal.ROUND_HALF_UP); // to sec;
+							BigDecimal result = byteCounter.divide(simulationTime, 5, BigDecimal.ROUND_HALF_UP);
+							System.out.println(result); 
+						}
 						return summedUpValues[statisticsType.ordinal()];
+					}
 					
 				default:
 					throw new RuntimeException("ERROR: unknown evaluation type!");
@@ -213,6 +245,43 @@ public class Statistics implements EventExecutor {
 			e.printStackTrace();
 			throw new RuntimeException("ERROR: no data!");
 			
+		}
+		
+	}
+	
+	
+	static class GetPercentageHelper implements TDoubleProcedure {
+		
+		double sumPos = 0;
+		double sumNeg = 0;
+		
+
+		public double getPercentage(TDoubleArrayList data) {
+			data.forEach(getPercentageHelper);
+			double result = sumNeg/(sumPos+sumNeg);
+			//System.out.println("sumNeg: " +sumNeg); 
+			//System.out.println("sumPos: " +sumPos); 
+			//double simulationTime = simulator.ts_recordStatisticsEnd - simulator.ts_recordStatisticsStart;
+			//double msgPerSec = (sumPos+sumNeg) / (simulationTime/1000d);
+			//double msgDropPerSec = sumNeg / (simulationTime/1000d);
+			//System.out.println("sent in total: " +(sumPos+sumNeg) +" messages in " +simulationTime +"ms -> " +msgPerSec +" msg/sek (rate: " +1d/((simulationTime/1000d)/(sumPos+sumNeg)) +")" ); 
+			//System.out.println("getPercentage-res: " +result*100d +"%"); // TODO: remove
+			//System.out.println("dropped in total: " +sumNeg +" messages in " +simulationTime +"ms -> " +msgDropPerSec +" msg/sek (rate: " +1d/((simulationTime/1000d)/(sumNeg)) +")" ); 
+			sumNeg = 0;
+			sumPos = 0;
+			return result;
+		}
+		
+		
+		@Override
+		public boolean execute(double val) {
+			if (val == 1.0d)
+				sumPos++;
+			else if (val == -1.0d)
+				sumNeg++;
+			else
+				throw new RuntimeException("use only 1.0d and -1.0d when recording statistics for PERCENTAGE EvaluationType"); 
+			return true;
 		}
 		
 	}
@@ -239,6 +308,31 @@ public class Statistics implements EventExecutor {
 		
 	}
 
+	
+	static class DisplayAllHelper implements TDoubleProcedure {
+		
+		private boolean isSeparated;
+		
+		public DisplayAllHelper(boolean isSeparated) {
+			this.isSeparated = isSeparated;
+		}
+		
+		
+		public void displayAll(TDoubleArrayList data) {
+			data.forEach(displayAllHelper);
+			if (isSeparated)
+				System.out.println(); 
+		}
+		
+		
+		@Override
+		public boolean execute(double val) {
+			System.out.println(val); 
+			return true;
+		}
+		
+	}
+	
 
 	@Override
 	public void executeEvent(Event event) {
@@ -249,8 +343,7 @@ public class Statistics implements EventExecutor {
 		} else if (event.getEventType() == StatisticsEvent.STOP_RECORDING) {
 			System.out.println("### STOP recording statistics"); 
 			recordStatistics = false; 
-			if (Simulator.settings.getPropertyAsBoolean("FORCE_QUIT"))
-				simulator.getEventQueue().clear();
+			simulator.stopSimulation("simulation-time limit reached (variable SIMULATION_TIME_LIMIT_IN_MS in experiment config)");
 		} else {
 			throw new RuntimeException("ERROR! received unsupported event!" +event);
 		}

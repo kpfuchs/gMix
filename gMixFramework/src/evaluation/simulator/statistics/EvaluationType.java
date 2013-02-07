@@ -24,10 +24,14 @@ public enum EvaluationType {
 	MAX("maximum", 1),
 	AVG("average", 1),
 	MEDIAN("median", 1),
+	VALUE_LIST("valueList", 1),
+	SEPARATED_VALUE_LIST("valueList", 1),
 	SUM("sum", 2),
 	EVENTS_PER_SECOND("events_per_second", 2),
 	EVENTS_PER_SECOND_AND_CLIENT("events_per_second", 2),
-	VOLUME_PER_SECOND("volume_per_second", 2);
+	VOLUME_PER_SECOND("volume_per_second", 2),
+	PERCENTAGE("percentage", 1) // use -1 and 1 only; will display count(-1)/count(1)
+	;
 	
 	public String description;
 	public int dataType;

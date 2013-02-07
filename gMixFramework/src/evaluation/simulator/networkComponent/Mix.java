@@ -63,7 +63,7 @@ public class Mix extends NetworkNode {
 		if(!networkMessage.isRequest())
 			throw new RuntimeException("ERROR: Received reply while expecting request");
 		
-		if (networkMessage instanceof NoneMixMessage) {
+		if (networkMessage instanceof TransportMessage) {
 			
 			sendToNextHop(networkMessage, 0, DistantProxyEvent.INCOMING_REQUEST);
 			
@@ -80,7 +80,7 @@ public class Mix extends NetworkNode {
 				if (simulator.getDistantProxy().supportsMixMessages())
 					sendToNextHop(networkMessage, 0, DistantProxyEvent.INCOMING_REQUEST);
 				else
-					for (NoneMixMessage nmm: ((MixMessage)networkMessage).getNoneMixMessagesContained())
+					for (TransportMessage nmm: ((MixMessage)networkMessage).getTransportMessagesContained())
 						sendToNextHop(nmm, 0, DistantProxyEvent.INCOMING_REQUEST);
 			}
 			
@@ -131,7 +131,7 @@ public class Mix extends NetworkNode {
 					break;
 				
 				case INCOMING_REPLY_FROM_DISTANT_PROXY:
-					outputStrategy.incomingReply((NoneMixMessage)event.getAttachment());
+					outputStrategy.incomingReply((TransportMessage)event.getAttachment());
 					break;
 					
 			}

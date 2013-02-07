@@ -20,7 +20,7 @@ package evaluation.simulator.message;
 import java.util.Vector;
 
 import evaluation.simulator.core.Simulator;
-import evaluation.simulator.networkComponent.Client;
+import evaluation.simulator.networkComponent.AbstractClient;
 import evaluation.simulator.networkComponent.NetworkNode;
 
 
@@ -29,14 +29,14 @@ public class BasicMixMessage extends MixMessage {
 	private int payloadSize;
 	private int maxPayloadSize; // byte
 	private int headerSize; // byte
-	private int totalSize = maxPayloadSize + headerSize; // byte
-	private Vector<PayloadObject> payloadObjectsContained; // z.B. mehrere DNS-Requests
-	private int noneMixMessagesContained = 0;
+	private int totalSize; // byte
+	private Vector<PayloadObject> payloadObjectsContained;
+	private int transportMessagesContained = 0;
 	//private int messageFragmentsContained = 0;
 	
 	
 	protected BasicMixMessage(boolean isRequest, NetworkNode source,
-			NetworkNode destination, Client owner, int creationTime,
+			NetworkNode destination, AbstractClient owner, long creationTime,
 			boolean isDummy) {
 		
 		super(isRequest, source, destination, owner, creationTime, isDummy, null);
@@ -63,7 +63,7 @@ public class BasicMixMessage extends MixMessage {
 
 	@Override
 	public int getNumberOfMessagesContained() {
-		return noneMixMessagesContained;
+		return transportMessagesContained;
 	}
 
 
@@ -81,13 +81,12 @@ public class BasicMixMessage extends MixMessage {
 
 	@Override
 	public boolean addPayloadObject(PayloadObject payloadObject) {
-		
-		if (payloadObject instanceof NoneMixMessage) {
-			this.noneMixMessagesContained++;
+		if (payloadObject instanceof TransportMessage) {
+			this.transportMessagesContained++;
 		} else if (payloadObject instanceof MessageFragment) {
 			//this.messageFragmentsContained++;
 			if (((MessageFragment)payloadObject).isLastFragment())
-				this.noneMixMessagesContained++;
+				this.transportMessagesContained++;
 		} else
 			throw new RuntimeException("ERROR: unknown PayloadObject" +payloadObject); 
 		
@@ -95,8 +94,8 @@ public class BasicMixMessage extends MixMessage {
 			
 			payloadSize += payloadObject.getLength();
 			payloadObjectsContained.add(payloadObject);
-			if (payloadObject instanceof NoneMixMessage)
-				((NoneMixMessage)payloadObject).setAssociatedMixMessage(this);
+			if (payloadObject instanceof TransportMessage)
+				((TransportMessage)payloadObject).setAssociatedMixMessage(this);
 			
 			return true;
 			
@@ -109,20 +108,27 @@ public class BasicMixMessage extends MixMessage {
 
 
 	@Override
-	public NoneMixMessage[] getNoneMixMessagesContained() {
+	public TransportMessage[] getTransportMessagesContained() {
 		
 		if (isDummy)
-			return new NoneMixMessage[0];
+			return new TransportMessage[0];
 		
-		Vector<NoneMixMessage> noneMixMessagesContained = new Vector<NoneMixMessage>(payloadObjectsContained.size());
+		Vector<TransportMessage> transportMessagesContained = new Vector<TransportMessage>(payloadObjectsContained.size());
 		
-		for (PayloadObject po: payloadObjectsContained)
-			if (po instanceof NoneMixMessage)
-				noneMixMessagesContained.add((NoneMixMessage)po);
-			else if (((MessageFragment)po).isLastFragment())
-				noneMixMessagesContained.add(((MessageFragment)po).getAssociatedNoneMixMessage());
-		
-		return noneMixMessagesContained.toArray(new NoneMixMessage[0]);
+		for (PayloadObject po: payloadObjectsContained) {
+			if (po instanceof TransportMessage) {
+				//System.out.println("its a complete TransportMessage (" +(TransportMessage)po +"), size: " +((TransportMessage)po).getLength()); 
+				transportMessagesContained.add((TransportMessage)po);
+			} else {
+				if (((MessageFragment)po).isLastFragment()) {
+					//System.out.println("its the final fragment (" +((MessageFragment)po).getAssociatedTransportMessage() +", "  +(MessageFragment)po +"), size: " +((MessageFragment)po).getLength()); 
+					transportMessagesContained.add(((MessageFragment)po).getAssociatedTransportMessage());
+				} else {
+					//System.out.println("its a fragment (" +((MessageFragment)po).getAssociatedTransportMessage() +", " +(MessageFragment)po +"), size: " +((MessageFragment)po).getLength()); 
+				}
+			}
+		}
+		return transportMessagesContained.toArray(new TransportMessage[0]);
 		
 	}
 	

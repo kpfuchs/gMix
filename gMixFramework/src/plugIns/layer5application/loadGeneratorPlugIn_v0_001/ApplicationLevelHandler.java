@@ -41,6 +41,7 @@ public class ApplicationLevelHandler {
 	
 	
 	public ApplicationLevelHandler(AnonNode owner) {
+		System.out.println("ApplicationLevelHandler started"); 
 		this.clients = new Vector<ClientData>(owner.EXPECTED_NUMBER_OF_USERS);
 		this.newClients = new Vector<ClientData>(50);
 		this.requestThread = new RequestThread();

@@ -34,6 +34,7 @@ public class MixPacketLevelHandler {
 	
 	
 	public MixPacketLevelHandler(AnonNode anonNode) {
+		System.out.println("MixPacketLevelHandler started"); 
 		this.owner = anonNode;
 		this.IS_DUPLEX = anonNode.IS_DUPLEX;
 		CommunicationMode cm = IS_DUPLEX ? CommunicationMode.DUPLEX : CommunicationMode.SIMPLEX_RECEIVER;
@@ -57,7 +58,7 @@ public class MixPacketLevelHandler {
 		public void run() {
 			while (true) {
 				AnonMessage message = socket.receiveMessage();
-				System.out.println("DISTANT_PROXY: received request"); 
+				//System.out.println("DISTANT_PROXY: received request"); 
 				if (IS_DUPLEX) {
 					if (message.getByteMessage().length == message.getMaxReplySize()) {
 						socket.sendMessage(message);

@@ -31,7 +31,7 @@ CAPABILITIES_MIX =
 #  CLIENT_CONNECTION_HANDLER: ClientHandler_TCP_FCFS_async_nio.java, ClientHandler_TCP_FCFS_async_nio2.java, ClientHandler_TCP_FCFS_sync_multithread_1.java, ClientHandler_TCP_FCFS_sync_multithread_2.java, ClientHandler_TCP_RR_sync.java
 #  PREVIOUS_MIX_CONNECTION_HANLDER: PrevMixHandler_TCP_multiplexed_sync.java
 #  NEXT_MIX_CONNECTION_HANLDER: NextMixHandler_TCP_multiplexed_sync.java
-CLIENT_CONNECTION_HANDLER = ClientHandler_TCP_RR_sync.java
+CLIENT_CONNECTION_HANDLER = ClientHandler_TCP_FCFS_async_netty_2.java
 PREVIOUS_MIX_CONNECTION_HANLDER = PrevMixHandler_TCP_multiplexed_sync.java
 NEXT_MIX_CONNECTION_HANLDER = NextMixHandler_TCP_multiplexed_sync.java
 # client-side:

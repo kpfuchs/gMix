@@ -23,23 +23,24 @@ import evaluation.simulator.core.Simulator;
 import evaluation.simulator.message.MessageFragment;
 import evaluation.simulator.message.MixMessage;
 import evaluation.simulator.message.NetworkMessage;
-import evaluation.simulator.message.NoneMixMessage;
-import evaluation.simulator.networkComponent.Client;
+import evaluation.simulator.message.TransportMessage;
+import evaluation.simulator.networkComponent.AbstractClient;
+
 
 public class ClientWaitForReply extends ClientCommunicationBehaviour {
 
-	private Vector<NoneMixMessage> requestWaitingQueue = new Vector<NoneMixMessage>(10,10);
+	private Vector<TransportMessage> requestWaitingQueue = new Vector<TransportMessage>(10,10);
 	private boolean isFirstCall;
 	
-	protected ClientWaitForReply(Client owner, Simulator simulator) {
-		
+	
+	protected ClientWaitForReply(AbstractClient owner, Simulator simulator) {
 		super(owner, simulator);
 		this.isFirstCall = true;
 	}
 	
 
 	@Override
-	public void incomingRequestFromUser(NoneMixMessage request) {
+	public void incomingRequestFromUser(TransportMessage request) {
 		
 		requestWaitingQueue.add(request);
 		
@@ -63,7 +64,7 @@ public class ClientWaitForReply extends ClientCommunicationBehaviour {
 
 			for (int i=0; i<requestWaitingQueue.size(); i++) {
 				
-				NoneMixMessage noneMixMessage = requestWaitingQueue.get(i);
+				TransportMessage noneMixMessage = requestWaitingQueue.get(i);
 				
 				if (mixMessage.getFreeSpace() >= noneMixMessage.getLength() && !noneMixMessage.isFragmented()) { // noneMixMessage fits in mixMessage completely
 					
@@ -101,9 +102,14 @@ public class ClientWaitForReply extends ClientCommunicationBehaviour {
 	
 	@Override
 	public void incomingDecryptedReply(NetworkMessage reply) {
-		
 		sendMessage();
-		
+	}
+
+
+	@Override
+	public void messageReachedServer(TransportMessage request) {
+		if (!simulateReplyChannel)
+			sendMessage();
 	}
 
 }

@@ -137,16 +137,13 @@ public class LoadGenerator extends GMixTool {
 		if (settings.getProperty("GENERATE_LOAD_ON").equalsIgnoreCase("APPLICATION_LEVEL")) {
 			return InsertLevel.APPLICATION_LEVEL;
 		} else if (settings.getProperty("GENERATE_LOAD_ON").equalsIgnoreCase("MIX_PACKET_LEVEL")) {
-			if (settings.getProperty("MPL-MODE").equalsIgnoreCase("AFAP")) // AFAP-mode is always APPLICATION_LEVEL
-				return InsertLevel.APPLICATION_LEVEL;
-			else
-				return InsertLevel.MIX_PACKET_LEVEL;
+			return InsertLevel.MIX_PACKET_LEVEL;
 		} else
 			throw new RuntimeException("could not read property \"GENERATE_LOAD_ON\" from " +Paths.LG_PROPERTY_FILE_PATH); 
 	}
 	
 	
-	public final static boolean VALIDATE_IO = true; // TODO
+	public final static boolean VALIDATE_IO = false; // TODO
 	
 	static {
 		if (VALIDATE_IO)

@@ -25,6 +25,12 @@ public class OutputCap {
 	private final String message;
 	
 	
+	public OutputCap(long minDelayBetweenOutputinMs) {
+		this.message = null;
+		this.minDelayBetweenOutput = minDelayBetweenOutputinMs;
+	}
+	
+	
 	public OutputCap(String message, long minDelayBetweenOutputinMs) {
 		this.message = message;
 		this.minDelayBetweenOutput = minDelayBetweenOutputinMs;
@@ -32,14 +38,24 @@ public class OutputCap {
 	
 	
 	public boolean putOut() {
+		if (message == null)
+			throw new RuntimeException("you must provide an error message either " +
+					"with constructor \"public OutputCap(String message, long " +
+					"minDelayBetweenOutputinMs)\" or method \"public boolean " +
+					"putOut(String newMessage)\""
+					); 
+		return putOut(message);
+	}
+	
+	
+	public boolean putOut(String newMessage) {
 		long now = System.currentTimeMillis();
 		if ((now - lastWarningDisplayed) > minDelayBetweenOutput) {
-			System.err.println(message);
+			System.err.println(newMessage);
 			lastWarningDisplayed = System.currentTimeMillis();
 			return true;
 		} else
 			return false;
-		
 	}
 
 }

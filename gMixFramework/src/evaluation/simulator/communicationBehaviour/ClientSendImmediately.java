@@ -21,14 +21,14 @@ import evaluation.simulator.core.Simulator;
 import evaluation.simulator.message.MessageFragment;
 import evaluation.simulator.message.MixMessage;
 import evaluation.simulator.message.NetworkMessage;
-import evaluation.simulator.message.NoneMixMessage;
-import evaluation.simulator.networkComponent.Client;
+import evaluation.simulator.message.TransportMessage;
+import evaluation.simulator.networkComponent.AbstractClient;
 
 
 public class ClientSendImmediately extends ClientCommunicationBehaviour {
 
 	
-	protected ClientSendImmediately(Client owner, Simulator simulator) {
+	protected ClientSendImmediately(AbstractClient owner, Simulator simulator) {
 		
 		super(owner, simulator);
 
@@ -36,13 +36,7 @@ public class ClientSendImmediately extends ClientCommunicationBehaviour {
 
 
 	@Override
-	public void incomingDecryptedReply(NetworkMessage reply) {
-
-	}
-
-
-	@Override
-	public void incomingRequestFromUser(NoneMixMessage request) {
+	public void incomingRequestFromUser(TransportMessage request) {
 		
 		MixMessage mixMessage = MixMessage.getInstance(true, owner, simulator.getDistantProxy(), owner, Simulator.getNow(), false);
 		
@@ -73,6 +67,18 @@ public class ClientSendImmediately extends ClientCommunicationBehaviour {
 
 		}	
 		
+	}
+
+
+	@Override
+	public void incomingDecryptedReply(NetworkMessage reply) {
+
+	}
+	
+	
+	@Override
+	public void messageReachedServer(TransportMessage request) {
+
 	}
 
 }

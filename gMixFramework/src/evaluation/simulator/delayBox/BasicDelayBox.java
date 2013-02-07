@@ -40,7 +40,7 @@ public class BasicDelayBox extends DelayBox {
 
 	@Override
 	public int getReceiveDelay(int numberOfBytesToReceive) {
-		int delay = this.receiveDelayBox.getDelay(numberOfBytesToReceive);	
+		int delay = (int)this.receiveDelayBox.getDelay(numberOfBytesToReceive);	
 		//System.out.println("reveiceDelay: " +delay);
 		/*if (delay > 1000*30)
 			System.out.println("OVERLOAD"); // TODO nur ausgeben, wenn numberOfBytesToReceive "groß" ist*/
@@ -50,7 +50,7 @@ public class BasicDelayBox extends DelayBox {
 
 	@Override
 	public int getSendDelay(int numberOfBytesToSend) {
-		int delay = this.sendDelayBox.getDelay(numberOfBytesToSend);	
+		int delay = (int)this.sendDelayBox.getDelay(numberOfBytesToSend);	
 		//System.out.println("sendDelay: " +delay); 
 		/*if (delay > 1000*30)
 			System.out.println("OVERLOAD");  // TODO nur ausgeben, wenn numberOfBytesToSend "groß" ist*/
@@ -63,13 +63,13 @@ public class BasicDelayBox extends DelayBox {
 		private final static int NOT_SCHEDULED = -100;
 		private final static int NOT_SET = -101;
 		
-		private double latency; // in ms
+		private int latency; // in ms
 		private int packetSize = new Integer(Simulator.settings.getProperty("NETWORK_PACKET_PAYLOAD_SIZE"));
 		private int freeSpaceInPacket = packetSize;
 		private double pulse; // abstand in dem pakete geschickt werden können
-		private int timeOfOutputForNextNotFullPacket;
+		private long timeOfOutputForNextNotFullPacket;
 		
-		private int lastPulse = NOT_SET;
+		private long lastPulse = NOT_SET;
 		private boolean isBusy;
 		
 		
@@ -87,11 +87,11 @@ public class BasicDelayBox extends DelayBox {
 		}
 
 		
-		public int getDelay(int numberOfBytesToSend) {
+		public long getDelay(int numberOfBytesToSend) {
 			
 			int packetsTransmittedSinceLastCall;
-			int transmitDuration; // when sending begins; see "delayTillTransmitBegins"
-			int delayTillTransmitBegins;
+			long transmitDuration; // when sending begins; see "delayTillTransmitBegins"
+			long delayTillTransmitBegins;
 			
 			if (numberOfBytesToSend == 0)
 				return 0;
@@ -113,7 +113,7 @@ public class BasicDelayBox extends DelayBox {
 				if (numberOfBytesToSend < freeSpaceInPacket) { // kein neues Paket nötig (Daten passen in ein Paket und fällen dieses nicht komplett)
 					
 					transmitDuration = 0;
-					delayTillTransmitBegins = (int)Math.round(pulse);
+					delayTillTransmitBegins = Math.round(pulse);
 					freeSpaceInPacket -= numberOfBytesToSend;
 					timeOfOutputForNextNotFullPacket = Simulator.getNow() + delayTillTransmitBegins;
 					lastPulse = Simulator.getNow();
@@ -123,12 +123,12 @@ public class BasicDelayBox extends DelayBox {
 					
 					int packetsNeeded = (int)Math.floor((double)numberOfBytesToSend / (double)packetSize); // counts only full packets
 					freeSpaceInPacket = packetSize - (numberOfBytesToSend % packetSize);
-					delayTillTransmitBegins = (int)Math.round(pulse);
-					timeOfOutputForNextNotFullPacket = Simulator.getNow() + (int)Math.round((double)packetsNeeded * pulse);
+					delayTillTransmitBegins = Math.round(pulse);
+					timeOfOutputForNextNotFullPacket = Simulator.getNow() + Math.round((double)packetsNeeded * pulse);
 					if (freeSpaceInPacket == packetSize) // auf letztes Paket muss NICHT gewartet werden
-						transmitDuration = (int)Math.round((double)packetsNeeded * pulse);
+						transmitDuration = Math.round((double)packetsNeeded * pulse);
 					else // auf letztes Paket muss gewartet werden
-						transmitDuration = (int)Math.round((double)((double)packetsNeeded+(double)1) * pulse);
+						transmitDuration = Math.round((double)((double)packetsNeeded+(double)1) * pulse);
 					
 					lastPulse = Simulator.getNow();
 					isBusy = true;
@@ -151,19 +151,19 @@ public class BasicDelayBox extends DelayBox {
 					numberOfBytesToSend -= freeSpaceInPacket;
 					int packetsNeeded = 1 + (int)Math.floor((double)numberOfBytesToSend / (double)packetSize); // counts only full packets ("1 +" weil aktuelles nicht volles Paket auch gez�hlt werden muss)
 					freeSpaceInPacket = packetSize - (numberOfBytesToSend % packetSize);
-					int timeTillNextPulse = (int)Math.round((double)lastPulse + pulse) - Simulator.getNow();
-					timeOfOutputForNextNotFullPacket += timeTillNextPulse + (int)Math.round((double)packetsNeeded * pulse);
+					long timeTillNextPulse = Math.round((double)lastPulse + pulse) - Simulator.getNow();
+					timeOfOutputForNextNotFullPacket += timeTillNextPulse + Math.round((double)packetsNeeded * pulse);
 					
 					if (freeSpaceInPacket == packetSize) // auf letztes Paket muss NICHT gewartet werden
-						transmitDuration = timeTillNextPulse + (int)Math.round((double)packetsNeeded * pulse);
+						transmitDuration = timeTillNextPulse + Math.round((double)packetsNeeded * pulse);
 					else // auf letztes Paket muss gewartet werden
-						transmitDuration = (int)Math.round((double)((double)packetsNeeded+(double)1) * pulse);
+						transmitDuration = Math.round((double)((double)packetsNeeded+(double)1) * pulse);
 
 				}
 
 			}
 			
-			return delayTillTransmitBegins + transmitDuration + (int)latency;
+			return delayTillTransmitBegins + transmitDuration + latency;
 			
 		}
 		
