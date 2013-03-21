@@ -32,18 +32,20 @@ import framework.core.message.Request;
 //messages, chosen uniformly at random from all the messages, is retained in 
 //the mix. (Consider these messages as feedback into the mix.) The other n 
 //are forwarded on.
+// f -> MIN_POOL_SIZE
+// f + n -> THRESHOLD
 public class MixPlugIn extends Implementation implements Layer3OutputStrategyMix {
 
 	private static SecureRandom secureRandom = new SecureRandom();
 	private SimplexTresholdPool requestPool;
 	private SimplexTresholdPool replyPool;
-	private int POOL_SIZE;
+	private int MIN_POOL_SIZE;
 	private int THRESHOLD;
 			
 	
 	@Override
 	public void constructor() {
-		this.POOL_SIZE = settings.getPropertyAsInt("BASIC_POOL_POOL_SIZE");
+		this.MIN_POOL_SIZE = settings.getPropertyAsInt("THRESHOLD_POOL_MIN_POOL_SIZE");
 		this.THRESHOLD = settings.getPropertyAsInt("THRESHOLD_POOL_THRESHOLD");
 		this.requestPool = new SimplexTresholdPool(true);
 		this.replyPool = new SimplexTresholdPool(false);
@@ -82,9 +84,9 @@ public class MixPlugIn extends Implementation implements Layer3OutputStrategyMix
 		
 		
 		public SimplexTresholdPool(boolean isRequestPool) {
-			this.collectedMessages = new Vector<MixMessage>(POOL_SIZE*2);
+			this.collectedMessages = new Vector<MixMessage>(MIN_POOL_SIZE*2);
 			this.isRequestPool = isRequestPool;
-			this.numberOfMessagesToPutOut = THRESHOLD - POOL_SIZE;
+			this.numberOfMessagesToPutOut = THRESHOLD - MIN_POOL_SIZE;
 		}
 		
 		

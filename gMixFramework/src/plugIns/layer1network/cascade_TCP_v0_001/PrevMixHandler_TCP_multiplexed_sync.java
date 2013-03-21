@@ -178,6 +178,8 @@ public class PrevMixHandler_TCP_multiplexed_sync extends SubImplementation imple
 							System.out.println(anonNode +" no id for " +replies[i].getOwner() +" available" );
 							continue;
 						}	
+						//System.out.println("id: " +id +", len: " +replies[i].getByteMessage().length); 
+						assert replies[i].getByteMessage().length > 0;
 						previousMixOutputStream.write(Util.intToByteArray(id));
 						previousMixOutputStream.write(Util.intToByteArray(replies[i].getByteMessage().length));
 						previousMixOutputStream.write(replies[i].getByteMessage());

@@ -182,7 +182,7 @@ public class ClientHandler_TCP_RR_sync extends SubImplementation {
 									assert read == 4; // should not be different due to buffered stream; check anyways...
 									ch.requestLength = Util.byteArrayToInt(len);
 									if (ch.requestLength > maxRequestLength) {
-										System.err.println("warning: user " +ch.user +" sent a too large message");
+										System.err.println("warning: user " +ch.user +" sent a too large message: " +ch.requestLength +">" +maxRequestLength);
 									}
 								} else {
 									break;

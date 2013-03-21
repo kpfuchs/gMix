@@ -23,7 +23,6 @@ import evaluation.traceParser.engine.dataStructure.Flow;
 import evaluation.traceParser.engine.dataStructure.FlowGroup;
 import evaluation.traceParser.engine.dataStructure.Host;
 import evaluation.traceParser.engine.dataStructure.ModifiableHost;
-import evaluation.traceParser.engine.filter.PacketFilterTester;
 import evaluation.traceParser.scenarioExtractor.flowFilter.FlowFilter;
 import evaluation.traceParser.scenarioExtractor.flowFilter.HttpWhitelist;
 import evaluation.traceParser.statistics.HostSampleSource.UrnModel;
@@ -120,7 +119,11 @@ public class FixedLengthExtractorDLPA extends Extractor {
 	 * @param args Not used.
 	 */
 	public static void main(String[] args) {
-		new FixedLengthExtractorDLPA(PacketFilterTester.AUCK_8, 100, 10*60*1000,"FixedLengthExtractorDLPA");
+		new FixedLengthExtractorDLPA("./inputOutput/global/traces/auck8/", 1000, 120*60*1000,"auck8_120min_1000user_dlpa");
+		new FixedLengthExtractorDLPA("./inputOutput/global/traces/auck10/", 1000, 120*60*1000,"auck10_120min_1000user_dlpa");
+		new FixedLengthExtractorDLPA("./inputOutput/global/traces/auck8/", 10000, 10*60*1000,"auck8_10min_10000user_dlpa");
+		new FixedLengthExtractorDLPA("./inputOutput/global/traces/auck10/", 10000, 10*60*1000,"auck10_10min_10000user_dlpa");
+	
 	}
 
 }

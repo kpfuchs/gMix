@@ -471,18 +471,22 @@ public class AnonNode extends GMixTool {
 		} else { // final hop: find desired socket and forward request to it
 			if (DISPLAY_ROUTE_INFO && ROUTING_MODE != RoutingMode.CASCADE)
 				System.out.println("" +this +": i'm the final hop");
-			int dstPort = Util.byteArrayToShort(Arrays.copyOf(request.getByteMessage(), 2)); // get desired socket
-			request.setByteMessage(Arrays.copyOfRange(request.getByteMessage(), 2, request.getByteMessage().length));
-			AdaptiveAnonServerSocket destSocket = sockets.get(dstPort);
-			if (destSocket == null) {
-				System.err.println("received message for unknown port: " +dstPort);
-				return;
-			} else {
-				if (this.RECORD_STATISTICS_ON) {
-					StatisticsRecorder.addMessageDwellTimeRecord(request);
-					StatisticsRecorder.addRequestThroughputRecord(request.getByteMessage().length, request.getOwner());
+			AdaptiveAnonServerSocket destSocket = null;
+			int dstPort = 0;
+			if (request.getByteMessage().length != 0) {// if not a dummy
+				dstPort = Util.byteArrayToShort(Arrays.copyOf(request.getByteMessage(), 2)); // get desired socket
+				request.setByteMessage(Arrays.copyOfRange(request.getByteMessage(), 2, request.getByteMessage().length));
+				destSocket = sockets.get(dstPort);
+				if (destSocket == null) {
+					System.err.println("received message for unknown port: " +dstPort);
+					return;
+				} else {
+					destSocket.incomingRequest(request);
 				}
-				destSocket.incomingRequest(request);
+			}
+			if (this.RECORD_STATISTICS_ON) {
+				StatisticsRecorder.addMessageDwellTimeRecord(request);
+				StatisticsRecorder.addRequestThroughputRecord(request.getByteMessage().length, request.getOwner());
 			}
 		}
 	}
@@ -589,7 +593,12 @@ public class AnonNode extends GMixTool {
 		if (requests.length > QUEUE_BLOCK_SIZE) {
 			Request[][] splitted = Util.splitInChunks(QUEUE_BLOCK_SIZE, requests);
 			for (Request[] block:splitted) {
-				putInRequestInputQueue(block, true);
+				try {
+					requestInputQueue.put(block);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+					putInRequestInputQueue(block);
+				}
 			}
 		} else {
 			try {
@@ -598,19 +607,6 @@ public class AnonNode extends GMixTool {
 				e.printStackTrace();
 				putInRequestInputQueue(requests);
 			}
-		}
-	}
-	
-	
-	private void putInRequestInputQueue(Request[] requests, boolean force) {
-		assert requests != null;
-		assert requests.length != 0;
-		assert requests.length <= QUEUE_BLOCK_SIZE;
-		try {
-			requestInputQueue.put(requests);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-			putInRequestInputQueue(requests, true);
 		}
 	}
 	
@@ -643,8 +639,14 @@ public class AnonNode extends GMixTool {
 		assert requests.length != 0;
 		if (requests.length > QUEUE_BLOCK_SIZE) {
 			Request[][] splitted = Util.splitInChunks(QUEUE_BLOCK_SIZE, requests);
-			for (Request[] block:splitted)
-				putInRequestOutputQueue(block);
+			for (Request[] block:splitted) {
+				try {
+					requestOutputQueue.put(block);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+					putInRequestOutputQueue(block);
+				}
+			}
 		}
 		try {
 			requestOutputQueue.put(requests);
@@ -663,6 +665,8 @@ public class AnonNode extends GMixTool {
 			e.printStackTrace();
 			putInReplyInputQueue(reply);
 		}
+		if (this.IS_LAST_MIX && this.RECORD_STATISTICS_ON)
+			StatisticsRecorder.addReplyThroughputRecord(reply.getByteMessage().length, reply.getOwner());
 	}
 	
 	
@@ -671,8 +675,14 @@ public class AnonNode extends GMixTool {
 		assert replies.length != 0;
 		if (replies.length > QUEUE_BLOCK_SIZE) {
 			Reply[][] splitted = Util.splitInChunks(QUEUE_BLOCK_SIZE, replies);
-			for (Reply[] block:splitted)
-				putInReplyInputQueue(block);
+			for (Reply[] block:splitted) {
+				try {
+					replyInputQueue.put(block);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+					putInReplyInputQueue(block);
+				}
+			}
 		} else {
 			try {
 				replyInputQueue.put(replies);
@@ -681,9 +691,9 @@ public class AnonNode extends GMixTool {
 				putInReplyInputQueue(replies);
 			}
 		}
-		if (this.RECORD_STATISTICS_ON)
-			for (Reply reply:replies)
-				StatisticsRecorder.addReplyThroughputRecord(reply.getByteMessage().length, reply.getOwner());
+		//if (this.RECORD_STATISTICS_ON)
+		//	for (Reply reply:replies)
+		//		StatisticsRecorder.addReplyThroughputRecord(reply.getByteMessage().length, reply.getOwner());
 	}
 	
 	
@@ -693,7 +703,7 @@ public class AnonNode extends GMixTool {
 			replyOutputQueue.put(new Reply[]{reply});
 		} catch (InterruptedException e) {
 			e.printStackTrace();
-			putInReplyInputQueue(reply);
+			putInReplyOutputQueue(reply);
 		}
 	}
 
@@ -703,14 +713,21 @@ public class AnonNode extends GMixTool {
 		assert replies.length != 0;
 		if (replies.length > QUEUE_BLOCK_SIZE) {
 			Reply[][] splitted = Util.splitInChunks(QUEUE_BLOCK_SIZE, replies);
-			for (Reply[] block:splitted)
-				putInReplyOutputQueue(block);
-		}
-		try {
-			replyOutputQueue.put(replies);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-			putInReplyOutputQueue(replies);
+			for (Reply[] block:splitted) {
+				try {
+					replyOutputQueue.put(block);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+					putInReplyOutputQueue(block);
+				}
+			}
+		} else {
+			try {
+				replyOutputQueue.put(replies);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+				putInReplyOutputQueue(replies);
+			}
 		}
 	}
 	

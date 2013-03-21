@@ -55,7 +55,7 @@ public class MixPlugIn extends Implementation implements Layer3OutputStrategyMix
 	
 	@Override
 	public void addRequest(Request request) {
-		requestBatch.addMessage((MixMessage)request);
+		requestBatch.addMessage(request);
 	}
 
 
@@ -69,24 +69,27 @@ public class MixPlugIn extends Implementation implements Layer3OutputStrategyMix
 		
 		private boolean isRequestBatch;
 		private MixMessage[] collectedMessages;
-		private int nextFreeSlot = 0;
+		private int nextFreeSlot = -1;
 		
 		
 		public SimplexBatch(boolean isRequestBatch) {
 			this.isRequestBatch = isRequestBatch;
-			this.collectedMessages = new MixMessage[BATCH_SIZE];	
+			this.collectedMessages = isRequestBatch ? new Request[BATCH_SIZE]: new Reply[BATCH_SIZE];	
 		}
 		
 		
 		public synchronized void addMessage(MixMessage mixMessage) {
-			collectedMessages[nextFreeSlot++] = mixMessage;
+			nextFreeSlot++;
 			if (nextFreeSlot == BATCH_SIZE) {
 				Arrays.sort(collectedMessages);
 				if (isRequestBatch)
 					anonNode.putOutRequests((Request[])collectedMessages);
 				else
 					anonNode.putOutReplies((Reply[])collectedMessages);
+				this.collectedMessages = isRequestBatch ? new Request[BATCH_SIZE]: new Reply[BATCH_SIZE];
+				nextFreeSlot = 0;
 			}
+			collectedMessages[nextFreeSlot] = mixMessage;
 		}
 	}
 	

@@ -1,0 +1,306 @@
+#
+#-LICENSE-----------------------------------------------------------------------
+#
+# Experiment definition file for the Discrete-event Mix Simulator of the gMix 
+# open source project - https://svs.informatik.uni-hamburg.de/gmix/
+# Copyright (C) 2013 SVS
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT 
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS 
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#
+#
+#
+#-DESCRIPTION-------------------------------------------------------------------
+#
+# the gMix Simulator requires several parameters to carry out an experiment. 
+# These parameters must be specified in a single config file, the so-called 
+# "experiment definition" file (EDF). This file is an example EDF that can be 
+# used to specify a new experiment. 
+#  
+# EDFs must be placed in folder ./inputOutput/simulator/experimentDefinitions/.
+# Before executing the simulator (evaluation.simulator.Simulator.java), an EDF 
+# must be specified in ./inputOutput/simulator/config/simulatorConfig.txt (set 
+# variable EXPERIMENTS_TO_PERFORM, e.g.: 
+# EXPERIMENTS_TO_PERFORM = exampleExperiment.txt)
+#
+#
+#
+#-GENERAL_NOTE------------------------------------------------------------------
+#
+# The following properties have the following form: "KEY=VALUE".
+# Note: Changing a KEY will result in runtime errors.
+#
+#-------------------------------------------------------------------------------
+#
+#
+#
+#-DESIRED_EVALUATIONS-----------------------------------------------------------
+#
+# the gMix Simulator supports different evaluations, i.e. different statistics 
+# can be recorded during a simulation. Specify the statistics to be recorded 
+# here, e.g. DESIRED_EVALUATIONS = DLPA_REQUEST_SENDING_RATE_PER_MIX_AND_CLIENT
+#
+# Note: see class evaluation.simulator.pluginRegistry.StatisticsType.java for 
+#       all available statistics types or to define a new statistics type.
+# Note: different statistics can be selected for a single simulation, e.g.:
+#       DESIRED_EVALUATIONS = STAT_TYPE_1,STAT_TYPE_2,STAT_TYPE_X
+# Note: statistics won't be recorded before START_RECORDING_STATISTICS_AT ms (of
+#       simulation time) have passed
+#
+#
+DESIRED_EVALUATIONS = CF_ADU_SIZE_SENDANDRECEIVE
+START_RECORDING_STATISTICS_AT = 0
+#
+#-------------------------------------------------------------------------------
+#
+#
+#
+#-PROPERTY_TO_VARY--------------------------------------------------------------
+#
+# To study the effect of a parameter (e.g., the number of clients), the 
+# simulation can be repeated N times with all parameters fixed except for that 
+# parameter (the PROPERTY_TO_VARY). The simulation will be repeated for each 
+# specified value (VALUES_FOR_THE_PROPERTY_TO_VARY).
+#
+# Note: simulations with only a single value for the PROPERTY_TO_VARY are 
+#       possible as well. 
+# Note: possible values for the PROPERTY_TO_VARY are the properties specified 
+#       below in this file, e.g. NUMBER_OF_CLIENTS_TO_SIMULATE.
+# Note: you can specify values for a second property that should be changed as 
+#       well (set USE_SECOND_PROPERTY_TO_VARY = TRUE). Make sure the the number 
+#       of values specified for the VALUES_FOR_THE_SECOND_PROPERTY_TO_VARY is 
+#       equal to the number of values for VALUES_FOR_THE_PROPERTY_TO_VARY.
+#
+#
+PROPERTY_TO_VARY = PATH_TO_TRACE
+VALUES_FOR_THE_PROPERTY_TO_VARY = ./inputOutput/global/traces/auck10/auck10_5min_1000user_dpe.gmf
+USE_SECOND_PROPERTY_TO_VARY = FALSE
+SECOND_PROPERTY_TO_VARY = 
+VALUES_FOR_THE_SECOND_PROPERTY_TO_VARY = 
+#
+#-------------------------------------------------------------------------------
+#
+#
+#
+#-VALIDATION_RUNS--AND--PLOT_SETTINGS-------------------------------------------
+#
+# Simulations can be repeated several times to indicate the error of the 
+# recorded statistics. Results will typically (depending on the selected 
+# plotting engine) be displayed as error bars in the result plots.
+#
+# Note: You cannot specify the plot type (e.g. histogram or line chart) here. 
+#       Plot types are specified for each statistics type (see 
+#       DESIRED_EVALUATIONS above or class evaluation.simulator.pluginRegistry.
+#       StatisticsType.java)
+# Note: Some plot types do not support error bars. With the parameter 
+#       CALC_AVG_OF_RUNS you can specify if the the results of all runs should 
+#       be plotted separately (->FALSE) or as the average of all runs (->TRUE) 
+#       in that case.
+#
+#
+VALIDATION_RUNS = 0
+CALC_AVG_OF_RUNS = TRUE
+#
+#
+#
+# Note: To modify plot styles (e.g., line widths or axis ranges) you can either 
+#       specify a source plot script (variable NAME_OF_PLOT_SCRIPT; the script 
+#       must have a special form - see defaultPlotScript.txt) or you can 
+#       specify gnuplot commands right here with the variables 
+#       OVERWRITABLE_PARAMETERS and NONE_OVERWRITABLE_PARAMETERS. Make sure to 
+#       only add valid plot commands (no checks are performed). Use \n for line 
+#       breaks.
+#       Example for PlotType LINE_CHART_ABS:
+#       NONE_OVERWRITABLE_PARAMETERS = set xrange [0 to 10]\nset yrange [0 to 5]
+#
+#
+NAME_OF_PLOT_SCRIPT = defaultPlotScript.txt
+OVERWRITABLE_PARAMETERS = 
+NONE_OVERWRITABLE_PARAMETERS = set logscale x\nset logscale y\nset xrange [1 to 10000000]
+#
+#
+#
+# Note: The plot type LINE_CHART_CF will plot results inverse if the variable 
+#       IS_INVERSE = TRUE
+#
+#
+IS_INVERSE = TRUE
+#
+#-------------------------------------------------------------------------------
+#
+#
+#
+#-TOPOLOGY--AND--NETWORK_DELAYS-------------------------------------------------
+#
+# The topology specifies the arrangement of the simulated nodes (e.g., mixes) 
+# and their communication links. See class evaluation.simulator.pluginRegistry.
+# Topology.java for available topologies or to create a new topology.
+# 
+# Note: You can set TOPOLOGY_SCRIPT = NO_MIXES for baseline measurements. 
+#       Further common topologies: ONE_MIX, THREE_MIX_CASCADE, FIVE_MIX_CASCADE
+# Note: If the topology script (see above) does not specify link latencies and 
+#       bandwidth limits, default values can be specified for clients, mixes 
+#       and distant proxy (the remote proxy on or after the exit node) here.
+# Note: To set unlimited bandwidth and zero delay for all communication links,
+#       set TYPE_OF_DELAY_BOX = NO_DELAY (or = BASIC_DELAY_BOX otherwise).
+# Note: bandwidth in byte/sec (-> 1MB/s=1048576,1KB/s=1024,1Mbit/s=131072,
+#       UNLIMITED), latency in ms
+#
+#
+TOPOLOGY_SCRIPT = ONE_MIX
+TYPE_OF_DELAY_BOX = NO_DELAY
+BASIC_DELAY_BOX_DEFAULT_CLIENT_BANDWIDTH_SEND = 131072
+BASIC_DELAY_BOX_DEFAULT_CLIENT_BANDWIDTH_RECEIVE = UNLIMITED
+BASIC_DELAY_BOX_DEFAULT_CLIENT_LATENCY = 25
+BASIC_DELAY_BOX_DEFAULT_MIX_BANDWIDTH_SEND = UNLIMITED
+BASIC_DELAY_BOX_DEFAULT_MIX_BANDWIDTH_RECEIVE = UNLIMITED
+BASIC_DELAY_BOX_DEFAULT_MIX_LATENCY = 7
+BASIC_DELAY_BOX_DEFAULT_DISTANT_PROXY_BANDWIDTH_SEND = UNLIMITED
+BASIC_DELAY_BOX_DEFAULT_DISTANT_PROXY_BANDWIDTH_RECEIVE = UNLIMITED
+BASIC_DELAY_BOX_DEFAULT_DISTANT_PROXY_LATENCY = 7
+#
+#
+#
+#-CLIENTS--AND--SERVERS--AND--LOAD_GENERATION-----------------------------------
+#
+# The simulator can generate different types of traffic, e.g., according to 
+# statistical distributions (TYPE_OF_TRAFFIC_GENERATOR = CONSTANT, POISSON or 
+# PARETO) or based on trace files (TYPE_OF_TRAFFIC_GENERATOR = TRACE_FILE).
+#
+# Note: see class evaluation.simulator.pluginRegistry.TrafficSource.java for 
+#       available traffic sources or to create a new traffic source.
+#
+TYPE_OF_TRAFFIC_GENERATOR = TRACE_FILE
+#
+#
+# Note: the following settings are valid only for traffic sources based on 
+#       statistical distributions (e.g. CONSTANT, POISSON and PARETO)
+# Note: when REQUEST_SIZE or REPLY_SIZE is set to AUTO, the 
+#       MIX_REQUEST_PAYLOAD_SIZE (see below) will be chosen as size.
+#
+NUMBER_OF_CLIENTS_TO_SIMULATE = 10
+AVERAGE_REQUESTS_PER_SECOND_AND_CLIENT = 1
+REQUEST_SIZE = AUTO
+REPLY_SIZE = AUTO
+RESOLVE_TIME = 0
+PARETO_ALPHA = 2.0
+#
+#
+# Note: the following settings are valid only for traffic source TRACE_FILE
+# Note: trace files must be in a format supported by the trace parser (e.g. ERF,
+#       PCAP, GMF etc.). See evaluation.traceParser.scenarioExtractor.
+# Note: if LIMIT_CLIENT_NUMBER = TRUE, the replay engine will only select 
+#       CLIENT_LIMIT clients from the trace file, even if the trace file 
+#       contains more clients
+# Note: if CHOOSE_RANDOM_CLIENTS = TURE, the replay engine will select clients
+#       at random from the trace file.
+#
+PATH_TO_TRACE = ./inputOutput/global/traces/auck8/auck8_1000min_1user_dpe.gmf
+LIMIT_CLIENT_NUMBER = FALSE
+CLIENT_LIMIT = 100
+CHOOSE_RANDOM_CLIENTS = FALSE
+#
+#
+# Note: the COMMUNICATION_MODE specifies whether communication is simplex or 
+#       duplex. More Precisely, SIMPLEX means that clients will send requests 
+#       with a fixes schedule (open loop) specified by the traffic source (e.g. 
+#       POISSON), i.e., no feedback from the communication channels (e.g. 
+#       congestion) is taken into account. Use SIMPLEX_WITH_FEEDBACK or DUPLEX 
+#       to take these effects into account. SIMPLEX_REPLY will simulate the 
+#       reply channel only.
+#       Possible values: SIMPLEX, SIMPLEX_WITH_FEEDBACK, DUPLEX, SIMPLEX_REPLY
+#
+COMMUNICATION_MODE = DUPLEX
+#
+#
+#
+#-SIMULATION-END----------------------------------------------------------------
+#
+# The simulation can be configured to end when one of the following events 
+# occurs:
+#
+#   REAL_TIME_END:             the simulation stops after REAL_TIME_LIMIT_IN_SEC
+#                              real time seconds (measured with the operating 
+#                              system's clock)
+#   SIMULATION_TIME_END:       the simulation stops after 
+#                              SIMULATION_TIME_LIMIT_IN_MS 
+#                              milliseconds of simulation time
+#   END_OF_TRACE_FILE_REACHED: the simulation ends when the trace file contains 
+#                              no more records (only valid if 
+#                              TYPE_OF_TRAFFIC_GENERATOR is set to TRACE_FILE,
+#                              see above)
+#
+SIMULATION_END = END_OF_TRACE_FILE_REACHED
+REAL_TIME_LIMIT_IN_SEC = 0.5
+SIMULATION_TIME_LIMIT_IN_MS = 100000
+#
+#
+#
+#-OUTPUT_STRATEGY--OR--FLUSHING_ALGORITHM---------------------------------------
+#
+# Mixes will delay messages according to the output strategy (sometimes called 
+# flushing algorithm) specified here. See class evaluation.simulator.
+# pluginRegistry.OutputStrategy.java for available output strategies or to 
+# create a new output strategy.
+# Some possible values: NO_DELAY, BASIC_SYNCHRONOUS_BATCH, BASIC_BATCH, 
+# BATCH_WITH_TIMEOUT, BINOMIAL_POOL, COTTRELL_POOL, COTTRELL_RANDOM_DELAY, 
+# COTTRELL_TIMED_POOL, DISTINCT_USER_BATCH, DLPA_BASIC, DLPA_HEURISTIC, 
+# DLPA_HEURISTIC_2, LOSSY_SYNCHRONOUS_BATCH, STOP_AND_GO, 
+# THRESHOLD_AND_TIMED_BATCH, THRESHOLD_OR_TIMED_BATCH, THRESHOLD_POOL, 
+# TIMED_BATCH, TIMED_DYNAMIC_POOL
+#	
+OUTPUT_STRATEGY = NO_DELAY
+BATCH_SIZE = 100
+POOL_SIZE = 10
+MAX_REPLY_DELAY_DISTINCT_USER_BATCH = 100
+MAX_DLPA_REQUEST_DELAY = 1000
+MAX_DLPA_REPLY_DELAY = 1000
+#
+#	RECEIVER_SUPPORTS_DUMMY_TRAFFIC: when enabled, dummy traffic will be sent 
+#   between last mix and distant proxy (required for some strategies)
+#
+RECEIVER_SUPPORTS_DUMMY_TRAFFIC = TRUE
+#
+#
+#
+#-RECODING_SCHEME---------------------------------------------------------------
+#
+MESSAGE_FORMAT = BASIC_MIX_MESSAGE
+NETWORK_PACKET_PAYLOAD_SIZE = 512
+MIX_REQUEST_PAYLOAD_SIZE = 512
+MIX_REQUEST_HEADER_SIZE = 0
+MIX_REPLY_PAYLOAD_SIZE = 512
+MIX_REPLY_HEADER_SIZE = 0
+MIX_REQUEST_CREATION_TIME = 0
+MIX_REPLY_DECRYPTION_TIME = 0
+PROCESSING_TIME_FOR_1000_REQUESTS = 0
+PROCESSING_TIME_FOR_1000_REPLIES = 0
+#
+#
+#
+#-SEND_STYLE--------------------------------------------------------------------
+#
+# The simulated clients and mixes can be configured to forward messages that 
+# arrive from the application layer directly (value SEND_IMMEDIATELY for 
+# clients and REPLY_IMMEDIATELY for mixes) or to wait a certain amount of time 
+# for further data before forwarding (value WAIT_FOR_FURTHER_DATA for clients 
+# and WAIT_FOR_FURTHER_DATA_BEFORE_REPLY for mixes). Further output strategy-
+# dependent (see above) sending styles (e.g. SEND_SYNCHRONOUSLY and 
+# WAIT_FOR_FURTHER_DATA) are available as well. See the classes evaluation.
+# simulator.pluginRegistry.ClientSendStyle.java and MixSendStyle.java for all 
+# available send styles.
+#
+CLIENT_SEND_STYLE = SEND_IMMEDIATELY
+MIX_SEND_STYLE = REPLY_IMMEDIATELY
+#
+# Settings for WAIT_FOR_FURTHER_DATA:
+TIME_TO_WAIT_FOR_FURTHER_DATA_FROM_USER = 1
+TIME_TO_WAIT_FOR_DATA_FROM_DISTANT_PROXY = 1
+#
+# Settings for SEND_SYNCHRONOUSLY:
+BASIC_SYNCHRONOUS_SEND_INTERVAL_IN_MS = 100
+BASIC_SYNCHRONOUS_REPLY_INTERVAL_IN_MS = 100
+#
+#
+#-------------------------------------------------------------------------------

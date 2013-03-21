@@ -24,7 +24,6 @@ import java.util.TimerTask;
 
 import framework.core.controller.Implementation;
 import framework.core.interfaces.Layer3OutputStrategyMix;
-import framework.core.message.MixMessage;
 import framework.core.message.Reply;
 import framework.core.message.Request;
 
@@ -34,7 +33,8 @@ import framework.core.message.Request;
 public class MixPlugIn extends Implementation implements Layer3OutputStrategyMix {
 
 	private static SecureRandom secureRandom;
-	private Timer timer = new Timer();
+	private Timer requestTimer = new Timer();
+	private Timer replyTimer = new Timer();
 	private int maxDelay;
 	
 	
@@ -64,16 +64,16 @@ public class MixPlugIn extends Implementation implements Layer3OutputStrategyMix
 	
 	@Override
 	public void addRequest(Request request) {
-		synchronized (timer) {
-			timer.schedule(new SendMessageTask((MixMessage) request, true), getRandomDelay());
+		synchronized (requestTimer) {
+			requestTimer.schedule(new SendMessageTask(request), getRandomDelay());
 		}
 	}
 
 	
 	@Override
 	public void addReply(Reply reply) {
-		synchronized (timer) {
-			timer.schedule(new SendMessageTask((MixMessage) reply, false), getRandomDelay());
+		synchronized (replyTimer) {
+			replyTimer.schedule(new SendMessageTask(reply), getRandomDelay());
 		}
 	}
 
@@ -85,22 +85,35 @@ public class MixPlugIn extends Implementation implements Layer3OutputStrategyMix
 	
 	private final class SendMessageTask extends TimerTask {
 
-		private MixMessage relatedMessage;
+		private Request request;
+		private Reply reply;
 		private boolean isRequest;
 		
-		protected SendMessageTask(MixMessage mixMessage, boolean isRequest) {
-			this.relatedMessage = mixMessage;
-			this.isRequest = isRequest;
+		
+		protected SendMessageTask(Request request) {
+			this.request = request;
+			this.isRequest = true;
 		}
+		
+		
+		protected SendMessageTask(Reply reply) {
+			this.reply = reply;
+			this.isRequest = false;
+		}
+		
 		
 		@Override 
 		public void run() {
-			synchronized (timer) {
-				if (isRequest)
-					anonNode.putOutRequest((Request)relatedMessage);
-				else
-					anonNode.putOutReply((Reply)relatedMessage);
+			if (isRequest) {
+				synchronized (requestTimer) {
+					anonNode.putOutRequest(request);
+				}
+			} else {
+				synchronized (replyTimer) {
+					anonNode.putOutReply(reply);
+				}
 			}
+			
 		}
 			
 	}

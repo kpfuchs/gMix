@@ -78,6 +78,7 @@ public class MixPlugIn extends Implementation implements Layer3OutputStrategyMix
 		private boolean isFirstMessage = true;
 		private Timer timer = new Timer();
 		
+		
 		public SimplexTimedBatch(boolean isRequestPool) {
 			this.collectedMessages = new Vector<MixMessage>(DEFAULT_BATCH_SIZE);
 			this.isRequestPool = isRequestPool;
@@ -85,7 +86,7 @@ public class MixPlugIn extends Implementation implements Layer3OutputStrategyMix
 		
 		
 		public void addMessage(MixMessage mixMessage) {
-			synchronized (this) {
+			synchronized (timer) {
 				if (isFirstMessage) {
 					isFirstMessage = false;
 					timer.scheduleAtFixedRate(new TimeoutTask(this), SENDING_RATE, SENDING_RATE);
@@ -96,13 +97,15 @@ public class MixPlugIn extends Implementation implements Layer3OutputStrategyMix
 
 		
 		public void putOutMessages() {
-			synchronized (this) {
-				Collections.sort(collectedMessages);
-				if (isRequestPool)
-					anonNode.putOutRequests(collectedMessages.toArray(new Request[0]));
-				else
-					anonNode.putOutReplies(collectedMessages.toArray(new Reply[0]));
-				this.collectedMessages = new Vector<MixMessage>(DEFAULT_BATCH_SIZE);
+			synchronized (timer) {
+				if (collectedMessages.size() > 0) {
+					Collections.sort(collectedMessages);
+					if (isRequestPool)
+						anonNode.putOutRequests(collectedMessages.toArray(new Request[0]));
+					else
+						anonNode.putOutReplies(collectedMessages.toArray(new Reply[0]));
+					this.collectedMessages = new Vector<MixMessage>(DEFAULT_BATCH_SIZE);
+				}
 			}	
 		}
 	

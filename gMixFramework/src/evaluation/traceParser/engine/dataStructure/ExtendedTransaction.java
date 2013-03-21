@@ -28,10 +28,7 @@ import framework.core.util.Util;
  * Transaction that additionally stores absolute timestamps of sending 
  * times. Offers higher accuracy and simpler access then direct use of 
  * Transaction.
- * This class is used by Flow.java to store transactions. Simulator and
- * load generator will only see normal none-extended Transactions 
- * (standard .gmt traces). This class is used to convert between .gmf and 
- * .gmt (i.e. when flows are extracted (see evaluation.traceParser.extractor)).
+ * This class is used by Flow.java to store transactions. 
  */
 public class ExtendedTransaction extends Transaction {
 

@@ -171,7 +171,7 @@ public class ClientPlugIn extends Implementation implements Layer3OutputStrategy
 			layer1.sendMessage(dummy);
 		} else {
 			try {
-				sendMessage(requestQueue.take());
+				layer1.sendMessage(requestQueue.take());
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 				sendMessage();

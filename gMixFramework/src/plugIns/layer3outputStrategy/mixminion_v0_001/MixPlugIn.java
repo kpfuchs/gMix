@@ -43,7 +43,6 @@ import framework.core.message.Request;
  */
 public class MixPlugIn extends Implementation implements Layer3OutputStrategyMix {
 
-	private SecureRandom secureRandom;
 	private SimplexTimedDynamicPool requestPool;
 	private SimplexTimedDynamicPool replyPool;
 	private int DEFAULT_POOL_SIZE;
@@ -62,12 +61,6 @@ public class MixPlugIn extends Implementation implements Layer3OutputStrategyMix
 		this.MIN_SEND = settings.getPropertyAsInt("MIXMINION_MIN_SEND");
 		this.requestPool = new SimplexTimedDynamicPool(true);
 		this.replyPool = new SimplexTimedDynamicPool(false);
-		try {
-			this.secureRandom = SecureRandom.getInstance(settings.getProperty("MIXMINION_PRNG_ALGORITHM"));
-		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
-			throw new RuntimeException("could not init secureRandom"); 
-		}
 	}
 	
 	
@@ -85,18 +78,19 @@ public class MixPlugIn extends Implementation implements Layer3OutputStrategyMix
 	
 	@Override
 	public void addRequest(Request request) {
-		requestPool.addMessage((MixMessage) request);
+		requestPool.addMessage(request);
 	}
 
 	
 	@Override
 	public void addReply(Reply reply) {
-		replyPool.addMessage((MixMessage) reply);
+		replyPool.addMessage(reply);
 	}
 
 
 	public class SimplexTimedDynamicPool {
 
+		private SecureRandom secureRandom;
 		private boolean isRequestPool;
 		private Vector<MixMessage> collectedMessages;
 		private boolean isFirstMessage = true;
@@ -106,6 +100,12 @@ public class MixPlugIn extends Implementation implements Layer3OutputStrategyMix
 		public SimplexTimedDynamicPool(boolean isRequestPool) {
 			this.collectedMessages = new Vector<MixMessage>(DEFAULT_POOL_SIZE);
 			this.isRequestPool = isRequestPool;
+			try {
+				this.secureRandom = SecureRandom.getInstance(settings.getProperty("MIXMINION_PRNG_ALGORITHM"));
+			} catch (NoSuchAlgorithmException e) {
+				e.printStackTrace();
+				throw new RuntimeException("could not init secureRandom"); 
+			}
 		}
 		
 		
@@ -136,19 +136,15 @@ public class MixPlugIn extends Implementation implements Layer3OutputStrategyMix
 				}
 				if (sendable > 0) {
 					if (isRequestPool) {
-						Request[] requests = new Request[sendable];
 						for (int i=0; i<sendable; i++) {
 							int chosen = secureRandom.nextInt(collectedMessages.size());
-							requests[i] = (Request)collectedMessages.remove(chosen);
+							anonNode.putOutRequest((Request)collectedMessages.remove(chosen));
 						} 
-						anonNode.putOutRequests(requests);
 					} else {
-						Reply[] replies = new Reply[sendable];
 						for (int i=0; i<sendable; i++) {
 							int chosen = secureRandom.nextInt(collectedMessages.size());
-							replies[i] = (Reply)collectedMessages.remove(chosen);
+							anonNode.putOutReply((Reply)collectedMessages.remove(chosen));
 						} 
-						anonNode.putOutReplies(replies);
 					}
 				}
 			}
@@ -159,15 +155,19 @@ public class MixPlugIn extends Implementation implements Layer3OutputStrategyMix
 
 			private SimplexTimedDynamicPool linkedPool;
 			
+			
 			protected TimeoutTask(SimplexTimedDynamicPool linkedPool) {
 				this.linkedPool = linkedPool;
 			}
+			
 			
 			@Override 
 			public void run() {
 				linkedPool.putOutMessages();
 			}
-		}	
+			
+		}
+		
 	}
 
 	

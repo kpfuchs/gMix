@@ -83,7 +83,7 @@
 		<copy todir="${tmp-dist.dir}"><fileset dir="." includes="inputOutput/anonNode/**" /></copy>
 		<copy todir="${tmp-dist.dir}"><fileset dir="." includes="inputOutput/global/**" excludes="inputOutput/global/traces/"/></copy>
 		<copy todir="${tmp-dist.dir}"><fileset dir="." includes="inputOutput/infoService/**" /></copy>			
-		<copy todir="${tmp-dist.dir}"><fileset dir="." includes="inputOutput/loadGenerator/**" /></copy>	
+		<copy todir="${tmp-dist.dir}"><fileset dir="." includes="inputOutput/loadGenerator/**" excludes="inputOutput/traceFiles/traces/"/></copy>
 		<copy todir="${tmp-dist.dir}"><fileset dir="." includes="inputOutput/localTest/**" /></copy>	
 		<copy todir="${tmp-dist.dir}"><fileset dir="." includes="inputOutput/simulator/config/**" /></copy>
 		<copy todir="${tmp-dist.dir}"><fileset dir="." includes="inputOutput/simulator/experimentDefinitions/default_settings.txt" /></copy>

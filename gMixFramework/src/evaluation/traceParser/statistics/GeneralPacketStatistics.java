@@ -21,7 +21,6 @@ import java.util.Calendar;
 
 import evaluation.traceParser.engine.Protocol;
 import evaluation.traceParser.engine.dataStructure.Packet;
-import evaluation.traceParser.engine.dataStructure.Packet.TCPflags;
 import evaluation.traceParser.engine.filter.PacketFilter;
 import evaluation.traceParser.engine.filter.PacketFilterTester;
 import framework.core.util.Util;
@@ -39,15 +38,15 @@ public class GeneralPacketStatistics implements PacketFilter {
 	private Calendar timestampFirstPacket;
 	private long start;
 	
-	int synToWan = 0;
-	int syn = 0;
+	//int synToWan = 0;
+	//int syn = 0;
 	@Override
 	public Packet newRecord(Packet packet) {
-		if (start == 0)
-			start = System.currentTimeMillis();
+		//if (start == 0)
+		//	start = System.currentTimeMillis();
 		packetCounter++;
 		
-		if (packetCounter < 10000000) { // TODO: remove
+		/*if (packetCounter < 10000000) { // TODO: remove
 			if (packet.getTCPflags() == TCPflags.SYN && packet.getLayer3dstAddress().equalsIgnoreCase("80")) {
 				syn++;
 				if (packet.getLayer1dstAddress().equalsIgnoreCase("0015C7568000"))
@@ -66,7 +65,7 @@ public class GeneralPacketStatistics implements PacketFilter {
 		if  (packetCounter == (10000000 -1)) {
 			double percentage = ((double)synToWan / (double)syn) * 100d;
 			System.out.println("percentage: " +percentage +"%"); 
-		}
+		}*/
 		if (packetCounter % 1000000 == 0)
 			System.out.println("read " +packetCounter +" packets so far"); 
 		protocolDistribution[packet.getHighestLevelProtocol().ordinal()]++;

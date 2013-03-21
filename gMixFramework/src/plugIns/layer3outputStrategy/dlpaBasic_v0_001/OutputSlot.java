@@ -48,18 +48,19 @@ public class OutputSlot {
 		this.isRequestSlot = isRequestSlot;
 		this.timeOfOutput = timeOfOutput;
 		this.anonNode = anonNode;
+		this.recodingScheme = anonNode.getRecodingLayerControllerMix();
 	}
 	
 	
 	public boolean isUsedBy(User user) {
-		synchronized (this) {
+		synchronized (userDatabase) {
 			return messagesToSend.containsKey(user);
 		}
 	}
 	
 	
 	public void addMessage(MixMessage mixMessage) {
-		synchronized (this) {
+		synchronized (userDatabase) {
 			messagesToSend.put(mixMessage.getOwner(), mixMessage);
 		}
 	}
@@ -69,9 +70,10 @@ public class OutputSlot {
 		// create dummies if needed
 		int normalMessages;
 		int dummyCounter = 0;
-		synchronized (this) { // TODO: remove
+		synchronized (userDatabase) { // TODO: remove
 			normalMessages = messagesToSend.size();
-			for (User user: userDatabase.getAllUsers()) {
+			User[] users = userDatabase.getAllUsers();
+			for (User user: users) {
 				MixMessage mixMessage = messagesToSend.get(user);
 				if (mixMessage == null) {
 					if (isRequestSlot)
@@ -83,7 +85,7 @@ public class OutputSlot {
 				messagesToSend.put(user, mixMessage);
 			}
 			System.out.println("putting out slot (" +dummyCounter +" dummies and " +normalMessages +" normal messages)"); // TODO: remove 
-			MixMessage[] messages = messagesToSend.values().toArray(new MixMessage[0]);
+			MixMessage[] messages = isRequestSlot ? messagesToSend.values().toArray(new Request[0]): messagesToSend.values().toArray(new Reply[0]);
 			Arrays.sort(messages);
 			// send messages
 			if (isRequestSlot)
@@ -96,14 +98,14 @@ public class OutputSlot {
 	
 
 	public int getNumerOfMessagesContained() {
-		synchronized (this) {
+		synchronized (userDatabase) {
 			return messagesToSend.size();
 		}
 	}
 
 
 	public long getTimeOfOutput() {
-		synchronized (this) {
+		synchronized (userDatabase) {
 			return timeOfOutput;
 		}
 	}

@@ -185,6 +185,7 @@ public class NextMixHandler_TCP_RR_multiplexed_sync extends SubImplementation im
 							con.nextMixOutputStream.write(Util.intToByteArray(thisToNextMixIDs.get(requests[i].getOwner())));
 						}
 						con.nextMixOutputStream.write(Util.intToByteArray(requests[i].getByteMessage().length));
+						//System.out.println("req-len: " +requests[i].getByteMessage().length); // TODO: remove
 						con.nextMixOutputStream.write(requests[i].getByteMessage());
 						con.nextMixOutputStream.flush();
 					} catch (IOException e) {
@@ -247,6 +248,8 @@ public class NextMixHandler_TCP_RR_multiplexed_sync extends SubImplementation im
 									int read = con.nextMixInputStream.read(len);
 									assert read == 4; // should not be different due to buffered stream; check anyways...
 									con.currentReplyLength = Util.byteArrayToInt(len);
+									//System.out.println("rep-len: " +con.currentReplyLength); // TODO: remove
+									
 									if (con.currentReplyLength > maxReplyLength) {
 										System.err.println("warning: mix " +con.mixId +" sent a too large message");
 										dropConncetion(con);

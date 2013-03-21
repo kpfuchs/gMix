@@ -26,13 +26,16 @@ import framework.core.util.Util;
 
 public class TraceInfo {
 
-	private final static String INFO_FILE_NAME = "traceInfo.txt";
+	public final static String INFO_FILE_NAME = "traceInfo.txt";
 	private Properties properties;
 	private Protocol traceFormat;
 	private String nameOfTraceFile;
 	private String pathToTraceFolder;
 	private String wanAddress;
 	private String lanAddress;
+	private long seed;
+	private String comment;
+	private String url;
 	
 	
 	public TraceInfo(String pathToTraceFolder) {
@@ -85,8 +88,20 @@ public class TraceInfo {
 				throw new RuntimeException("ERROR: not supported trace format (" +traceFormat +") specified in property file " +pathToTraceFolder +INFO_FILE_NAME +" (key TRACE_FORMAT)"); 
 				
 			}
-		}	
-		
+		}
+		try {
+			this.seed = Long.parseLong(properties.getProperty("PRNG_SEED"));
+		} catch (Exception e) {
+			System.err.println("WARNING: no valid PRNG_SEED specified in " +(pathToTraceFolder +INFO_FILE_NAME));
+			System.err.println("will use the default seed (1234567890). seed must be an integer."); 
+			this.seed = 1234567890l;
+		}
+		try {
+			this.url = properties.getProperty("URL");
+			this.comment = properties.getProperty("COMMENT");
+		} catch (Exception e) {
+			// not mandatory -> do nothing 
+		}
 	}
 	
 	
@@ -158,5 +173,20 @@ public class TraceInfo {
 	public void setLanAddress(String lanAddress) {
 		this.lanAddress = lanAddress;
 	}
-
+	
+	
+	public long getPrngSeed() {
+		return this.seed;
+	}
+	
+	
+	public String getURL() {
+		return this.url;
+	}
+	
+	
+	public String getComment() {
+		return this.comment;
+	}
+	
 }

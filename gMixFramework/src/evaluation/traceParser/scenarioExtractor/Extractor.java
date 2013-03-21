@@ -35,6 +35,7 @@ import evaluation.traceParser.engine.dataStructure.Host;
 import evaluation.traceParser.engine.dataStructure.ModifiableHost;
 import evaluation.traceParser.engine.filter.PacketFilterTester;
 import evaluation.traceParser.scenarioExtractor.flowFilter.FlowFilter;
+import evaluation.traceParser.statistics.GeneralHostStatistics;
 import evaluation.traceParser.statistics.HostSampleSource;
 import evaluation.traceParser.statistics.HostSampleSource.UrnModel;
 import framework.core.util.Util;
@@ -53,7 +54,7 @@ public abstract class Extractor {
 	protected SecureRandom secureRandom;
 	private boolean writeDone = false;
 	private int hostIdCounter = -1;
-	private final static long PRNG_SEED = 1234567890l;
+	private final long PRNG_SEED;
 
 	
 	/**
@@ -73,6 +74,7 @@ public abstract class Extractor {
 	 */
 	public Extractor(String pathToTraceFolder) {
 		this.traceInfo = new TraceInfo(pathToTraceFolder);
+		this.PRNG_SEED = traceInfo.getPrngSeed();
 		this.hosts = Host.getHostIndex(traceInfo, getFlowFilter());
 		initTraceFiles(traceInfo);
 		HashSet<Host> bl = createHostBlackList();
@@ -99,6 +101,10 @@ public abstract class Extractor {
 		extract();
 		close();
 		System.out.println("finished extracting (duration: " +((double)(System.currentTimeMillis() - start)/1000d) +" sec)"); 
+		System.out.println("creating stats.txt"); 
+		new GeneralHostStatistics(this.destTracePath , null).writeStatisticsToDisk();
+		System.out.println("done"); 
+		
 	}
 	
 	

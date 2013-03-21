@@ -60,13 +60,13 @@ public class MixPlugIn extends Implementation implements Layer3OutputStrategyMix
 	
 	@Override
 	public void addRequest(Request request) {
-		requestBatch.addMessage((MixMessage) request);
+		requestBatch.addMessage(request);
 	}
 
 	
 	@Override
 	public void addReply(Reply reply) {
-		replyBatch.addMessage((MixMessage) reply);
+		replyBatch.addMessage(reply);
 	}
 
 	

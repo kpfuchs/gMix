@@ -174,7 +174,7 @@ public class ClientPlugIn extends Implementation implements Layer1NetworkClient 
 			}
 			byte[] message = Util.forceRead(mixInputStream, replyLength);
 			//System.out.println("habe empfangen auf layer 0 (" +anonNode.toString() +"): " +Util.md5(message));
-			replyLength = Util.NOT_SET;
+			replyLength = Util.NOT_SET; 
 			return MixMessage.getInstanceReply(message);
 		} catch (IOException e) {
 			System.err.println("connection lost... try again"); 

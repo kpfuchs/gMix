@@ -19,6 +19,7 @@ package evaluation.traceParser.engine.fileReader;
 
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -149,7 +150,19 @@ public class PacketSource {
 			throw new RuntimeException("ERROR: could not read trace file from " +pathToFile);
 		}
 		// detect compression and return stream:
-		trace = new BufferedInputStream(Util.tryDetectCompressionMethod(pathToFile));
+		try {
+			trace = new BufferedInputStream(Util.tryDetectCompressionMethod(pathToFile));
+		} catch (FileNotFoundException e) {
+			System.err.println("ERROR: trace file " +pathToFile +" not found.");
+			System.err.println("possible reasons: ");
+			System.err.println("   - file not present");
+			System.err.println("   - wrong file specified in " +TraceInfo.INFO_FILE_NAME);
+			if (traceInfo.getURL() != null)
+				System.err.println("if the file is not present, it can be downlaoded from " +traceInfo.getURL());
+			if (traceInfo.getComment() != null)
+				System.err.println("Comment: " +traceInfo.getComment()); 
+			System.exit(1);
+		}
 		return trace;
 	}
 	

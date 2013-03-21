@@ -123,28 +123,37 @@ public class FlowGroup {
 	 * contain no more transactions
 	 */
 	public boolean cutOff(long maxEnd) {
-		if (maxEnd >= this.end) // already short enough
+		if (maxEnd >= this.end) { // already short enough
+			//if (Util.assertionsEnabled())
+			//	for (Flow f:flows)
+			//		assert f.endOfFlow <= maxEnd;
 			return true;
-		int cutCounter = 0;
+		}
 		for (int i=flows.size()-1; i>=0; i--) {
 			Flow flow = flows.get(i);
 			if (flow.startOfFlow >= maxEnd) { // flow starts later than (or equal to) max end -> drop whole flow
-				cutCounter++;
+				flows.remove(i);
 			} else if (flow.endOfFlow > maxEnd) { // flow starts before maxEnd and ends later than maxEnd -> try to cut flow
 				boolean cutSuccessful = flow.cutOff(maxEnd);
-				if (!cutSuccessful) // drop whole flow
-					cutCounter++;
+				if (!cutSuccessful) { // drop whole flow
+					flows.remove(i);
+				} else {
+					assert flow.endOfFlow <= maxEnd;
+				}
 				//break;
 			} else {
+				assert flow.endOfFlow <= maxEnd;
 				//break;
 			}
 		} 
-		if (cutCounter == flows.size()) { // no flows left
+		if (flows.size() == 0) { // no flows left
 			return false;
 		} else {
-			for (int i=0; i<cutCounter; i++) // remove flows
-				flows.remove(flows.size()-1);
-			end = flows.get(flows.size()-1).endOfFlow;
+			end = Long.MIN_VALUE;
+			for (Flow flow:flows)
+				if (flow.endOfFlow > end)
+					end = flow.endOfFlow;
+			assert end <= maxEnd;
 			return true;
 		}
 	}

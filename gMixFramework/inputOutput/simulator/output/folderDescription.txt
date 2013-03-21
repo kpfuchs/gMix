@@ -1,6 +1,3 @@
 This folder ("./inputOutput/simulator/output") contains the output (plotscripts, 
 recorded statistics as txt, config dump, graphs as eps) of the simulator.
-The output of the last run of the simulator is stored in the root of this folder 
-("./inputOutput/simulator/output"). Results of previous runs are stored in the 
-folder "all" ("./inputOutput/simulator/output/all"), tagged with a timestamp.
 

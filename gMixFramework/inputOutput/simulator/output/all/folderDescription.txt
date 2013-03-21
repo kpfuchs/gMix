@@ -1,4 +1,0 @@
-This folder ("./inputOutput/simulator/output/all") contains the output 
-(plotscripts, recorded statistics as txt, config dump, graphs as eps) of the 
-simulator. The output files are tagged and grouped by a timestamp when the 
-experiment was carried out.

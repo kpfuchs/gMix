@@ -1,17 +1,35 @@
-# specify which experiments shall be performed when the simulator is run
-# a seperate property file must exist for each experiment
-# specify the filenames of the property files here
-# (property files must be in folder "./inputOutput/simulator/experimentDefinitions")
-# example: EXPERIMENTS_TO_PERFORM = lgpaper_dlpaDummyPercentagePoi.txt
+#
+#-LICENSE-----------------------------------------------------------------------
+#
+# Experiment definition file for the Discrete-event Mix Simulator of the gMix 
+# open source project - https://svs.informatik.uni-hamburg.de/gmix/
+# Copyright (C) 2013 SVS
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT 
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS 
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#
+#
+#
+#-SETTINGS----------------------------------------------------------------------
+#
+# the gMix Simulator requires several parameters to carry out an experiment. 
+# These parameters must be specified in a single config file, the so-called 
+# "experiment definition" file (EDF). EDFs must be placed in folder 
+# ./inputOutput/simulator/experimentDefinitions/. Specify the name of the EDF,
+# i.e., which experiment shall be performed when the simulator is run the next 
+# time here:
+# example: EXPERIMENTS_TO_PERFORM = exampleExperiment.txt
 EXPERIMENTS_TO_PERFORM = lgpaper_dlpaDummyPercentagePoi.txt
+#
 #
 # GNUPLOT_FOLDER
 GNUPLOT_FOLDER = 
-#
-# TODO: LOAD_EXPERIMENT_DESCRIPTIONS_FROM -> "PROPERTY_FILE", "E-MAIL", "FOLDER", "COMMAND_LINE"
 #
 #
 # DEBUG_OUTPUT
 # possible values: OFF, ON
 # Default value: OFF
 DEBUG_OUTPUT = OFF
+#
+#-------------------------------------------------------------------------------

@@ -67,7 +67,7 @@ AL-TRACE_FILE-USE_DYNAMIC_SCHEDULE = FALSE
 #	corresponding reply (before sending the next request)
 #
 # ---AFAP-options:
-AL-AFAP-NUMBER_OF_CLIENTS = 1
+AL-AFAP-NUMBER_OF_CLIENTS = 10
 #
 # ---CONSTANT_RATE-options:
 AL-CONSTANT_RATE-REQUEST_PAYLOAD_SIZE = AUTO

@@ -24,7 +24,6 @@ import framework.core.interfaces.Layer2RecodingSchemeMix;
 import framework.core.message.MixMessage;
 import framework.core.message.Reply;
 import framework.core.message.Request;
-import framework.core.routing.RoutingMode;
 import framework.core.userDatabase.User;
 
 
@@ -38,8 +37,7 @@ public class MixPlugIn extends Implementation implements Layer2RecodingSchemeMix
 	
 	@Override
 	public void constructor() {
-		if (anonNode.ROUTING_MODE != RoutingMode.CASCADE)
-			throw new RuntimeException("not supported"); // TODO: support it...
+		
 		this.config = new RSA_OAEP_AES_OFB_Config(anonNode, false);
 		this.messageCreator = new RSA_OAEP_AES_OFB(anonNode, config);
 		this.requestThreads = new RequestThread[config.NUMBER_OF_THREADS];

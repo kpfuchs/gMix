@@ -27,7 +27,6 @@ import framework.core.socket.socketInterfaces.AnonSocketOptions.CommunicationMod
 import framework.core.socket.socketInterfaces.StreamAnonServerSocket;
 import framework.core.socket.socketInterfaces.StreamAnonSocketMix;
 import framework.core.socket.stream.BasicOutputStreamMix;
-import framework.core.util.Util;
 
 
 public class MixPlugIn extends Implementation implements Layer5ApplicationMix {

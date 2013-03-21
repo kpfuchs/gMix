@@ -20,6 +20,7 @@ package evaluation.traceParser.engine.converter;
 import java.io.BufferedWriter;
 import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -71,6 +72,16 @@ public class ToGMP {
 				}
 			}
 			this.source = new DynamicPacketReader(sourceTrace, traceInfo);
+		} catch (FileNotFoundException e) {
+			System.err.println("ERROR: trace file " +pathToInFile +" not found.");
+			System.err.println("possible reasons: ");
+			System.err.println("   - file not present");
+			System.err.println("   - wrong file specified in " +TraceInfo.INFO_FILE_NAME);
+			if (traceInfo.getURL() != null)
+				System.err.println("if the file is not present, it can be downlaoded from " +traceInfo.getURL());
+			if (traceInfo.getComment() != null)
+				System.err.println("Comment: " +traceInfo.getComment()); 
+			System.exit(1);
 		} catch (Exception e) {
 			throw new RuntimeException("ERROR: could not read trace file from " +pathToInFile);
 		}

@@ -167,6 +167,8 @@ public class CommandLineParameters {
 			String value = pluginComposition.getProperty(key);
 			if (value != null && !value.equals("")) {
 				for (String plugInName: value.split(",")) {
+					if (plugInName.equalsIgnoreCase("AUTO"))
+						continue;
 					Settings plugInSettings = new Settings(Paths.getProperty(key +"_PATH") +plugInName +"/PlugInSettings.txt");
 					String staticFunctions = plugInSettings.getProperty("SAME_LAYER_REQUIREMENTS");
 					if (staticFunctions != null && !staticFunctions.equals(""))

@@ -180,7 +180,7 @@ public class HostSampleSource {
 						continue;
 					try {flowIndex[indexCounter++] = fr.getOffsetOfLastFlow();} catch (ArrayIndexOutOfBoundsException e) {System.err.println("indexCounter: " +indexCounter); System.err.println("currentBlacklistedHost: " +currentBlacklistedHost); System.err.println("flow.senderId: " +flow.senderId); throw new RuntimeException("");  }
 				}
-				assert indexCounter == numberOfFlows - 1;
+				assert indexCounter == numberOfFlows: "indexCounter: " +indexCounter +", numberOfFlows: " +numberOfFlows;
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

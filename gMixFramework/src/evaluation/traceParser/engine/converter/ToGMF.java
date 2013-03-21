@@ -72,7 +72,7 @@ public class ToGMF {
 		int flows = flowIdentifiers.size();
 		int runs = (flows / MAX_FLOWS_PER_RUN) + ((flows % MAX_FLOWS_PER_RUN) > 0 ? 1: 0);
 		System.out.println("found " +flows +" potential flows");
-		System.out.println("length of trace file (unpacked): " +Util.humanReadableByteCount(packetSource.getTotalBytesRead(), false));
+		//System.out.println("length of trace file (unpacked): " +Util.humanReadableByteCount(packetSource.getTotalBytesRead(), false));
 		System.out.println("scanning took " +((float)dur/1000f) +" seconds");
 		System.out.println("will iterate over the trace " +runs +" time(s) to extract TCP flows");
 		

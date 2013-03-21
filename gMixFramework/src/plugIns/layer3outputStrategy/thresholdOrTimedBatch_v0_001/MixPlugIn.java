@@ -43,8 +43,8 @@ public class MixPlugIn extends Implementation implements Layer3OutputStrategyMix
 	
 	@Override
 	public void constructor() {
-		this.BATCH_SIZE = settings.getPropertyAsInt("THRESHOLD_AND_TIMED_BATCH_BATCH_SIZE");
-		this.SENDING_RATE = settings.getPropertyAsInt("THRESHOLD_AND_TIMED_BATCH_SENDING_RATE");
+		this.BATCH_SIZE = settings.getPropertyAsInt("THRESHOLD_OR_TIMED_BATCH_BATCH_SIZE");
+		this.SENDING_RATE = settings.getPropertyAsInt("THRESHOLD_OR_TIMED_BATCH_SENDING_RATE");
 		this.requestBatch = new SimplexThresholdOrTimedBatch(true);
 		this.replyBatch = new SimplexThresholdOrTimedBatch(false);
 	}
@@ -100,14 +100,15 @@ public class MixPlugIn extends Implementation implements Layer3OutputStrategyMix
 		
 		public void putOutMessages() {
 			synchronized (this) {
-				Collections.sort(collectedMessages);
-				if (isRequestBatch)
-					anonNode.putOutRequests((Request[])collectedMessages.toArray(new MixMessage[0]));
-				else
-					anonNode.putOutReplies((Reply[])collectedMessages.toArray(new MixMessage[0]));
-				this.collectedMessages = new Vector<MixMessage>(BATCH_SIZE);
-			}
-				
+				if (collectedMessages.size() > 0) {
+					Collections.sort(collectedMessages);
+					if (isRequestBatch)
+						anonNode.putOutRequests(collectedMessages.toArray(new Request[0]));
+					else
+						anonNode.putOutReplies(collectedMessages.toArray(new Reply[0]));
+					this.collectedMessages = new Vector<MixMessage>(BATCH_SIZE);
+				}
+			}	
 		}
 	
 		

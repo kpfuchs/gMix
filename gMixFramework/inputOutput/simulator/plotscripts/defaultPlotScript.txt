@@ -3,6 +3,7 @@ varTitle = "WILL_BE_SET_AUTOMATICALLY"
 varXLabel = "WILL_BE_SET_AUTOMATICALLY"
 varYLabel = "WILL_BE_SET_AUTOMATICALLY"
 varInputFile = "WILL_BE_SET_AUTOMATICALLY"
+#_OVERWRITABLE_PARAMETERS
 # END do not modify section
 
 
@@ -16,8 +17,7 @@ set key top left
 set pointsize 1.5
 set grid
 
-#set xrange [0 to 300]
-#set yrange [0 to 500]
+
 #set label 1 "120" at 112, 10 rotate left
 #set style arrow 1 nohead lt 3 lw 1
 #set arrow 1 from 0,200 to 300,200 as 1
@@ -26,12 +26,13 @@ set grid
 
 
 # BEGIN do not modify section
+#_NONE_OVERWRITABLE_PARAMETERS
 plot "WILL_BE_SET_AUTOMATICALLY"
 # END do not modify section
 
 
 # BEGIN modify output for file
-set terminal postscript color eps 
+set terminal postscript color eps solid
 
 #set size 0.6
 #set terminal postscript eps "Helvetica" 16

@@ -19,7 +19,7 @@ package framework.core.launcher;
 
 import evaluation.loadGenerator.LoadGenerator;
 import evaluation.localTest.LocalTest;
-import evaluation.simulator.core.Simulator;
+import evaluation.simulator.Simulator;
 import framework.core.AnonNode;
 import framework.infoService.InfoServiceServer;
 

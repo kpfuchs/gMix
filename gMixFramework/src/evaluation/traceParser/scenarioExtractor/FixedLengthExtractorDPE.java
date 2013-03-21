@@ -110,7 +110,10 @@ public class FixedLengthExtractorDPE extends Extractor {
 	 * @param args Not used.
 	 */
 	public static void main(String[] args) {
-		//new FixedLengthExtractorDPE(PacketFilterTester.AUCK_8);
+		new FixedLengthExtractorDPE("./inputOutput/global/traces/auck8/", 1000, 120*60*1000,"auck8_120min_1000user_dpe");
+		new FixedLengthExtractorDPE("./inputOutput/global/traces/auck10/", 1000, 120*60*1000,"auck10_120min_1000user_dpe");
+		new FixedLengthExtractorDPE("./inputOutput/global/traces/auck8/", 10000, 10*60*1000,"auck8_10min_10000user_dpe");
+		new FixedLengthExtractorDPE("./inputOutput/global/traces/auck10/", 10000, 10*60*1000,"auck10_10min_10000user_dpe");
 	}
 
 }

@@ -94,9 +94,6 @@ public class LocalTest extends GMixTool implements EipEventListener {
 	
 	
 	public void startClients() {
-		// TODO: avoid timeout; use info-service to determine when cascade is up
-		//infoService.waitTillCascadeIsUp();
-		
 		System.out.println("all mixes up");
 		System.out.println("starting clients");
 		CommandLineParameters params = new CommandLineParameters(new String[0]);

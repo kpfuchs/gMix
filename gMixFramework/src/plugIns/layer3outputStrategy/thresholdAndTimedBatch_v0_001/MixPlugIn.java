@@ -88,23 +88,23 @@ public class MixPlugIn extends Implementation implements Layer3OutputStrategyMix
 		
 		
 		public void addMessage(MixMessage mixMessage) {
-			synchronized (this) {
+			synchronized (timer) {
 				collectedMessages.add(mixMessage);
 			}
 		}
 
 		
 		public void putOutMessages() {
-			synchronized (this) {
+			synchronized (timer) {
 				if (collectedMessages.size() <= BATCH_SIZE)
 					return;
 				if (isRequestBatch)
 					System.out.println("putting out " +collectedMessages.size() +" messages"); // TODO: remove
 				Collections.sort(collectedMessages);
 				if (isRequestBatch)
-					anonNode.putOutRequests((Request[])collectedMessages.toArray(new MixMessage[0]));
+					anonNode.putOutRequests(collectedMessages.toArray(new Request[0]));
 				else
-					anonNode.putOutReplies((Reply[])collectedMessages.toArray(new MixMessage[0]));
+					anonNode.putOutReplies(collectedMessages.toArray(new Reply[0]));
 				this.collectedMessages = new Vector<MixMessage>(BATCH_SIZE);
 			}
 				

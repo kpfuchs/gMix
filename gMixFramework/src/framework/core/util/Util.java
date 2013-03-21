@@ -252,6 +252,19 @@ public final class Util {
 	}
 	
 	
+	public static double[] concatArrays(double[] firstArray, double[] secondArray) {
+
+		double[] result = new double[firstArray.length + secondArray.length];
+
+		System.arraycopy(firstArray, 0, result, 0, firstArray.length);
+
+		System.arraycopy(secondArray, 0, result, firstArray.length, secondArray.length);
+
+		return result;
+
+	}
+	
+	
 	public static byte[] removePartOfArray(byte[] data, int offset, int length) {
 		
 		byte[] result = new byte[data.length - length];
@@ -911,7 +924,7 @@ public final class Util {
 
 	
 	
-	public static InputStream tryDetectCompressionMethod(String pathToFile) {
+	public static InputStream tryDetectCompressionMethod(String pathToFile) throws FileNotFoundException {
 		// gzip:
 		boolean isGzip = true;
 		try {
@@ -957,7 +970,13 @@ public final class Util {
 		try {
 			return new FileInputStream(pathToFile);
 		} catch (IOException e) {
-			try {Thread.sleep(1000);} catch (InterruptedException e1) {}
+			if (e instanceof FileNotFoundException) {
+				throw (FileNotFoundException) e;
+			}
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e1) {
+			}
 			return tryDetectCompressionMethod(pathToFile);
 		}
 	}

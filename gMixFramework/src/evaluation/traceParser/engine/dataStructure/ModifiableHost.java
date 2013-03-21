@@ -126,14 +126,13 @@ public class ModifiableHost extends Host {
 				cutCounter++;
 			} else if (fg.end > maxEnd) { // flow group starts before maxEnd and ends later than maxEnd -> try to cut flow group
 				assert fg.start < maxEnd;
-				if (fg.flowGroupId == 32796)
-					System.out.println("debug again"); 
 				boolean cutSuccessful = fg.cutOff(maxEnd);
-				if (!cutSuccessful) // drop whole flow group
+				if (!cutSuccessful) { // drop whole flow group
 					cutCounter++;
-				else
+				} else {
 					assert fg.end <= maxEnd: "" +fg.end +" > " +maxEnd;
-				break;
+					break;
+				}
 			} else {
 				break;
 			}
@@ -145,6 +144,8 @@ public class ModifiableHost extends Host {
 				flowGroups.remove(flowGroups.size()-1);
 			lastAction = flowGroups.get(flowGroups.size()-1).end;
 			ExtendedHost.calculateStatistics(this);
+			if ((lastAction - firstAction) == 7260352)
+				System.out.println("hm"); 
 			assert lastAction - firstAction <= cutOffAsOffsetFromFirstAction: "" +(lastAction - firstAction) + " > " +cutOffAsOffsetFromFirstAction;
 			return lastAction - firstAction;
 		}
