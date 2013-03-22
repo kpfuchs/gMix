@@ -44,7 +44,7 @@ public class ThresholdOrTimedBatch extends OutputStrategyImpl {
 	
 	public ThresholdOrTimedBatch(Mix mix, Simulator simulator) {
 		super(mix, simulator);
-		int sendingRate = Simulator.settings.getPropertyAsInt("THRESHOLD_OR_TIMED_BATCH_SENDING_RATE");
+		int sendingRate = Simulator.settings.getPropertyAsInt("THRESHOLD_OR_TIMED_BATCH_SENDING_RATE_IN_MS");
 		int batchSize = Simulator.settings.getPropertyAsInt("THRESHOLD_OR_TIMED_BATCH_BATCH_SIZE");
 		this.requestBatch = new SimplexThresholdOrTimedBatch(true, sendingRate,batchSize );
 		this.replyBatch = new SimplexThresholdOrTimedBatch(false, sendingRate, batchSize);

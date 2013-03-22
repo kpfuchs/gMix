@@ -43,7 +43,7 @@ public class CottrellPool extends OutputStrategyImpl {
 	
 	public CottrellPool(Mix mix, Simulator simulator) {
 		super(mix, simulator);
-		int poolSize = Simulator.settings.getPropertyAsInt("COTTRELL_POOL_POOL_SIZE");
+		int poolSize = Simulator.settings.getPropertyAsInt("POOL_SIZE");
 		this.requestPool = new SimplexCottrellPool(true, poolSize);
 		this.replyPool = new SimplexCottrellPool(false, poolSize);
 	}

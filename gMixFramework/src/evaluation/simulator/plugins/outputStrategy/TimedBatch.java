@@ -42,7 +42,7 @@ public class TimedBatch extends OutputStrategyImpl {
 	
 	public TimedBatch(Mix mix, Simulator simulator) {
 		super(mix, simulator);
-		int sendingRate = Simulator.settings.getPropertyAsInt("TIMED_BATCH_SENDING_RATE");
+		int sendingRate = Simulator.settings.getPropertyAsInt("TIMED_BATCH_SEND_INTERVAL_IN_MS");
 		this.requestBatch = new SimplexTimedMix(true, sendingRate);
 		this.replyBatch = new SimplexTimedMix(false, sendingRate);
 	}

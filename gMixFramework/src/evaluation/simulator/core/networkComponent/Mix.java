@@ -83,6 +83,8 @@ public class Mix extends NetworkNode implements ReplyReceiver  {
 			} else {
 				
 				((MixMessage)networkMessage).getOwner().statistics.addValue(Simulator.getNow() - ((MixMessage)networkMessage).getCreationTime(), StatisticsType.AVG_CLIENT_LATENCY_REQUESTMIXMESSAGE);
+				((MixMessage)networkMessage).getOwner().statistics.addValue(Simulator.getNow() - ((MixMessage)networkMessage).getCreationTime(), StatisticsType.MAX_CLIENT_LATENCY_REQUESTMIXMESSAGE);
+				((MixMessage)networkMessage).getOwner().statistics.addValue(Simulator.getNow() - ((MixMessage)networkMessage).getCreationTime(), StatisticsType.MIN_CLIENT_LATENCY_REQUESTMIXMESSAGE);
 				
 				if (RECEIVER_SUPPORTS_DUMMY_TRAFFIC)
 					sendToNextHop(networkMessage, 0, DistantProxyEvent.INCOMING_REQUEST);

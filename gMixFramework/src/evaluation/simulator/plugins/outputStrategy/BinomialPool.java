@@ -49,12 +49,12 @@ public class BinomialPool extends OutputStrategyImpl {
 	public BinomialPool(Mix mix, Simulator simulator) {
 
 		super(mix, simulator);
-		int sendingRate = Simulator.settings.getPropertyAsInt("BINOMIAL_POOL_SENDING_RATE");
+		int sendingInterval = Simulator.settings.getPropertyAsInt("BINOMIAL_POOL_SENDING_INTERVAL_IN_MS");
 		double maxOutputFraction = Simulator.settings.getPropertyAsDouble("BINOMIAL_POOL_MAX_OUTPUT_FRACTION");
 		double mean = Simulator.settings.getPropertyAsDouble("BINOMIAL_POOL_MEAN");
 		double stdDev = Simulator.settings.getPropertyAsDouble("BINOMIAL_POOL_STANDARD_DEVIATION");
-		this.requestBatch = new SimplexBinomialPool(true, sendingRate, maxOutputFraction, mean, stdDev);
-		this.replyBatch = new SimplexBinomialPool(false, sendingRate, maxOutputFraction, mean, stdDev);
+		this.requestBatch = new SimplexBinomialPool(true, sendingInterval, maxOutputFraction, mean, stdDev);
+		this.replyBatch = new SimplexBinomialPool(false, sendingInterval, maxOutputFraction, mean, stdDev);
 	}
 	
 	
@@ -75,20 +75,20 @@ public class BinomialPool extends OutputStrategyImpl {
 		private boolean isRequestPool;
 		private Vector<MixMessage> collectedMessages;
 		private boolean isFirstMessage = true;
-		private int sendingRate;
+		private int sendingInterval;
 		private double maxOutputFraction;
 		private NormalDistributionImpl normalDist;
 		
 		
 		public SimplexBinomialPool(	boolean isRequestPool, 
-									int sendingRate,
+									int sendingInterval,
 									double maxOutputFraction, 
 									double mean, 
 									double stdDev) {
 			
 			this.collectedMessages = new Vector<MixMessage>(simulator.getClients().size()*2);	
 			this.isRequestPool = isRequestPool;
-			this.sendingRate = sendingRate;
+			this.sendingInterval = sendingInterval;
 			this.maxOutputFraction = maxOutputFraction;
 			this.normalDist = new NormalDistributionImpl(mean, stdDev);
 			this.normalDist.reseedRandomGenerator(secureRandom.nextLong());
@@ -140,7 +140,7 @@ public class BinomialPool extends OutputStrategyImpl {
 		
 		private void scheduleNextOutput() {
 			
-			simulator.scheduleEvent(new Event(this, Simulator.getNow() + sendingRate, OutputStrategyEvent.TIMEOUT), this);
+			simulator.scheduleEvent(new Event(this, Simulator.getNow() + sendingInterval, OutputStrategyEvent.TIMEOUT), this);
 		
 		}
 

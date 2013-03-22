@@ -46,8 +46,8 @@ public class BatchWithTimeout extends OutputStrategyImpl {
 	public BatchWithTimeout(Mix mix, Simulator simulator) {
 
 		super(mix, simulator);
-		int timeout = Simulator.settings.getPropertyAsInt("BATCH_WITH_TIMEOUT_TIMEOUT");
-		int batchSize = Simulator.settings.getPropertyAsInt("BATCH_WITH_TIMEOUT_BATCH_SIZE");
+		int timeout = Simulator.settings.getPropertyAsInt("TIMEOUT_IN_MS");
+		int batchSize = Simulator.settings.getPropertyAsInt("BATCH_SIZE");
 		this.requestBatch = new SimplexBatchWithTimeout(true, timeout,batchSize );
 		this.replyBatch = new SimplexBatchWithTimeout(false, timeout, batchSize);
 
@@ -87,11 +87,12 @@ public class BatchWithTimeout extends OutputStrategyImpl {
 		
 		public void addMessage(MixMessage mixMessage) {
 			
-			collectedMessages.add(mixMessage);
-			
 			if (collectedMessages.size() == 0)
 				setTimeout();
-			else if (collectedMessages.size() == batchSize)
+			
+			collectedMessages.add(mixMessage);
+			
+			if (collectedMessages.size() == batchSize)
 				putOutMessages();
 
 		}
@@ -121,10 +122,10 @@ public class BatchWithTimeout extends OutputStrategyImpl {
 
 		
 		private void cancelTimeout() {
-			
-			simulator.unscheduleEvent(this.timeoutEvent);
-			this.timeoutEvent = null;
-			
+			if (this.timeoutEvent != null) {
+				simulator.unscheduleEvent(this.timeoutEvent);
+				this.timeoutEvent = null;
+			}
 		}
 		
 		

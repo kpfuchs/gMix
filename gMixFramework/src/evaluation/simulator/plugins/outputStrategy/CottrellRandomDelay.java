@@ -43,7 +43,7 @@ public class CottrellRandomDelay extends OutputStrategyImpl implements EventExec
 	public CottrellRandomDelay(Mix mix, Simulator simulator) {
 
 		super(mix, simulator);
-		this.maxDelay = Simulator.settings.getPropertyAsInt("MAX_RANDOM_DELAY");
+		this.maxDelay = Simulator.settings.getPropertyAsInt("COTTRELL_MAX_RANDOM_DELAY_IN_MS");
 	}
 	
 	
@@ -65,7 +65,7 @@ public class CottrellRandomDelay extends OutputStrategyImpl implements EventExec
 
 	
 	private void scheduleOutput(MixMessage mixMessage, int delayTillOutput) {
-		simulator.scheduleEvent(new Event(this, Simulator.getNow() + delayTillOutput, OutputStrategyEvent.TIMEOUT), mixMessage);
+		simulator.scheduleEvent(new Event(this, Simulator.getNow() + delayTillOutput, OutputStrategyEvent.TIMEOUT, mixMessage), this);
 	}
 	
 	

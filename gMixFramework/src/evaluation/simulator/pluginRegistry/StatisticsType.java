@@ -25,9 +25,15 @@ import evaluation.simulator.core.statistics.postProcessor.PostProcessor;
 
 public enum StatisticsType {
 	
-	AVG_CLIENT_RTT_LAYER5MESSAGE(			"plot_clientLatency", 	PlotType.LINE_CHART_ABS,	PlotScale.LINEAR,	Unit.ms,	Aggregator.AVG, 	new Aggregator[]{ Aggregator.MIN, Aggregator.MAX, Aggregator.AVG, Aggregator.MEDIAN },		new PostProcessor[] {PostProcessor.NONE}),	
-	AVG_CLIENT_LATENCY_REQUESTMIXMESSAGE(	"plot_clientLatency", 	PlotType.LINE_CHART_ABS,	PlotScale.LINEAR,	Unit.ms,	Aggregator.AVG,		new Aggregator[]{ Aggregator.MIN, Aggregator.MAX, Aggregator.AVG, Aggregator.MEDIAN },		new PostProcessor[] {PostProcessor.NONE}),
-	AVG_CLIENT_LATENCY_REPLYMIXMESSAGE(		"plot_clientLatency", 	PlotType.LINE_CHART_ABS,	PlotScale.LINEAR,	Unit.ms, 	Aggregator.AVG,		new Aggregator[]{ Aggregator.MIN, Aggregator.MAX, Aggregator.AVG, Aggregator.MEDIAN },		new PostProcessor[] {PostProcessor.NONE}),
+	AVG_CLIENT_RTT_LAYER5MESSAGE(			"plot_clientLatencyLayer5", 	PlotType.LINE_CHART_ABS,	PlotScale.LINEAR,	Unit.ms,	Aggregator.AVG, 	new Aggregator[]{ Aggregator.MIN, Aggregator.MAX, Aggregator.AVG, Aggregator.MEDIAN },		new PostProcessor[] {PostProcessor.NONE}),	
+	AVG_CLIENT_LATENCY_LAYER5MESSAGE(		"plot_clientLatencyLayer5", 	PlotType.HISTOGRAM,	PlotScale.LINEAR,	Unit.ms,	Aggregator.AVG, 	new Aggregator[]{ Aggregator.MIN, Aggregator.MAX, Aggregator.AVG, Aggregator.MEDIAN },		new PostProcessor[] {PostProcessor.NONE}), // used in: example_outputStrategy_synchronous.txt	
+	
+	AVG_CLIENT_LATENCY_LAYER5MESSAGE_HIST(		"plot_clientLatencyLayer5hist", 	PlotType.HISTOGRAM,	PlotScale.NONE,	Unit.ms,	Aggregator.AVG, 	new Aggregator[]{ Aggregator.MIN, Aggregator.MAX, Aggregator.AVG, Aggregator.MEDIAN },		new PostProcessor[] {PostProcessor.NONE}), // used in: example_plotType_histogram.txt
+	
+	AVG_CLIENT_LATENCY_REQUESTMIXMESSAGE(	"plot_clientLatencyMixMessage", 	PlotType.LINE_CHART_ABS,	PlotScale.LINEAR,	Unit.ms,	Aggregator.AVG,		new Aggregator[]{ Aggregator.MIN, Aggregator.MAX, Aggregator.AVG, Aggregator.MEDIAN },		new PostProcessor[] {PostProcessor.NONE}), // used in: example_plotType_lineChart.txt, example_outputStrategy_batch.txt, example_outputStrategy_pool.txt, example_outputStrategy_batchWithTimeout.txt ...
+	MAX_CLIENT_LATENCY_REQUESTMIXMESSAGE(	"plot_clientLatencyMixMessage", 	PlotType.LINE_CHART_ABS,	PlotScale.LINEAR,	Unit.ms,	Aggregator.MAX,		new Aggregator[]{ Aggregator.MIN, Aggregator.MAX, Aggregator.AVG, Aggregator.MEDIAN },		new PostProcessor[] {PostProcessor.NONE}), // used in: example_plotType_lineChart.txt, example_outputStrategy_batch.txt, example_outputStrategy_pool.txt, example_outputStrategy_batchWithTimeout.txt ...
+	MIN_CLIENT_LATENCY_REQUESTMIXMESSAGE(	"plot_clientLatencyMixMessage", 	PlotType.LINE_CHART_ABS,	PlotScale.LINEAR,	Unit.ms,	Aggregator.MIN,		new Aggregator[]{ Aggregator.MIN, Aggregator.MAX, Aggregator.AVG, Aggregator.MEDIAN },		new PostProcessor[] {PostProcessor.NONE}),
+	AVG_CLIENT_LATENCY_REPLYMIXMESSAGE(		"plot_clientLatencyMixMessage", 	PlotType.LINE_CHART_ABS,	PlotScale.LINEAR,	Unit.ms, 	Aggregator.AVG,		new Aggregator[]{ Aggregator.MIN, Aggregator.MAX, Aggregator.AVG, Aggregator.MEDIAN },		new PostProcessor[] {PostProcessor.NONE}),
 	
 	
 	SUM_CLIENT_DATAVOLUME_SEND(					"clientPlot_datavolume", PlotType.LINE_CHART_ABS, PlotScale.LINEAR,	Unit.byte_, Aggregator.SUM,  new Aggregator[]{ Aggregator.SUM }, new PostProcessor[] {PostProcessor.NONE}),
@@ -79,6 +85,7 @@ public enum StatisticsType {
 	CF_AVG_THROUGHPUT_PER_CLIENT_RECEIVE(			"plot_cfThroughputPerClient",		PlotType.LINE_CHART_CF,	PlotScale.LINEAR,	Unit.kbyte,		Aggregator.SUM,	new Aggregator[]{ Aggregator.NONE },	new PostProcessor[] {PostProcessor.PER_SECOND}),
 	CF_AVG_THROUGHPUT_PER_CLIENT_SENDANDRECEIVE(	"plot_cfThroughputPerClient",		PlotType.LINE_CHART_CF,	PlotScale.LINEAR,	Unit.kbyte,		Aggregator.SUM,	new Aggregator[]{ Aggregator.NONE },	new PostProcessor[] {PostProcessor.PER_SECOND}), // used in: lgpaper_mixMessageSendingRateClients.txt, lgpaper_throughputZero.txt
 	
+	CF_AVG_LATENCY_PER_CLIENT_SEND(				"plot_cfLatencyPerClient",		PlotType.LINE_CHART_CF,	PlotScale.LINEAR,	Unit.ms,		Aggregator.AVG,	new Aggregator[]{ Aggregator.NONE },	new PostProcessor[] {PostProcessor.NONE}), // used in: example_plotType_cumulativeFraction.txt
 	
 	SUM_DATAVOLUME_PER_MIX_SEND(			"mixPlot_datavolume",	PlotType.LINE_CHART_ABS,	PlotScale.LINEAR,	Unit.byte_,	Aggregator.SUM,	new Aggregator[]{ Aggregator.SUM },	new PostProcessor[] {PostProcessor.PER_MIX}),
 	SUM_DATAVOLUME_PER_MIX_RECEIVE(			"mixPlot_datavolume",	PlotType.LINE_CHART_ABS,	PlotScale.LINEAR,	Unit.byte_,	Aggregator.SUM,	new Aggregator[]{ Aggregator.SUM },	new PostProcessor[] {PostProcessor.PER_MIX}),
@@ -89,7 +96,7 @@ public enum StatisticsType {
 	DLPA_REPLY_SENDING_RATE_PER_MIX(				"dlpaPlot_events_per_second",	PlotType.LINE_CHART_ABS,	PlotScale.LINEAR,	Unit.event,	Aggregator.SUM,	new Aggregator[]{ Aggregator.SUM },	new PostProcessor[] {PostProcessor.PER_SECOND, PostProcessor.PER_MIX}),
 	DLPA_REQUEST_AND_REPLY_SENDING_RATE_PER_MIX(	"dlpaPlot_events_per_second",	PlotType.LINE_CHART_ABS,	PlotScale.LINEAR,	Unit.event,	Aggregator.SUM,	new Aggregator[]{ Aggregator.SUM },	new PostProcessor[] {PostProcessor.PER_SECOND, PostProcessor.PER_MIX}),
 	
-	DLPA_REQUEST_SENDING_RATE_PER_MIX_AND_CLIENT(				"dlpaPlot_events_per_second",	PlotType.LINE_CHART_ABS,	PlotScale.LINEAR,	Unit.event,	Aggregator.SUM,	new Aggregator[]{ Aggregator.SUM },	new PostProcessor[] {PostProcessor.PER_SECOND, PostProcessor.PER_MIX, PostProcessor.PER_CLIENT}), // used in: exampleExperiment.txt
+	DLPA_REQUEST_SENDING_RATE_PER_MIX_AND_CLIENT(				"dlpaPlot_events_per_second",	PlotType.LINE_CHART_ABS,	PlotScale.LINEAR,	Unit.event,	Aggregator.SUM,	new Aggregator[]{ Aggregator.SUM },	new PostProcessor[] {PostProcessor.PER_SECOND, PostProcessor.PER_MIX, PostProcessor.PER_CLIENT}), // used in: exampleExperiment.txt, example_outputStrategy_DLPA.txt
 	DLPA_REPLY_SENDING_RATE_PER_MIX_AND_CLIENT(					"dlpaPlot_events_per_second",	PlotType.LINE_CHART_ABS,	PlotScale.LINEAR,	Unit.event,	Aggregator.SUM,	new Aggregator[]{ Aggregator.SUM },	new PostProcessor[] {PostProcessor.PER_SECOND, PostProcessor.PER_MIX, PostProcessor.PER_CLIENT}),
 	DLPA_REQUEST_AND_REPLY_SENDING_RATE_PER_MIX_AND_CLIENT(		"dlpaPlot_events_per_second",	PlotType.LINE_CHART_ABS,	PlotScale.LINEAR,	Unit.event,	Aggregator.SUM,	new Aggregator[]{ Aggregator.SUM },	new PostProcessor[] {PostProcessor.PER_SECOND, PostProcessor.PER_MIX, PostProcessor.PER_CLIENT}),
 	
@@ -112,7 +119,7 @@ public enum StatisticsType {
 	SUM_DISTANTPROXY_MIXMESSAGES_RECEIVED(	"clientPlot_messagesSent",	PlotType.LINE_CHART_ABS,	PlotScale.LINEAR,	Unit.event,	Aggregator.SUM,	new Aggregator[]{ Aggregator.SUM },	new PostProcessor[] {PostProcessor.NONE}),
 	
 	AVG_TRAFFICSOURCE_SENDING_RATE_PER_CLIENT(	"dlpaPlot_events_per_second",	PlotType.LINE_CHART_ABS,	PlotScale.LINEAR,	Unit.event,	Aggregator.SUM,	new Aggregator[]{ Aggregator.SUM },	new PostProcessor[] {PostProcessor.PER_SECOND, PostProcessor.PER_CLIENT}),
-	AVG_MIXMESSAGE_SENDING_RATE_PER_CLIENT(		"dlpaPlot_events_per_second",	PlotType.LINE_CHART_ABS,	PlotScale.LINEAR,	Unit.event,	Aggregator.SUM,	new Aggregator[]{ Aggregator.SUM },	new PostProcessor[] {PostProcessor.PER_SECOND, PostProcessor.PER_CLIENT}) // used in: exampleExperiment.txt
+	AVG_MIXMESSAGE_SENDING_RATE_PER_CLIENT(		"dlpaPlot_events_per_second",	PlotType.LINE_CHART_ABS,	PlotScale.LINEAR,	Unit.event,	Aggregator.SUM,	new Aggregator[]{ Aggregator.SUM },	new PostProcessor[] {PostProcessor.PER_SECOND, PostProcessor.PER_CLIENT}) // used in: exampleExperiment.txt, example_outputStrategy_DLPA.txt
 	;
 
 	

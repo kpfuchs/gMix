@@ -102,7 +102,7 @@ public class DistinctUserBatch extends OutputStrategyImpl implements EventExecut
 			setup();
 		
 		if (collectedRequests[mixMessage.getOwner().getClientId()] != null)
-			throw new RuntimeException("ERROR! two messages from the same client for one batch! " +mixMessage); // ggf. nachrichtenqueue einfügen, wenn das unterstützt werden soll
+			throw new RuntimeException("ERROR! two messages from the same client for one batch! " +mixMessage);
 		
 		collectedRequests[mixMessage.getOwner().getClientId()] = mixMessage;
 		

@@ -20,7 +20,24 @@
 # i.e., which experiment shall be performed when the simulator is run the next 
 # time here:
 # example: EXPERIMENTS_TO_PERFORM = exampleExperiment.txt
-EXPERIMENTS_TO_PERFORM = lgpaper_dlpaDummyPercentagePoi.txt
+EXPERIMENTS_TO_PERFORM = example_plotType_lineChart.txt
+#EXPERIMENTS_TO_PERFORM = example_plotType_cumulativeFraction.txt
+#EXPERIMENTS_TO_PERFORM = example_plotType_histogram.txt
+#EXPERIMENTS_TO_PERFORM = exampleExperiment.txt
+#EXPERIMENTS_TO_PERFORM = example_outputStrategy_batch.txt
+#EXPERIMENTS_TO_PERFORM = example_outputStrategy_pool.txt
+#EXPERIMENTS_TO_PERFORM = example_outputStrategy_batchWithTimeout.txt
+#EXPERIMENTS_TO_PERFORM = example_outputStrategy_binomialPool.txt
+#EXPERIMENTS_TO_PERFORM = example_outputStrategy_cottrellRandomDelay.txt
+#EXPERIMENTS_TO_PERFORM = example_outputStrategy_cottrellTimedPool.txt
+#EXPERIMENTS_TO_PERFORM = example_outputStrategy_stopAndGo.txt
+#EXPERIMENTS_TO_PERFORM = example_outputStrategy_DLPA.txt
+#EXPERIMENTS_TO_PERFORM = example_outputStrategy_synchronous.txt
+#EXPERIMENTS_TO_PERFORM = example_outputStrategy_thresholdAndTimedBatch.txt
+#EXPERIMENTS_TO_PERFORM = example_outputStrategy_thresholdOrTimedBatch.txt
+#EXPERIMENTS_TO_PERFORM = example_outputStrategy_thresholdPool.txt
+#EXPERIMENTS_TO_PERFORM = example_outputStrategy_timedBatch.txt
+#EXPERIMENTS_TO_PERFORM = example_outputStrategy_timedDynamicPool.txt
 #
 #
 # GNUPLOT_FOLDER

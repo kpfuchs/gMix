@@ -51,6 +51,9 @@ public class BasicDistantProxy extends DistantProxy implements ReplyReceiver {
 		EndToEndMessage message = transportMessage.reltedEndToEndMessage;
 		message.transportMessage = transportMessage;
 		statistics.increment(transportMessage.getLength(), StatisticsType.SUM_DISTANTPROXY_DATAVOLUME_SENDANDRECEIVE);
+		transportMessage.getOwner().statistics.addValue(Simulator.getNow() - transportMessage.getCreationTime(), StatisticsType.AVG_CLIENT_LATENCY_LAYER5MESSAGE);
+		transportMessage.getOwner().statistics.addValue(Simulator.getNow() - transportMessage.getCreationTime(), StatisticsType.AVG_CLIENT_LATENCY_LAYER5MESSAGE_HIST);
+		transportMessage.getOwner().statistics.addValue(Simulator.getNow() - transportMessage.getCreationTime(), StatisticsType.CF_AVG_LATENCY_PER_CLIENT_SEND);
 		server.incomingMessage(message);
 		transportMessage.getOwner().messageReachedServer(message); // notify client that his message has now reached the server
 	}

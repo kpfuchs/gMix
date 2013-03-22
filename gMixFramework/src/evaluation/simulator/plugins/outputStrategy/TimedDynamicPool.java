@@ -49,7 +49,7 @@ public class TimedDynamicPool extends OutputStrategyImpl {
 	
 	public TimedDynamicPool(Mix mix, Simulator simulator) {
 		super(mix, simulator);
-		int sendingRate = Simulator.settings.getPropertyAsInt("TIMED_DYNAMIC_POOL_SENDING_RATE");
+		int sendingRate = Simulator.settings.getPropertyAsInt("TIMED_DYNAMIC_POOL_SEND_INTERVAL_IN_MS");
 		int minMessages = Simulator.settings.getPropertyAsInt("TIMED_DYNAMIC_POOL_MIN_MESSAGES_IN_POOL");
 		double fraction = Simulator.settings.getPropertyAsDouble("TIMED_DYNAMIC_POOL_FRACTION");
 		this.requestPool = new SimplexTimedDynamicPool(true, sendingRate, minMessages, fraction);

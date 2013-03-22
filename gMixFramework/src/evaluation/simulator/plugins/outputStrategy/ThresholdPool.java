@@ -46,7 +46,7 @@ public class ThresholdPool extends OutputStrategyImpl {
 	
 	public ThresholdPool(Mix mix, Simulator simulator) {
 		super(mix, simulator);
-		int poolSize = Simulator.settings.getPropertyAsInt("THRESHOLD_POOL_POOL_SIZE");
+		int poolSize = Simulator.settings.getPropertyAsInt("THRESHOLD_POOL_MIN_POOL_SIZE");
 		int threshold = Simulator.settings.getPropertyAsInt("THRESHOLD_POOL_THRESHOLD");
 		this.requestPool = new SimplexTresholdPool(true, poolSize, threshold);
 		this.replyPool = new SimplexTresholdPool(false, poolSize, threshold);
@@ -69,16 +69,18 @@ public class ThresholdPool extends OutputStrategyImpl {
 		
 		private boolean isRequestPool;
 		private Vector<MixMessage> collectedMessages;
-		private int threshold;
-		private int numberOfMessagesToPutOut;
+		private final int threshold;
+		private final int minPoolSize;
+		//private int numberOfMessagesToPutOut;
 		
 		
-		public SimplexTresholdPool(boolean isRequestPool, int poolSize, int threshold) {
+		public SimplexTresholdPool(boolean isRequestPool, int minPoolSize, int threshold) {
 			
-			this.collectedMessages = new Vector<MixMessage>(poolSize*2);
+			this.collectedMessages = new Vector<MixMessage>(minPoolSize*2);
 			this.isRequestPool = isRequestPool;
 			this.threshold = threshold;
-			this.numberOfMessagesToPutOut = threshold - poolSize;
+			this.minPoolSize = minPoolSize;
+			//this.numberOfMessagesToPutOut = threshold - poolSize;
 			
 		}
 		
@@ -87,7 +89,7 @@ public class ThresholdPool extends OutputStrategyImpl {
 			
 			collectedMessages.add(mixMessage);
 			
-			if (collectedMessages.size() == threshold)
+			if (collectedMessages.size() == (minPoolSize + threshold))
 				putOutMessages();
 
 		}
@@ -95,7 +97,7 @@ public class ThresholdPool extends OutputStrategyImpl {
 		
 		public void putOutMessages() {
 			
-			for (int i=0; i<numberOfMessagesToPutOut; i++) {
+			for (int i=0; i<threshold; i++) {
 					
 				int chosen = secureRandom.nextInt(collectedMessages.size());
 					
@@ -106,7 +108,7 @@ public class ThresholdPool extends OutputStrategyImpl {
 
 			}
 	
-			collectedMessages.clear();
+			//collectedMessages.clear();
 			
 		}
 		

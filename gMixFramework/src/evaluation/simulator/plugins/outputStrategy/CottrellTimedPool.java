@@ -46,8 +46,8 @@ public class CottrellTimedPool extends OutputStrategyImpl {
 	
 	public CottrellTimedPool(Mix mix, Simulator simulator) {
 		super(mix, simulator);
-		int sendingRate = Simulator.settings.getPropertyAsInt("COTTRELL_TIMED_POOL_SENDING_RATE");
-		int poolSize = Simulator.settings.getPropertyAsInt("COTTRELL_TIMED_POOL_POOL_SIZE");
+		int sendingRate = Simulator.settings.getPropertyAsInt("COTTRELL_TIMED_POOL_SENDING_INTERVAL_IN_MS");
+		int poolSize = Simulator.settings.getPropertyAsInt("COTTRELL_TIMED_POOL_MIN_POOL_SIZE");
 		this.requestBatch = new SimplexCottrellTimedPool(true, sendingRate, poolSize);
 		this.replyBatch = new SimplexCottrellTimedPool(false, sendingRate, poolSize);
 	}
