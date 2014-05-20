@@ -1,23 +1,24 @@
-/*
+/*******************************************************************************
  * gMix open source project - https://svs.informatik.uni-hamburg.de/gmix/
- * Copyright (C) 2013  Karl-Peter Fuchs
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * Copyright (C) 2014  SVS
+ *
+ * This program is free software: you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by 
+ * the Free Software Foundation, either version 3 of the License, or 
  * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
+ *
+ * You should have received a copy of the GNU General Public License 
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+ *******************************************************************************/
 package evaluation.simulator.core.networkComponent;
 
 import evaluation.simulator.Simulator;
+import evaluation.simulator.annotations.property.StringSimulationProperty;
 import evaluation.simulator.core.event.Event;
 import evaluation.simulator.core.event.EventExecutor;
 import evaluation.simulator.core.event.SimulationEvent;
@@ -28,6 +29,16 @@ import evaluation.simulator.pluginRegistry.StatisticsType;
 public abstract class AbstractServer implements EventExecutor {
 
 	private DistantProxy distantProxy;
+	
+	@StringSimulationProperty( key = "COMMUNICATION_MODE",
+			name = "Communication mode",
+			inject = "0:SIMULATION,Simulation",
+			global = true,
+			isStatic = true,
+			possibleValues = "SIMPLEX,SIMPLEX_WITH_FEEDBACK,DUPLEX,SIMPLEX_REPLY"
+			)
+	String commMode; 
+	
 	protected boolean SIMULATE_REPLY_CHANNEL;
 	protected boolean UNLIMITED_BANDWIDTH;
 	protected Simulator simulator;
@@ -37,7 +48,7 @@ public abstract class AbstractServer implements EventExecutor {
 	protected AbstractServer(DistantProxy distantProxy) {
 		this.distantProxy = distantProxy;
 		this.SIMULATE_REPLY_CHANNEL = Simulator.settings.getProperty("COMMUNICATION_MODE").equals("SIMPLEX_REPLY") || Simulator.settings.getProperty("COMMUNICATION_MODE").equals("DUPLEX");
-		this.UNLIMITED_BANDWIDTH = Simulator.settings.getProperty("TYPE_OF_DELAY_BOX").equals("NO_DELAY");
+		this.UNLIMITED_BANDWIDTH = Simulator.settings.getProperty("TYPE_OF_DELAY_BOX").equals("NO_DELAY_BOX");
 		this.simulator = Simulator.getSimulator();
 	}
 	

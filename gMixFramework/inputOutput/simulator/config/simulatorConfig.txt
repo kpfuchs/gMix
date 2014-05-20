@@ -20,7 +20,8 @@
 # i.e., which experiment shall be performed when the simulator is run the next 
 # time here:
 # example: EXPERIMENTS_TO_PERFORM = exampleExperiment.txt
-EXPERIMENTS_TO_PERFORM = example_plotType_lineChart.txt
+EXPERIMENTS_TO_PERFORM = example_plotType_lineChart.cfg
+#EXPERIMENTS_TO_PERFORM = example_outputStrategy_DLPA.txt
 #EXPERIMENTS_TO_PERFORM = example_plotType_cumulativeFraction.txt
 #EXPERIMENTS_TO_PERFORM = example_plotType_histogram.txt
 #EXPERIMENTS_TO_PERFORM = exampleExperiment.txt
@@ -41,7 +42,7 @@ EXPERIMENTS_TO_PERFORM = example_plotType_lineChart.txt
 #
 #
 # GNUPLOT_FOLDER
-GNUPLOT_FOLDER = 
+GNUPLOT_FOLDER = /opt/local/bin/
 #
 #
 # DEBUG_OUTPUT

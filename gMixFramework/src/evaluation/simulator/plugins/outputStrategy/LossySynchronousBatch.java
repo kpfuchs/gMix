@@ -1,20 +1,20 @@
-/*
+/*******************************************************************************
  * gMix open source project - https://svs.informatik.uni-hamburg.de/gmix/
- * Copyright (C) 2012  Karl-Peter Fuchs
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * Copyright (C) 2014  SVS
+ *
+ * This program is free software: you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by 
+ * the Free Software Foundation, either version 3 of the License, or 
  * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
+ *
+ * You should have received a copy of the GNU General Public License 
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+ *******************************************************************************/
 package evaluation.simulator.plugins.outputStrategy;
 
 import java.util.Arrays;
@@ -25,6 +25,8 @@ import java.util.Map;
 import java.util.Vector;
 
 import evaluation.simulator.Simulator;
+import evaluation.simulator.annotations.plugin.Plugin;
+import evaluation.simulator.annotations.property.DoubleSimulationProperty;
 import evaluation.simulator.core.event.Event;
 import evaluation.simulator.core.event.EventExecutor;
 import evaluation.simulator.core.message.MessageFragment;
@@ -42,7 +44,7 @@ import evaluation.simulator.plugins.clientSendStyle.ClientSendStyleImpl;
 import evaluation.simulator.plugins.mixSendStyle.MixSendStyleImpl;
 import evaluation.simulator.plugins.mixSendStyle.ReplyReceiver;
 
-
+@Plugin(pluginKey = "LOSSY_SYNCHRONOUS_BATCH", pluginName="Lossy Synchronous Batch")
 public class LossySynchronousBatch extends OutputStrategyImpl implements Identifiable {
 
 	private Statistics statistics;
@@ -51,16 +53,26 @@ public class LossySynchronousBatch extends OutputStrategyImpl implements Identif
 	private SimplexLossySynchronousBatch replyBatch;
 	private Map<String, Vector<TransportMessage>> clientReplyWaitingQueues;
 	
+	@DoubleSimulationProperty( name = "Request rate (Hz)",
+			key = "LSB_REQUEST_RATE",
+			min = 0)
+	private double requestRate;
+	
+	@DoubleSimulationProperty( name = "Reply rate (Hz)",
+			key = "LSB_REPLY_RATE",
+			min = 0)
+	private double replyRate;
+	
 	
 	public LossySynchronousBatch(Mix mix, Simulator simulator) {
 		super(mix, simulator);
 		this.statistics = new Statistics(this);
 		this.numericIdentifier = IdGenerator.getId();
 		int numberOfClients = Simulator.getSimulator().getNumberOfClients();
-		double requestRate = Simulator.settings.getPropertyAsDouble("LSB_REQUEST_RATE");
+		this.requestRate = Simulator.settings.getPropertyAsDouble("LSB_REQUEST_RATE");
 		this.requestBatch = new SimplexLossySynchronousBatch(true, requestRate, numberOfClients);
 		if (Simulator.settings.getProperty("COMMUNICATION_MODE").equals("SIMPLEX_REPLY") || Simulator.settings.getProperty("COMMUNICATION_MODE").equals("DUPLEX")) {
-			double replyRate = Simulator.settings.getPropertyAsDouble("LSB_REPLY_RATE");
+			replyRate = Simulator.settings.getPropertyAsDouble("LSB_REPLY_RATE");
 			this.replyBatch = new SimplexLossySynchronousBatch(true, replyRate, numberOfClients);
 			if (mix.isLastMix())
 				clientReplyWaitingQueues = new HashMap<String, Vector<TransportMessage>>();

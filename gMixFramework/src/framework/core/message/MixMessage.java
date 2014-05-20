@@ -1,20 +1,20 @@
-/*
+/*******************************************************************************
  * gMix open source project - https://svs.informatik.uni-hamburg.de/gmix/
- * Copyright (C) 2012  Karl-Peter Fuchs
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * Copyright (C) 2014  SVS
+ *
+ * This program is free software: you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by 
+ * the Free Software Foundation, either version 3 of the License, or 
  * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
+ *
+ * You should have received a copy of the GNU General Public License 
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+ *******************************************************************************/
 package framework.core.message;
 
 import framework.core.userDatabase.User;
@@ -27,6 +27,7 @@ public abstract class MixMessage implements Message, ExternalMessage, Comparable
 	public static final int CLIENT = -343555;
 	private int identifier;
 	private User owner;
+	private DummyStatus dummyStatus = DummyStatus.UNKNOWN;
 	private byte[] byteMessage;
 	private static int msgIdCounter = 0;
 	
@@ -38,6 +39,7 @@ public abstract class MixMessage implements Message, ExternalMessage, Comparable
 	public byte[][] headers;
 
 	public long statisticsCreateTime;
+	public boolean isFirstReplyHop = false;
 	
 	
 	public static Request getInstanceRequest(byte[] byteMesssage, User owner) {
@@ -49,10 +51,16 @@ public abstract class MixMessage implements Message, ExternalMessage, Comparable
 	}
 	
 	
-	public static Request getInstanceRequest(byte[] byteMesssage) {
+	public static Request getInstanceRequest(byte[] byteMessage) {
 		Request request = new Request();
-		request.setByteMessage(byteMesssage);
+		request.setByteMessage(byteMessage);
 		request.setIdentifier(msgIdCounter++);
+		if (byteMessage == null)
+			request.setByteMessage(new byte[0]);
+		if (request.getByteMessage().length == 0) // no payload -> dummy
+			request.setDummyStatus(DummyStatus.DUMMY);
+		else
+			request.setDummyStatus(DummyStatus.NO_DUMMY);
 		return request;
 	}
 	
@@ -62,19 +70,24 @@ public abstract class MixMessage implements Message, ExternalMessage, Comparable
 	}
 	
 	
-	public static Reply getInstanceReply(byte[] byteMesssage, User owner) {
-		Reply reply = new Reply();
-		reply.setByteMessage(byteMesssage);
+	public static Reply getInstanceReply(byte[] byteMessage, User owner) {
+		Reply reply = getInstanceReply(byteMessage);
 		reply.setOwner(owner);
 		reply.nextHopAddress = owner.prevHopAddress;
 		return reply;
 	}
 	
 	
-	public static Reply getInstanceReply(byte[] byteMesssage) {
+	public static Reply getInstanceReply(byte[] byteMessage) {
 		Reply reply = new Reply();
-		reply.setByteMessage(byteMesssage);
+		reply.setByteMessage(byteMessage);
 		reply.setIdentifier(msgIdCounter++);
+		if (byteMessage == null)
+			reply.setByteMessage(new byte[0]);
+		if (reply.getByteMessage().length == 0) // no payload -> dummy
+			reply.setDummyStatus(DummyStatus.DUMMY);
+		else
+			reply.setDummyStatus(DummyStatus.NO_DUMMY);
 		return reply;
 	}
 
@@ -111,12 +124,34 @@ public abstract class MixMessage implements Message, ExternalMessage, Comparable
 	@Override
 	public void setByteMessage(byte[] byteMessage) {
 		this.byteMessage = byteMessage;
+		if (byteMessage == null)
+			this.byteMessage = new byte[0];
+		//if (byteMessage.length == 0) // no payload -> dummy
+		//	this.dummyStatus = DummyStatus.DUMMY;
+		//else
+		//	this.dummyStatus = DummyStatus.NO_DUMMY;
 	}
 	
 	
 	@Override
 	public void setOwner(User owner) {
 		this.owner = owner;
+	}
+	
+	
+	@Override
+	public DummyStatus getDummyStatus() {
+		return dummyStatus;
+	}
+
+	
+	@Override
+	public void setDummyStatus(DummyStatus dummyStatus) {
+		this.dummyStatus = dummyStatus;
+	}
+	
+	public boolean wasCreatedOnThisMix() {
+		return this.isFirstReplyHop;
 	}
 	
 	

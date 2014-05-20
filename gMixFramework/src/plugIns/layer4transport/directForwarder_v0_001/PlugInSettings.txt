@@ -1,0 +1,29 @@
+### Settings for directForwarder_v0_001
+# global capabilities
+TOPOLOGY_CLIENT = 
+TOPOLOGY_MIX = 
+DUPLEX_CLIENT = TRUE
+DUPLEX_MIX = TRUE
+#
+# compatible plug-ins (see plugIns.layerX.*)
+COMPATIBLE_CLIENT_PLUG_INS = 
+COMPATIBLE_MIX_PLUG_INS = 
+#
+# static function requirements (see staticFunctions.layerX.*)
+SAME_LAYER_REQUIREMENTS = 
+LAYER_1_CLIENT_REQUIREMENTS = 
+LAYER_2_CLIENT_REQUIREMENTS = 
+LAYER_3_CLIENT_REQUIREMENTS = 
+LAYER_4_CLIENT_REQUIREMENTS = 
+LAYER_5_CLIENT_REQUIREMENTS = 
+LAYER_1_MIX_REQUIREMENTS = 
+LAYER_2_MIX_REQUIREMENTS = 
+LAYER_3_MIX_REQUIREMENTS = 
+LAYER_4_MIX_REQUIREMENTS = 
+LAYER_5_MIX_REQUIREMENTS = 
+#
+# static function capabilities (see staticFunctions.capabilities.*)
+CAPABILITIES_CLIENT = 
+CAPABILITIES_MIX = 
+#
+# parameters

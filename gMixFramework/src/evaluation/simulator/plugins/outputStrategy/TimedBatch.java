@@ -1,26 +1,28 @@
-/*
+/*******************************************************************************
  * gMix open source project - https://svs.informatik.uni-hamburg.de/gmix/
- * Copyright (C) 2012  Karl-Peter Fuchs
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * Copyright (C) 2014  SVS
+ *
+ * This program is free software: you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by 
+ * the Free Software Foundation, either version 3 of the License, or 
  * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
+ *
+ * You should have received a copy of the GNU General Public License 
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+ *******************************************************************************/
 package evaluation.simulator.plugins.outputStrategy;
 
 import java.util.Vector;
 
 
 import evaluation.simulator.Simulator;
+import evaluation.simulator.annotations.plugin.Plugin;
+import evaluation.simulator.annotations.property.IntSimulationProperty;
 import evaluation.simulator.core.event.Event;
 import evaluation.simulator.core.event.EventExecutor;
 import evaluation.simulator.core.message.MixMessage;
@@ -34,15 +36,21 @@ import evaluation.simulator.plugins.mixSendStyle.MixSendStyleImpl;
 
 // Dingledine 2002: Timed Mix
 // "The mix fires (flushes all messages) every t seconds"
+@Plugin(pluginKey = "TIMED_BATCH", pluginName="Timed Batch")
 public class TimedBatch extends OutputStrategyImpl {
 
 	private SimplexTimedMix requestBatch;
 	private SimplexTimedMix replyBatch;
 	
+	@IntSimulationProperty( name = "Sending rate (ms)", 
+			key = "TIMED_BATCH_SEND_INTERVAL_IN_MS",
+			min = 0)
+	private int sendingRate;
+	
 	
 	public TimedBatch(Mix mix, Simulator simulator) {
 		super(mix, simulator);
-		int sendingRate = Simulator.settings.getPropertyAsInt("TIMED_BATCH_SEND_INTERVAL_IN_MS");
+		this.sendingRate = Simulator.settings.getPropertyAsInt("TIMED_BATCH_SEND_INTERVAL_IN_MS");
 		this.requestBatch = new SimplexTimedMix(true, sendingRate);
 		this.replyBatch = new SimplexTimedMix(false, sendingRate);
 	}

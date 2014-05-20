@@ -1,20 +1,20 @@
-/*
+/*******************************************************************************
  * gMix open source project - https://svs.informatik.uni-hamburg.de/gmix/
- * Copyright (C) 2012  Karl-Peter Fuchs
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * Copyright (C) 2014  SVS
+ *
+ * This program is free software: you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by 
+ * the Free Software Foundation, either version 3 of the License, or 
  * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
+ *
+ * You should have received a copy of the GNU General Public License 
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+ *******************************************************************************/
 package evaluation.loadGenerator;
 
 import java.io.IOException;
@@ -24,7 +24,7 @@ import framework.core.socket.stream.BasicOutputStreamMix;
 import framework.core.userDatabase.User;
 
 
-public class Echo_ExitNodeRequestReceiver implements ExitNodeRequestReceiver {
+public class Echo_ExitNodeRequestReceiver extends ExitNodeRequestReceiver {
 
 	private AnonNode mix;
 	
@@ -37,7 +37,7 @@ public class Echo_ExitNodeRequestReceiver implements ExitNodeRequestReceiver {
 	
 	
 	@Override
-	public void dataReceived(ClientData clientData, byte[] dataReceived) {
+	public void dataReceived(ExitNodeClientData clientData, byte[] dataReceived) {
 		Echo_ClientData client = (Echo_ClientData)clientData;
 		if (mix.IS_DUPLEX) {
 			try {
@@ -52,18 +52,18 @@ public class Echo_ExitNodeRequestReceiver implements ExitNodeRequestReceiver {
 	
 	
 	@Override
-	public ClientData createClientDataInstance(User user, StreamAnonSocketMix socket) {
-		return new Echo_ClientData(user, socket);
+	public ExitNodeClientData createClientDataInstance(User user, StreamAnonSocketMix socket, Object callingInstance) {
+		return new Echo_ClientData(user, socket, callingInstance);
 	}
 	
 	
-	private class Echo_ClientData extends ClientData {
+	private class Echo_ClientData extends ExitNodeClientData {
 		
 		BasicOutputStreamMix outputStream;
 		
 		
-		public Echo_ClientData(User user, StreamAnonSocketMix socket) {
-			super(user, socket);
+		public Echo_ClientData(User user, StreamAnonSocketMix socket, Object callingInstance) {
+			super(user, socket, callingInstance);
 			if (mix.IS_DUPLEX)
 				this.outputStream = (BasicOutputStreamMix)socket.getOutputStream();
 		}

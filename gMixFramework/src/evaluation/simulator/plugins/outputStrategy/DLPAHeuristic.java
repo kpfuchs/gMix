@@ -1,25 +1,28 @@
-/*
+/*******************************************************************************
  * gMix open source project - https://svs.informatik.uni-hamburg.de/gmix/
- * Copyright (C) 2012  Karl-Peter Fuchs
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * Copyright (C) 2014  SVS
+ *
+ * This program is free software: you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by 
+ * the Free Software Foundation, either version 3 of the License, or 
  * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
+ *
+ * You should have received a copy of the GNU General Public License 
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+ *******************************************************************************/
 package evaluation.simulator.plugins.outputStrategy;
 
 import java.util.Vector;
 
 import evaluation.simulator.Simulator;
+import evaluation.simulator.annotations.plugin.Plugin;
+import evaluation.simulator.annotations.property.DoubleSimulationProperty;
+import evaluation.simulator.annotations.property.IntSimulationProperty;
 import evaluation.simulator.core.event.Event;
 import evaluation.simulator.core.event.EventExecutor;
 import evaluation.simulator.core.message.MixMessage;
@@ -53,8 +56,31 @@ import evaluation.simulator.plugins.mixSendStyle.MixSendStyleImpl;
  * 07: endif
  * 08: Go to step 01 until no more packet arrives."
 */
+
+@Plugin(pluginKey = "DLPA_HEURISTIC", pluginName = "DLPA Heuristic I")
 public class DLPAHeuristic extends OutputStrategyImpl implements Identifiable {
 
+	// Requirement
+	@IntSimulationProperty( name = "Maximum request delay (ms)", 
+			key = "MAX_DLPAI_REQUEST_DELAY",
+			min = 0)
+	private int maxRequestDelay;
+	
+	@IntSimulationProperty( name = "Maximum reply delay (ms)", 
+			key = "MAX_DLPAI_REPLY_DELAY",
+			min = 0)
+	private int maxReplyDelay;
+	
+	@DoubleSimulationProperty( name = "Request utility threshold (requests)",
+			key = "REQUEST_UTILITY_THRESHOLD_I",
+			min = 0)
+	double requestUtilityThreshold;
+	
+	@DoubleSimulationProperty( name = "Reply utility threshold (requests)",
+			key = "REPLY_UTILITY_THRESHOLD_I",
+			min = 0)
+	double replyUtilityThreshold;
+	
 	private Statistics statistics;
 	private int numericIdentifier;
 	private DLPAHeuristicSimplex requestHandler;
@@ -66,10 +92,10 @@ public class DLPAHeuristic extends OutputStrategyImpl implements Identifiable {
 		super(mix, simulator);
 		this.statistics = new Statistics(this);
 		this.numericIdentifier = IdGenerator.getId();
-		int maxRequestDelay = Simulator.settings.getPropertyAsInt("MAX_DLPA_REQUEST_DELAY");
-		int maxReplyDelay = Simulator.settings.getPropertyAsInt("MAX_DLPA_REPLY_DELAY");
-		double requestUtilityThreshold = Simulator.settings.getPropertyAsDouble("REQUEST_UTILITY_THRESHOLD");
-		double replyUtilityThreshold = Simulator.settings.getPropertyAsDouble("REPLY_UTILITY_THRESHOLD");
+		maxRequestDelay = Simulator.settings.getPropertyAsInt("MAX_DLPAI_REQUEST_DELAY");
+		maxReplyDelay = Simulator.settings.getPropertyAsInt("MAX_DLPAI_REPLY_DELAY");
+		requestUtilityThreshold = Simulator.settings.getPropertyAsDouble("REQUEST_UTILITY_THRESHOLD_I");
+		replyUtilityThreshold = Simulator.settings.getPropertyAsDouble("REPLY_UTILITY_THRESHOLD_I");
 		this.requestHandler = new DLPAHeuristicSimplex(true, maxRequestDelay, requestUtilityThreshold);
 		this.replyHandler = new DLPAHeuristicSimplex(false, maxReplyDelay, replyUtilityThreshold);
 		}

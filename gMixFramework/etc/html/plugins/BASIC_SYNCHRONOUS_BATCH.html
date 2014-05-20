@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<title> GSim Helpdesk </title>
+<link rel="stylesheet" type="text/css" href="style.css"/>
+</head>
+<body>
+<h2>Basic Synchronous Batch</h2>
+1991: Andreas Pfitzmann, Birgit Pfitzmann, Michael Waidner: ISDN-MIXes:
+Untraceable Communication with Very Small Bandwidth Overhead
+simplified version; no broadcast; no anonymity for servers
+mix that expects exactly one message from each participant per "sendingRate"
+(see class "ClientBasicSynchronous")
+(blocks until every client has sent a message!)
+will put out a reply batch every "replyRate" ms
+(creates dummies if no data available)
+<br />
+<h3>Plugin key:</h3> <b>BASIC_SYNCHRONOUS_BATCH</b>
+<h3>Properties:</h3>
+<ul>
+  <li>Reply interval (ms):
+    <ul>
+      <li>Key: BASIC_SYNCHRONOUS_REPLY_INTERVAL_IN_MS</li>
+      <li>Type: Integer</li>
+      <li>Min: 0</li>      
+    </ul>
+  </li>
+</ul>
+</body>
+</html>

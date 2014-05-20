@@ -1,20 +1,20 @@
-/*
+/*******************************************************************************
  * gMix open source project - https://svs.informatik.uni-hamburg.de/gmix/
- * Copyright (C) 2013  Karl-Peter Fuchs
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * Copyright (C) 2014  SVS
+ *
+ * This program is free software: you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by 
+ * the Free Software Foundation, either version 3 of the License, or 
  * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
+ *
+ * You should have received a copy of the GNU General Public License 
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+ *******************************************************************************/
 package evaluation.simulator.plugins.trafficSource;
 
 import java.security.SecureRandom;
@@ -22,39 +22,67 @@ import java.security.SecureRandom;
 import org.apache.commons.math.random.RandomDataImpl;
 
 import evaluation.simulator.Simulator;
+import evaluation.simulator.annotations.plugin.Plugin;
+import evaluation.simulator.annotations.property.DoubleSimulationProperty;
+import evaluation.simulator.annotations.property.IntSimulationProperty;
 import evaluation.simulator.core.event.Event;
 import evaluation.simulator.core.event.SimulationEvent;
 import evaluation.simulator.core.message.EndToEndMessage;
 import evaluation.simulator.core.networkComponent.AbstractClient;
 import evaluation.traceParser.engine.dataStructure.ExtendedTransaction;
 
-
+@Plugin(pluginKey = "PARETO", pluginName = "Pareto")
 public class ParetoClient extends AbstractClient {
 
+	// Properties
+	@IntSimulationProperty( name = "Request size (byte)", 
+			key = "PARETO_REQUEST_SIZE",
+			enableAuto = true,
+			min = 0,
+			max = 9000)
 	private int REQUEST_SIZE;
+	
+	@IntSimulationProperty( name = "Reply size (byte)", 
+			key = "PARETO_REPLY_SIZE",
+			enableAuto = true,
+			min = 0,
+			max = 9000)
 	private int REPLY_SIZE;
-	private int RESOLVE_TIME; // in ms
-	private NormalizedPareto pareto;
+	
+	@IntSimulationProperty( name = "Resolve time (ms)", 
+			key = "PARETO_RESOLVE_TIME",
+			min = 0)
+	private int RESOLVE_TIME;
+	
+	@DoubleSimulationProperty( name = "Alpha parameter", 
+			key = "PARETO_ALPHA",
+			min = 0.0001)
 	private double ALPHA;
+	
+	@DoubleSimulationProperty( name = "Average requests per second (requests)", 
+			key = "PARETO_AVERAGE_REQUESTS_PER_SECOND_AND_CLIENT",
+			min = 0.0001)
 	private double AVERAGE_REQUESTS_PER_SECOND;
+	
+	private NormalizedPareto pareto;
 	private RandomDataImpl randomDataImpl;
 	private static SecureRandom secureRandom = new SecureRandom();
 	
 	
 	public ParetoClient(String identifier, Simulator simulator, int clientId) {
 		super(identifier, simulator);
-		if (Simulator.settings.getProperty("REQUEST_SIZE").equals("AUTO"))
+		if (Simulator.settings.getProperty("PARETO_REQUEST_SIZE").equals("AUTO"))
 			this.REQUEST_SIZE = Simulator.settings.getPropertyAsInt("MIX_REQUEST_PAYLOAD_SIZE");
 		else
-			this.REQUEST_SIZE = Simulator.settings.getPropertyAsInt("REQUEST_SIZE");
-		if (Simulator.settings.getProperty("REPLY_SIZE").equals("AUTO"))
+			this.REQUEST_SIZE = Simulator.settings.getPropertyAsInt("PARETO_REQUEST_SIZE");
+		if (Simulator.settings.getProperty("PARETO_REPLY_SIZE").equals("AUTO"))
 			this.REPLY_SIZE = Simulator.settings.getPropertyAsInt("MIX_REPLY_PAYLOAD_SIZE");
 		else
-			this.REPLY_SIZE = Simulator.settings.getPropertyAsInt("REPLY_SIZE");
-		this.RESOLVE_TIME = Simulator.settings.getPropertyAsInt("RESOLVE_TIME");
+			this.REPLY_SIZE = Simulator.settings.getPropertyAsInt("PARETO_REPLY_SIZE");
+		this.RESOLVE_TIME = Simulator.settings.getPropertyAsInt("PARETO_RESOLVE_TIME");
 		this.clientId = clientId;
 		this.ALPHA = Simulator.settings.getPropertyAsDouble("PARETO_ALPHA");
-		this.AVERAGE_REQUESTS_PER_SECOND = Simulator.settings.getPropertyAsDouble("AVERAGE_REQUESTS_PER_SECOND_AND_CLIENT");
+		this.AVERAGE_REQUESTS_PER_SECOND = Simulator.settings.getPropertyAsDouble("PARETO_AVERAGE_REQUESTS_PER_SECOND_AND_CLIENT");
 		this.pareto = new NormalizedPareto(ALPHA, AVERAGE_REQUESTS_PER_SECOND);
 		this.randomDataImpl = new RandomDataImpl();
 		this.randomDataImpl.reSeed(secureRandom.nextLong());

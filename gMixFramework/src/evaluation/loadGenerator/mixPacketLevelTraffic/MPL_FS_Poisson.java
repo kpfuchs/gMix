@@ -1,20 +1,20 @@
-/*
+/*******************************************************************************
  * gMix open source project - https://svs.informatik.uni-hamburg.de/gmix/
- * Copyright (C) 2012  Karl-Peter Fuchs
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * Copyright (C) 2014  SVS
+ *
+ * This program is free software: you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by 
+ * the Free Software Foundation, either version 3 of the License, or 
  * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
+ *
+ * You should have received a copy of the GNU General Public License 
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+ *******************************************************************************/
 package evaluation.loadGenerator.mixPacketLevelTraffic;
 
 import java.security.SecureRandom;
@@ -33,7 +33,7 @@ import framework.core.AnonNode;
 import framework.core.config.Settings;
 import framework.core.launcher.ToolName;
 import framework.core.routing.RoutingMode;
-import framework.core.socket.socketInterfaces.AnonSocketOptions.CommunicationMode;
+import framework.core.socket.socketInterfaces.AnonSocketOptions.CommunicationDirection;
 
 
 public class MPL_FS_Poisson implements ClientTrafficScheduleWriter<MPL_ClientWrapper> {
@@ -81,7 +81,7 @@ public class MPL_FS_Poisson implements ClientTrafficScheduleWriter<MPL_ClientWra
 		this.scheduleTarget = new MPL_BasicWriter(this, client.IS_DUPLEX, dstPort);
 		// determine number of clients and lines; create ClientWrapper objects etc
 		this.clientsArray = new MPL_ClientWrapper[numberOfClients];
-		CommunicationMode cm = client.IS_DUPLEX ? CommunicationMode.DUPLEX : CommunicationMode.SIMPLEX_SENDER;
+		CommunicationDirection cm = client.IS_DUPLEX ? CommunicationDirection.DUPLEX : CommunicationDirection.SIMPLEX_SENDER;
 		for (int i=0; i<numberOfClients; i++) {
 			clientsArray[i] = new MPL_ClientWrapper(i);
 			clientsArray[i].socket = client.createDatagramSocket(cm, true, true, client.ROUTING_MODE != RoutingMode.CASCADE);
@@ -103,7 +103,7 @@ public class MPL_FS_Poisson implements ClientTrafficScheduleWriter<MPL_ClientWra
 		
 		for (int j=0; j<periods; j++) { // for each period
 			long packetsInThisPeriod = randomDataImpl.nextPoisson(AVG_SENDS_PER_PERIOD.drawIntSample());
-			System.out.println("packetsInThisPeriod: " +packetsInThisPeriod); // TODO: remove
+			//System.out.println("packetsInThisPeriod: " +packetsInThisPeriod); // TODO: remove
 			long[] delays = new long[(int) packetsInThisPeriod];
 			for (int l=0; l<delays.length; l++) // distribute delays at (uniform) random (for this period)
 				delays[l] = (long) (random.nextDouble() * PULSE_LENGTH);

@@ -1,20 +1,20 @@
-/*
+/*******************************************************************************
  * gMix open source project - https://svs.informatik.uni-hamburg.de/gmix/
- * Copyright (C) 2012  Karl-Peter Fuchs
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * Copyright (C) 2014  SVS
+ *
+ * This program is free software: you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by 
+ * the Free Software Foundation, either version 3 of the License, or 
  * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
+ *
+ * You should have received a copy of the GNU General Public License 
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+ *******************************************************************************/
 package framework.core.socket.socketInterfaces;
 
 import java.util.Random;
@@ -24,9 +24,11 @@ import framework.core.config.Settings;
 import framework.core.controller.Layer1NetworkClientController;
 import framework.core.controller.Layer2RecodingSchemeClientController;
 import framework.core.controller.Layer3OutputStrategyClientController;
+import framework.core.controller.Layer4TransportClientController;
 import framework.core.interfaces.Layer1NetworkClient;
 import framework.core.interfaces.Layer2RecodingSchemeClient;
 import framework.core.interfaces.Layer3OutputStrategyClient;
+import framework.core.interfaces.Layer4TransportClient;
 import framework.core.message.Request;
 import framework.core.routing.RoutingMode;
 import framework.core.interfaces.ThreePhaseStart;
@@ -45,7 +47,7 @@ public abstract class AdaptiveAnonSocket implements AnonSocket, AnonSocketOption
 	protected int destinationPort = NOT_SET;
 	
 	protected boolean isDuplex = false;
-	protected CommunicationMode communicationMode = null;
+	protected CommunicationDirection communicationMode = null;
 	protected boolean isConnectionBased = false;
 	protected boolean isReliable = false;
 	protected boolean isOrderPreserving = false;
@@ -55,6 +57,7 @@ public abstract class AdaptiveAnonSocket implements AnonSocket, AnonSocketOption
 	protected Layer1NetworkClient layer1;
 	protected Layer2RecodingSchemeClient layer2;
 	protected Layer3OutputStrategyClient layer3;
+	protected Layer4TransportClient layer4;
 	protected AnonNode owner;
 	protected Settings settings;
 	
@@ -65,7 +68,7 @@ public abstract class AdaptiveAnonSocket implements AnonSocket, AnonSocketOption
 	// client-side
 	public AdaptiveAnonSocket(
 			AnonNode owner,
-			CommunicationMode communicationMode,
+			CommunicationDirection communicationMode,
 			boolean isConnectionBased, 
 			boolean isReliable, 
 			boolean isOrderPreserving, 
@@ -87,20 +90,26 @@ public abstract class AdaptiveAnonSocket implements AnonSocket, AnonSocketOption
 		this.layer2 = layer2controller.loadClientPluginInstance();
 		Layer3OutputStrategyClientController layer3controller = owner.getOutputStrategyLayerControllerClient();
 		this.layer3 = layer3controller.loadClientPluginInstance();
+		Layer4TransportClientController layer4controller = owner.getTransportLayerControllerClient();
+		this.layer4 = layer4controller.loadClientPluginInstance();
 		
 		// three phase start:
-		this.layer1.setReferences(layer1, layer2, layer3);
-		this.layer2.setReferences(layer1, layer2, layer3);
-		this.layer3.setReferences(layer1, layer2, layer3);
+		this.layer1.setReferences(layer1, layer2, layer3, layer4);
+		this.layer2.setReferences(layer1, layer2, layer3, layer4);
+		this.layer3.setReferences(layer1, layer2, layer3, layer4);
+		this.layer4.setReferences(layer1, layer2, layer3, layer4);
 		((ThreePhaseStart)this.layer1).constructor();
 		((ThreePhaseStart)this.layer2).constructor();
 		((ThreePhaseStart)this.layer3).constructor();
+		((ThreePhaseStart)this.layer4).constructor();
 		((ThreePhaseStart)this.layer1).initialize();
 		((ThreePhaseStart)this.layer2).initialize();
 		((ThreePhaseStart)this.layer3).initialize();
+		((ThreePhaseStart)this.layer4).initialize();
 		((ThreePhaseStart)this.layer1).begin();
 		((ThreePhaseStart)this.layer2).begin();
 		((ThreePhaseStart)this.layer3).begin();
+		((ThreePhaseStart)this.layer4).begin();
 	}
 	
 	
@@ -108,7 +117,7 @@ public abstract class AdaptiveAnonSocket implements AnonSocket, AnonSocketOption
 	public AdaptiveAnonSocket(
 			AnonNode owner,
 			int endToEndPseudonym,
-			CommunicationMode communicationMode,
+			CommunicationDirection communicationMode,
 			boolean isConnectionBased, 
 			boolean isReliable, 
 			boolean isOrderPreserving, 
@@ -132,14 +141,14 @@ public abstract class AdaptiveAnonSocket implements AnonSocket, AnonSocketOption
 	
 	private void init(
 			AnonNode owner,
-			CommunicationMode communicationMode,
+			CommunicationDirection communicationMode,
 			boolean isConnectionBased, 
 			boolean isReliable, 
 			boolean isOrderPreserving, 
 			boolean isFreeRoute
 			) {
 		
-		if (communicationMode == CommunicationMode.DUPLEX && !owner.IS_DUPLEX)
+		if (communicationMode == CommunicationDirection.DUPLEX && !owner.IS_DUPLEX)
 			throw new RuntimeException("the current plug-in config does not support duplex sockets");
 		if (isConnectionBased && !owner.IS_CONNECTION_BASED)
 			throw new RuntimeException("the current plug-in config does not support connection-based sockets"); 
@@ -159,7 +168,7 @@ public abstract class AdaptiveAnonSocket implements AnonSocket, AnonSocketOption
 		this.isReliable = isReliable;
 		this.isOrderPreserving = isOrderPreserving;
 		this.isFreeRoute = isFreeRoute;
-		if (communicationMode == CommunicationMode.DUPLEX)
+		if (communicationMode == CommunicationDirection.DUPLEX)
 			this.isDuplex = true;
 	}
 
@@ -283,7 +292,7 @@ public abstract class AdaptiveAnonSocket implements AnonSocket, AnonSocketOption
 
 	// AnonSocketOptions
 	@Override
-	public CommunicationMode getCommunicationMode() {
+	public CommunicationDirection getCommunicationDirection() {
 		return this.communicationMode;
 	}
 

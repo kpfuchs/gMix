@@ -1,23 +1,26 @@
-/*
+/*******************************************************************************
  * gMix open source project - https://svs.informatik.uni-hamburg.de/gmix/
- * Copyright (C) 2012  Karl-Peter Fuchs
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * Copyright (C) 2014  SVS
+ *
+ * This program is free software: you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by 
+ * the Free Software Foundation, either version 3 of the License, or 
  * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
+ *
+ * You should have received a copy of the GNU General Public License 
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+ *******************************************************************************/
 package evaluation.simulator.core.networkComponent;
 
 import evaluation.simulator.Simulator;
+import evaluation.simulator.annotations.property.BoolSimulationProperty;
+import evaluation.simulator.annotations.property.DoubleSimulationProperty;
+import evaluation.simulator.annotations.property.IntSimulationProperty;
 import evaluation.simulator.core.event.ClientEvent;
 import evaluation.simulator.core.event.DistantProxyEvent;
 import evaluation.simulator.core.event.Event;
@@ -34,11 +37,29 @@ public class Mix extends NetworkNode implements ReplyReceiver  {
 	private boolean isFirstMix;
 	private boolean isLastMix;
 	protected Simulator simulator;
+	
+	@BoolSimulationProperty(key="RECEIVER_SUPPORTS_DUMMY_TRAFFIC",
+			name="Receiver supports dummy traffic",
+			inject = "0:RECODING_SCHEME,Recoding Scheme"
+			)
 	private boolean RECEIVER_SUPPORTS_DUMMY_TRAFFIC;
 	private OutputStrategyImpl outputStrategy;
 	private MixSendStyleImpl mixSendStyle;
+	
+	@DoubleSimulationProperty(key = "PROCESSING_TIME_FOR_1000_REQUESTS",
+			name="Processing time for 1000 requests (ms)",
+			inject = "0:RECODING_SCHEME,Recoding Scheme",
+			min = 0
+	)
 	private static double PROCESSING_TIME_FOR_1000_REQUESTS;
+	
+	@DoubleSimulationProperty(key = "PROCESSING_TIME_FOR_1000_REPLIES",
+			name="Processing time for 1000 replies (ms)",
+			inject = "0:RECODING_SCHEME,Recoding Scheme",
+			min = 0
+	)
 	private static double PROCESSING_TIME_FOR_1000_REPLIES;
+	
 	private static int requestProcessingTime;
 	private static int replyProcessingTime;
 	

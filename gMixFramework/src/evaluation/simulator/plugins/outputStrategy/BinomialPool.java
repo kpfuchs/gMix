@@ -1,29 +1,31 @@
-/*
+/*******************************************************************************
  * gMix open source project - https://svs.informatik.uni-hamburg.de/gmix/
- * Copyright (C) 2012  Karl-Peter Fuchs
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * Copyright (C) 2014  SVS
+ *
+ * This program is free software: you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by 
+ * the Free Software Foundation, either version 3 of the License, or 
  * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
+ *
+ * You should have received a copy of the GNU General Public License 
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+ *******************************************************************************/
 package evaluation.simulator.plugins.outputStrategy;
 
 import java.security.SecureRandom;
 import java.util.Vector;
+
 import org.apache.commons.math.MathException;
 import org.apache.commons.math.distribution.NormalDistributionImpl;
 
-
 import evaluation.simulator.Simulator;
+import evaluation.simulator.annotations.plugin.Plugin;
+import evaluation.simulator.annotations.property.DoubleSimulationProperty;
 import evaluation.simulator.core.event.Event;
 import evaluation.simulator.core.event.EventExecutor;
 import evaluation.simulator.core.message.MixMessage;
@@ -39,20 +41,52 @@ import evaluation.simulator.plugins.mixSendStyle.MixSendStyleImpl;
 // "a timed pool mix that tosses coins and uses a probability function that 
 // depends on the number of messages inside the mix at the time of flushing"
 // -> normal cumulative distribution
+
+@Plugin(pluginKey = "BINOMIAL_POOL", pluginName = "Binominal Pool")
 public class BinomialPool extends OutputStrategyImpl {
 
 	private SimplexBinomialPool requestBatch;
 	private SimplexBinomialPool replyBatch;
 	private static SecureRandom secureRandom = new SecureRandom();
 	
+	@DoubleSimulationProperty(
+			name = "Sending interval (ms)",
+			key = "BINOMIAL_POOL_SENDING_INTERVAL_IN_MS",
+			min = 0
+	)
+	private int sendingInterval;
+	
+	@DoubleSimulationProperty(
+			name = "Maximum output fraction (percent)",
+			key = "BINOMIAL_POOL_MAX_OUTPUT_FRACTION",
+			min = 0,
+			max = 1
+	)
+	private double maxOutputFraction;
+	
+	@DoubleSimulationProperty(
+			name = "Mean",
+			key = "BINOMIAL_POOL_MEAN",
+			min = 0,
+			max = 1
+	)
+	private double mean;
+	
+	@DoubleSimulationProperty(
+			name = "Standard deviation",
+			key = "BINOMIAL_POOL_STANDARD_DEVIATION",
+			min = 0
+	)
+	private double stdDev;
+	
 	
 	public BinomialPool(Mix mix, Simulator simulator) {
 
 		super(mix, simulator);
-		int sendingInterval = Simulator.settings.getPropertyAsInt("BINOMIAL_POOL_SENDING_INTERVAL_IN_MS");
-		double maxOutputFraction = Simulator.settings.getPropertyAsDouble("BINOMIAL_POOL_MAX_OUTPUT_FRACTION");
-		double mean = Simulator.settings.getPropertyAsDouble("BINOMIAL_POOL_MEAN");
-		double stdDev = Simulator.settings.getPropertyAsDouble("BINOMIAL_POOL_STANDARD_DEVIATION");
+		sendingInterval = Simulator.settings.getPropertyAsInt("BINOMIAL_POOL_SENDING_INTERVAL_IN_MS");
+		maxOutputFraction = Simulator.settings.getPropertyAsDouble("BINOMIAL_POOL_MAX_OUTPUT_FRACTION");
+		mean = Simulator.settings.getPropertyAsDouble("BINOMIAL_POOL_MEAN");
+		stdDev = Simulator.settings.getPropertyAsDouble("BINOMIAL_POOL_STANDARD_DEVIATION");
 		this.requestBatch = new SimplexBinomialPool(true, sendingInterval, maxOutputFraction, mean, stdDev);
 		this.replyBatch = new SimplexBinomialPool(false, sendingInterval, maxOutputFraction, mean, stdDev);
 	}

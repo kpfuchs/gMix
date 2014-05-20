@@ -1,20 +1,20 @@
-/*
+/*******************************************************************************
  * gMix open source project - https://svs.informatik.uni-hamburg.de/gmix/
- * Copyright (C) 2012  Karl-Peter Fuchs
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * Copyright (C) 2014  SVS
+ *
+ * This program is free software: you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by 
+ * the Free Software Foundation, either version 3 of the License, or 
  * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
+ *
+ * You should have received a copy of the GNU General Public License 
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+ *******************************************************************************/
 package evaluation.loadGenerator.fixedSchedule;
 
 import java.io.BufferedOutputStream;
@@ -38,7 +38,7 @@ import framework.core.AnonNode;
 import framework.core.config.Settings;
 import framework.core.launcher.ToolName;
 import framework.core.routing.RoutingMode;
-import framework.core.socket.socketInterfaces.AnonSocketOptions.CommunicationMode;
+import framework.core.socket.socketInterfaces.AnonSocketOptions.CommunicationDirection;
 
 
 public class ALM_FS_Poisson implements ClientTrafficScheduleWriter<ApplicationLevelMessage> {
@@ -91,7 +91,7 @@ public class ALM_FS_Poisson implements ClientTrafficScheduleWriter<ApplicationLe
 		this.scheduleTarget = new ALRR_BasicWriter(this, client.IS_DUPLEX);
 		// determine number of clients and lines; create ClientWrapper objects etc
 		this.clientsArray = new ALRR_ClientWrapper[numberOfClients];
-		CommunicationMode cm = client.IS_DUPLEX ? CommunicationMode.DUPLEX : CommunicationMode.SIMPLEX_SENDER;
+		CommunicationDirection cm = client.IS_DUPLEX ? CommunicationDirection.DUPLEX : CommunicationDirection.SIMPLEX_SENDER;
 		int port = settings.getPropertyAsInt("SERVICE_PORT1");
 		System.out.println("LOAD_GENERATOR: connecting clients..."); 
 		for (int i=0; i<numberOfClients; i++) {
@@ -105,7 +105,8 @@ public class ALM_FS_Poisson implements ClientTrafficScheduleWriter<ApplicationLe
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-		}String str_requestPayloadSize = settings.getProperty("AL-POISSON-REQUEST_PAYLOAD_SIZE");
+		}
+		String str_requestPayloadSize = settings.getProperty("AL-POISSON-REQUEST_PAYLOAD_SIZE");
 		if (RandomVariable.isRandomVariable(str_requestPayloadSize)) {
 			this.REQUEST_PAYLOAD_SIZE = RandomVariable.createRandomVariable(str_requestPayloadSize);
 		} else {

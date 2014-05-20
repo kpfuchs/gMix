@@ -1,20 +1,20 @@
-/*
+/*******************************************************************************
  * gMix open source project - https://svs.informatik.uni-hamburg.de/gmix/
- * Copyright (C) 2012  Karl-Peter Fuchs
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * Copyright (C) 2014  SVS
+ *
+ * This program is free software: you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by 
+ * the Free Software Foundation, either version 3 of the License, or 
  * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
+ *
+ * You should have received a copy of the GNU General Public License 
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+ *******************************************************************************/
 package evaluation.loadGenerator.asFastAsPossible;
 
 import java.io.IOException;
@@ -28,7 +28,7 @@ import framework.core.AnonNode;
 import framework.core.launcher.ToolName;
 import framework.core.routing.RoutingMode;
 import framework.core.socket.socketInterfaces.StreamAnonSocket;
-import framework.core.socket.socketInterfaces.AnonSocketOptions.CommunicationMode;
+import framework.core.socket.socketInterfaces.AnonSocketOptions.CommunicationDirection;
 import framework.core.util.Util;
 
 
@@ -87,7 +87,7 @@ public class AFAP_RR_LoadGenerator_modified extends AFAP_LoadGenerator {
 			try {
 				// create and connect sockets:
 				System.out.println("LOAD_GENERATOR (AFAP): creating " +sockets.length +" connections...");
-				CommunicationMode cm = client.IS_DUPLEX ? CommunicationMode.DUPLEX : CommunicationMode.SIMPLEX_SENDER;
+				CommunicationDirection cm = client.IS_DUPLEX ? CommunicationDirection.DUPLEX : CommunicationDirection.SIMPLEX_SENDER;
 				for (int i=0; i<sockets.length; i++) {
 					sockets[i] = client.createStreamSocket(cm, client.ROUTING_MODE != RoutingMode.CASCADE);
 					sockets[i].connect(settings.getPropertyAsInt("SERVICE_PORT1"));

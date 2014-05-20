@@ -1,26 +1,28 @@
-/*
+/*******************************************************************************
  * gMix open source project - https://svs.informatik.uni-hamburg.de/gmix/
- * Copyright (C) 2012  Karl-Peter Fuchs
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * Copyright (C) 2014  SVS
+ *
+ * This program is free software: you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by 
+ * the Free Software Foundation, either version 3 of the License, or 
  * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
+ *
+ * You should have received a copy of the GNU General Public License 
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+ *******************************************************************************/
 package evaluation.simulator.plugins.outputStrategy;
 
 import java.util.Vector;
 
 
 import evaluation.simulator.Simulator;
+import evaluation.simulator.annotations.plugin.Plugin;
+import evaluation.simulator.annotations.property.IntSimulationProperty;
 import evaluation.simulator.core.event.Event;
 import evaluation.simulator.core.event.EventExecutor;
 import evaluation.simulator.core.message.MixMessage;
@@ -36,16 +38,26 @@ import evaluation.simulator.plugins.mixSendStyle.MixSendStyleImpl;
 //"The mix fires (flushes all messages) every t seconds or when n messages 
 // accumulate in the mix."
 // see also: "BatchWithTimeout.java"
+@Plugin(pluginKey = "THRESHOLD_OR_TIMED_BATCH", pluginName="Threshold Or Timed Batch")
 public class ThresholdOrTimedBatch extends OutputStrategyImpl {
 
 	private SimplexThresholdOrTimedBatch requestBatch;
 	private SimplexThresholdOrTimedBatch replyBatch;
 	
+	@IntSimulationProperty( name = "Sending Rate (ms)", 
+			key = "THRESHOLD_OR_TIMED_BATCH_SENDING_RATE_IN_MS",
+			min = 0)
+	private int sendingRate;
+	
+	@IntSimulationProperty( name = "Batch Size (requests)", 
+			key = "THRESHOLD_OR_TIMED_BATCH_BATCH_SIZE",
+			min = 1)
+	private int batchSize;
 	
 	public ThresholdOrTimedBatch(Mix mix, Simulator simulator) {
 		super(mix, simulator);
-		int sendingRate = Simulator.settings.getPropertyAsInt("THRESHOLD_OR_TIMED_BATCH_SENDING_RATE_IN_MS");
-		int batchSize = Simulator.settings.getPropertyAsInt("THRESHOLD_OR_TIMED_BATCH_BATCH_SIZE");
+		this.sendingRate = Simulator.settings.getPropertyAsInt("THRESHOLD_OR_TIMED_BATCH_SENDING_RATE_IN_MS");
+		this.batchSize = Simulator.settings.getPropertyAsInt("THRESHOLD_OR_TIMED_BATCH_BATCH_SIZE");
 		this.requestBatch = new SimplexThresholdOrTimedBatch(true, sendingRate,batchSize );
 		this.replyBatch = new SimplexThresholdOrTimedBatch(false, sendingRate, batchSize);
 	}

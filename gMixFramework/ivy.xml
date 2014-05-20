@@ -2,7 +2,7 @@
 <!--
 /*
  * gMix open source project - https://svs.informatik.uni-hamburg.de/gmix/
- * Copyright (C) 2012  Karl-Peter Fuchs
+ * Copyright (C) 2014 SVS
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -50,7 +50,17 @@
         <dependency org="com.google.guava" name="guava" rev="12.0" />
 		<dependency org="net.sf.trove4j" name="trove4j" rev="2.0.2"/>
 		<dependency org="com.jamesmurty.utils" name="java-xmlbuilder" rev="0.3" />
-		<dependency org="org.apache.commons" name="commons-lang3" rev="3.1" />
+		<dependency org="org.apache.commons" name="commons-lang3" rev="3.2.1"/>
 		<dependency org="org.apache.airavata" name="levenshtein-distance-service" rev="0.2-incubating" />
+		<dependency org="org.reflections" name="reflections" rev="0.9.9-RC1" />
+		<dependency org="org.jfree" name="jfreechart" rev="1.0.14"/>
+		<dependency org="org.xhtmlrenderer" name="core-renderer" rev="R8pre2"/>
+		<dependency org="com.google.classpath-explorer" name="classpath-explorer" rev="1.0"/>
+		<dependency org="commons-configuration" name="commons-configuration" rev="1.10"/>
+		<dependency org="batik" name="batik-swing" rev="1.6-1"/>
+		<dependency	org="com.jtattoo" name="JTattoo" rev="1.6.9"/>
+		<dependency org="log4j" name="log4j" rev="1.2.17"/>
+		<dependency org="com.miglayout" name="miglayout-swing" rev="4.2"/>
+		<dependency org="batik" name="batik-transcoder" rev="1.6-1"/>         
 	</dependencies>
 </ivy-module>

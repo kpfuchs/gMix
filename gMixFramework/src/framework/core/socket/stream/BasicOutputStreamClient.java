@@ -1,20 +1,20 @@
-/*
+/*******************************************************************************
  * gMix open source project - https://svs.informatik.uni-hamburg.de/gmix/
- * Copyright (C) 2012  Karl-Peter Fuchs
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * Copyright (C) 2014  SVS
+ *
+ * This program is free software: you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by 
+ * the Free Software Foundation, either version 3 of the License, or 
  * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
+ *
+ * You should have received a copy of the GNU General Public License 
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+ *******************************************************************************/
 package framework.core.socket.stream;
 
 
@@ -26,9 +26,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import framework.core.interfaces.Layer3OutputStrategyClient;
-import framework.core.message.MixMessage;
-import framework.core.message.Request;
+import framework.core.interfaces.Layer4TransportClient;
 import framework.core.socket.socketInterfaces.StreamAnonSocket;
 import framework.core.util.Util;
 
@@ -36,10 +34,10 @@ import framework.core.util.Util;
 public class BasicOutputStreamClient extends OutputStream implements Callable<BasicOutputStreamClient> {
 	
 	private StreamAnonSocket socket;
-	private Layer3OutputStrategyClient layer3;
+	private Layer4TransportClient layer4;
 	private boolean isClosed = false;
 
-	private boolean sendImmediately;
+	private boolean sendImmediately; // TODO: wait for further data should actually be a layer 3 task (some plug-ins use their own buffering and mght be less efficient with this additional buffer)
 	private int timeToWaitForFurtherData; // in microseconds
 	public static ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(1); // TODO: shut down on exit in AnonNode
 	private ScheduledFuture<BasicOutputStreamClient> currentTimer;
@@ -50,10 +48,10 @@ public class BasicOutputStreamClient extends OutputStream implements Callable<Ba
 	
 	public BasicOutputStreamClient(
 			StreamAnonSocket socket,
-			Layer3OutputStrategyClient layer3
+			Layer4TransportClient layer4
 			) {
 		this.socket = socket;
-		this.layer3 = layer3;
+		this.layer4 = layer4;
 		this.timeToWaitForFurtherData = socket.getOwner().TIME_TO_WAIT_FOR_FURTHER_DATA;
 		if (timeToWaitForFurtherData == 0)
 			sendImmediately = true;
@@ -64,7 +62,7 @@ public class BasicOutputStreamClient extends OutputStream implements Callable<Ba
 	public void close() throws IOException {
 		this.isClosed = true;
 		this.socket = null;
-		this.layer3 = null;
+		this.layer4 = null;
 	}
 	
 	
@@ -153,9 +151,9 @@ public class BasicOutputStreamClient extends OutputStream implements Callable<Ba
 		payload = Util.concatArrays(Util.shortToByteArray(socket.getDestinationPort()), payload); // add destination port (= which layer 5 service/ServerSocket shall be addressed)
 		if (!socket.getOwner().LAYER_1_LINKS_MESSAGES) // add a pseudonym for the (final) receiver, so it can link the messages of this sender/socket 
 			payload = Util.concatArrays(Util.intToByteArray(socket.getEndToEndPseudonym()), payload);
-		Request request = MixMessage.getInstanceRequest(payload);
-		request.destinationPseudonym = socket.getDestinationPseudonym();
-		layer3.sendMessage(request);
+		//Request request = MixMessage.getInstanceRequest(payload);
+		//request.destinationPseudonym = socket.getDestinationPseudonym();
+		layer4.write(payload, socket.getDestinationPseudonym());
 	}
 	
 	
@@ -175,7 +173,7 @@ public class BasicOutputStreamClient extends OutputStream implements Callable<Ba
 	
 	
 	public int getMaxSizeForNextMessageSend() {
-		int maxSize = layer3.getMaxSizeOfNextRequest() - 2; // -2 for port; see sendMessage()
+		int maxSize = layer4.getMaxSizeOfNextWrite() - 2; // -2 for port; see sendMessage()
 		if (!socket.getOwner().LAYER_1_LINKS_MESSAGES) // -4 for pseudonym; see sendMessage()
 			maxSize -= 4;
 		return maxSize;

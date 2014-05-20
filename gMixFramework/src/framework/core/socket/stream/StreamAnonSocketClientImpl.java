@@ -1,20 +1,20 @@
-/*
+/*******************************************************************************
  * gMix open source project - https://svs.informatik.uni-hamburg.de/gmix/
- * Copyright (C) 2012  Karl-Peter Fuchs
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * Copyright (C) 2014  SVS
+ *
+ * This program is free software: you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by 
+ * the Free Software Foundation, either version 3 of the License, or 
  * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
+ *
+ * You should have received a copy of the GNU General Public License 
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+ *******************************************************************************/
 package framework.core.socket.stream;
 
 import java.io.IOException;
@@ -36,7 +36,7 @@ public class StreamAnonSocketClientImpl extends AdaptiveAnonSocket implements St
 		
 	public StreamAnonSocketClientImpl(
 			AnonNode owner,
-			CommunicationMode communicationMode,
+			CommunicationDirection communicationMode,
 			boolean isFreeRoute
 			) {
 		super(	owner, 
@@ -51,12 +51,12 @@ public class StreamAnonSocketClientImpl extends AdaptiveAnonSocket implements St
 
 	@Override
 	public void connect(int destinationPort) throws IOException {
-		layer3.connect();
+		layer4.connect();
 		
 		this.destinationPort = destinationPort;
-		this.outputStream = new BasicOutputStreamClient(this, layer3);
+		this.outputStream = new BasicOutputStreamClient(this, layer4);
 		if (isDuplex)
-			this.inputStream =  new BasicInputStreamClient(owner, layer3);
+			this.inputStream =  new BasicInputStreamClient(owner, layer4);
 		this.isConnected = true;
 	}
 
@@ -65,20 +65,20 @@ public class StreamAnonSocketClientImpl extends AdaptiveAnonSocket implements St
 	public void connect(int destinationPseudonym, int destinationPort) throws IOException {
 		if (!isFreeRoute)
 			throw new RuntimeException("this is a fixed route socket; you cannot specify a destination address; use \"connect(destinationPort)\" instead"); 
-		layer3.connect(destinationPseudonym);
+		layer4.connect(destinationPseudonym);
 		
 		this.destinationPseudonym = destinationPseudonym;
 		this.destinationPort = destinationPort;
-		this.outputStream = new BasicOutputStreamClient(this, layer3);
+		this.outputStream = new BasicOutputStreamClient(this, layer4);
 		if (isDuplex)
-			this.inputStream =  new BasicInputStreamClient(owner, layer3);
+			this.inputStream =  new BasicInputStreamClient(owner, layer4);
 		this.isConnected = true;
 	}
 
 
 	@Override
 	public void disconnect() throws IOException {
-		layer3.disconnect();
+		layer4.disconnect();
 		this.isConnected = false;
 		this.outputStream.close();
 		this.outputStream = null;

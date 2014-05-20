@@ -1,34 +1,38 @@
-/*
+/*******************************************************************************
  * gMix open source project - https://svs.informatik.uni-hamburg.de/gmix/
- * Copyright (C) 2012  Karl-Peter Fuchs
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * Copyright (C) 2014  SVS
+ *
+ * This program is free software: you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by 
+ * the Free Software Foundation, either version 3 of the License, or 
  * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
+ *
+ * You should have received a copy of the GNU General Public License 
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+ *******************************************************************************/
 package evaluation.simulator.pluginRegistry;
 
+import evaluation.simulator.annotations.helper.PossibleValues;
 import evaluation.simulator.core.statistics.aggregator.Aggregator;
 import evaluation.simulator.core.statistics.aggregator.Aggregator.InputDataType;
 import evaluation.simulator.core.statistics.plotEngine.PlotScale;
 import evaluation.simulator.core.statistics.postProcessor.PostProcessor;
 
 
+@PossibleValues(id="StatisticsType")
 public enum StatisticsType {
 	
 	AVG_CLIENT_RTT_LAYER5MESSAGE(			"plot_clientLatencyLayer5", 	PlotType.LINE_CHART_ABS,	PlotScale.LINEAR,	Unit.ms,	Aggregator.AVG, 	new Aggregator[]{ Aggregator.MIN, Aggregator.MAX, Aggregator.AVG, Aggregator.MEDIAN },		new PostProcessor[] {PostProcessor.NONE}),	
 	AVG_CLIENT_LATENCY_LAYER5MESSAGE(		"plot_clientLatencyLayer5", 	PlotType.HISTOGRAM,	PlotScale.LINEAR,	Unit.ms,	Aggregator.AVG, 	new Aggregator[]{ Aggregator.MIN, Aggregator.MAX, Aggregator.AVG, Aggregator.MEDIAN },		new PostProcessor[] {PostProcessor.NONE}), // used in: example_outputStrategy_synchronous.txt	
 	
 	AVG_CLIENT_LATENCY_LAYER5MESSAGE_HIST(		"plot_clientLatencyLayer5hist", 	PlotType.HISTOGRAM,	PlotScale.NONE,	Unit.ms,	Aggregator.AVG, 	new Aggregator[]{ Aggregator.MIN, Aggregator.MAX, Aggregator.AVG, Aggregator.MEDIAN },		new PostProcessor[] {PostProcessor.NONE}), // used in: example_plotType_histogram.txt
+	
+	AVG_BATCH_SIZE(	"plot_batchSize", 	PlotType.LINE_CHART_ABS,	PlotScale.LINEAR,	Unit.event,	Aggregator.AVG,		new Aggregator[]{ Aggregator.MIN, Aggregator.MAX, Aggregator.AVG, Aggregator.MEDIAN },		new PostProcessor[] {PostProcessor.NONE}), // used in: example_plotType_lineChart.txt, example_outputStrategy_batch.txt, example_outputStrategy_pool.txt, example_outputStrategy_batchWithTimeout.txt ...
 	
 	AVG_CLIENT_LATENCY_REQUESTMIXMESSAGE(	"plot_clientLatencyMixMessage", 	PlotType.LINE_CHART_ABS,	PlotScale.LINEAR,	Unit.ms,	Aggregator.AVG,		new Aggregator[]{ Aggregator.MIN, Aggregator.MAX, Aggregator.AVG, Aggregator.MEDIAN },		new PostProcessor[] {PostProcessor.NONE}), // used in: example_plotType_lineChart.txt, example_outputStrategy_batch.txt, example_outputStrategy_pool.txt, example_outputStrategy_batchWithTimeout.txt ...
 	MAX_CLIENT_LATENCY_REQUESTMIXMESSAGE(	"plot_clientLatencyMixMessage", 	PlotType.LINE_CHART_ABS,	PlotScale.LINEAR,	Unit.ms,	Aggregator.MAX,		new Aggregator[]{ Aggregator.MIN, Aggregator.MAX, Aggregator.AVG, Aggregator.MEDIAN },		new PostProcessor[] {PostProcessor.NONE}), // used in: example_plotType_lineChart.txt, example_outputStrategy_batch.txt, example_outputStrategy_pool.txt, example_outputStrategy_batchWithTimeout.txt ...

@@ -1,25 +1,23 @@
-/*
+/*******************************************************************************
  * gMix open source project - https://svs.informatik.uni-hamburg.de/gmix/
- * Copyright (C) 2012  Karl-Peter Fuchs
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * Copyright (C) 2014  SVS
+ *
+ * This program is free software: you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by 
+ * the Free Software Foundation, either version 3 of the License, or 
  * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
+ *
+ * You should have received a copy of the GNU General Public License 
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+ *******************************************************************************/
 package framework.core.socket.connectedDatagram;
 
 import framework.core.AnonNode;
-import framework.core.message.MixMessage;
-import framework.core.message.Request;
 import framework.core.socket.socketInterfaces.AdaptiveAnonSocket;
 import framework.core.socket.socketInterfaces.ConnectedDatagramAnonSocket;
 import framework.core.util.Util;
@@ -32,7 +30,7 @@ public class ConnectedDatagramAnonSocketClientImpl extends AdaptiveAnonSocket im
 	
 	public ConnectedDatagramAnonSocketClientImpl(
 			AnonNode owner,
-			CommunicationMode communicationMode,
+			CommunicationDirection communicationMode,
 			boolean isReliable, 
 			boolean isOrderPreserving, 
 			boolean isFreeRoute
@@ -49,7 +47,7 @@ public class ConnectedDatagramAnonSocketClientImpl extends AdaptiveAnonSocket im
 	
 	@Override
 	public void connect(int destinationPort) {
-		layer3.connect();
+		layer4.connect();
 		this.destinationPort = destinationPort;
 		this.isConnected = true;
 	}
@@ -59,7 +57,7 @@ public class ConnectedDatagramAnonSocketClientImpl extends AdaptiveAnonSocket im
 	public void connect(int destinationPseudonym, int destinationPort) {
 		if (!isFreeRoute)
 			throw new RuntimeException("this is a fixed route socket; you cannot specify a destination address; use \"connect(destinationPort)\" instead"); 
-		layer3.connect(destinationPseudonym);
+		layer4.connect(destinationPseudonym);
 		this.destinationPseudonym = destinationPseudonym;
 		this.destinationPort = destinationPort;
 		this.isConnected = true;
@@ -68,7 +66,7 @@ public class ConnectedDatagramAnonSocketClientImpl extends AdaptiveAnonSocket im
 
 	@Override
 	public void disconnect() {
-		layer3.disconnect();
+		layer4.disconnect();
 		this.isConnected = false;
 	}
 
@@ -88,8 +86,8 @@ public class ConnectedDatagramAnonSocketClientImpl extends AdaptiveAnonSocket im
 			payload = Util.concatArrays(Util.intToByteArray(endToEndPseudonym), payload);
 		
 		payload = Util.concatArrays(Util.shortToByteArray(destinationPort), payload); // add destination port (= which layer 5 service/ServerSocket shall be addressed)
-		Request request = MixMessage.getInstanceRequest(payload);
-		layer3.sendMessage(request);
+		//Request request = MixMessage.getInstanceRequest(payload);
+		layer4.write(payload);
 	}
 
 
@@ -99,13 +97,15 @@ public class ConnectedDatagramAnonSocketClientImpl extends AdaptiveAnonSocket im
 			throw new RuntimeException("this is a simplex socket"); 
 		if (!isConnected)
 			throw new RuntimeException("not connected");
-		return layer3.receiveReply().getByteMessage();
+		byte[] result = layer4.receive();
+		assert result != null && result.length != 0;
+		return result;
 	}
 
 
 	@Override
 	public int getMaxSizeForNextMessageSend() {
-		int maxSize = layer3.getMaxSizeOfNextRequest() - 2; // -2 for port; see sendMessage()
+		int maxSize = layer4.getMaxSizeOfNextWrite() - 2; // -2 for port; see sendMessage()
 		if (!owner.LAYER_1_LINKS_MESSAGES) // -4 for pseudonym; see sendMessage()
 			maxSize -= 4;
 		return maxSize;
@@ -116,7 +116,7 @@ public class ConnectedDatagramAnonSocketClientImpl extends AdaptiveAnonSocket im
 	public int getMaxSizeForNextMessageReceive() {
 		if (!isDuplex)
 			throw new RuntimeException("this socket is simplex only"); 
-		return layer3.getMaxSizeOfNextReply();
+		return layer4.getMaxSizeOfNextReply();
 	}
 
 

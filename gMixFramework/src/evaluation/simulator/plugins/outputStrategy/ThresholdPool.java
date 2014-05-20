@@ -1,20 +1,20 @@
-/*
+/*******************************************************************************
  * gMix open source project - https://svs.informatik.uni-hamburg.de/gmix/
- * Copyright (C) 2012  Karl-Peter Fuchs
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * Copyright (C) 2014  SVS
+ *
+ * This program is free software: you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by 
+ * the Free Software Foundation, either version 3 of the License, or 
  * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
+ *
+ * You should have received a copy of the GNU General Public License 
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+ *******************************************************************************/
 package evaluation.simulator.plugins.outputStrategy;
 
 import java.security.SecureRandom;
@@ -22,6 +22,8 @@ import java.util.Vector;
 
 
 import evaluation.simulator.Simulator;
+import evaluation.simulator.annotations.plugin.Plugin;
+import evaluation.simulator.annotations.property.IntSimulationProperty;
 import evaluation.simulator.core.message.MixMessage;
 import evaluation.simulator.core.networkComponent.AbstractClient;
 import evaluation.simulator.core.networkComponent.Mix;
@@ -37,17 +39,28 @@ import evaluation.simulator.plugins.mixSendStyle.MixSendStyleImpl;
 // messages, chosen uniformly at random from all the messages, is retained in 
 // the mix. (Consider these messages as feedback into the mix.) The other n 
 // are forwarded on.
+@Plugin(pluginKey = "THRESHOLD_POOL", pluginName="Threshold Pool")
 public class ThresholdPool extends OutputStrategyImpl {
 
 	private static SecureRandom secureRandom = new SecureRandom();
 	private SimplexTresholdPool requestPool;
 	private SimplexTresholdPool replyPool;
 	
+	@IntSimulationProperty( name = "Pool size (requests)", 
+			key = "THRESHOLD_POOL_MIN_POOL_SIZE",
+			min = 1)
+	private int poolSize;
+	
+	// Requirement
+	@IntSimulationProperty( name = "Threshold", 
+			key = "THRESHOLD_POOL_THRESHOLD",
+			min = 1)
+	private int threshold;
 	
 	public ThresholdPool(Mix mix, Simulator simulator) {
 		super(mix, simulator);
-		int poolSize = Simulator.settings.getPropertyAsInt("THRESHOLD_POOL_MIN_POOL_SIZE");
-		int threshold = Simulator.settings.getPropertyAsInt("THRESHOLD_POOL_THRESHOLD");
+		this.poolSize = Simulator.settings.getPropertyAsInt("THRESHOLD_POOL_MIN_POOL_SIZE");
+		this.threshold = Simulator.settings.getPropertyAsInt("THRESHOLD_POOL_THRESHOLD");
 		this.requestPool = new SimplexTresholdPool(true, poolSize, threshold);
 		this.replyPool = new SimplexTresholdPool(false, poolSize, threshold);
 	}

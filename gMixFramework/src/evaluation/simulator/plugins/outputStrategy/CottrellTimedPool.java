@@ -1,20 +1,20 @@
-/*
+/*******************************************************************************
  * gMix open source project - https://svs.informatik.uni-hamburg.de/gmix/
- * Copyright (C) 2012  Karl-Peter Fuchs
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * Copyright (C) 2014  SVS
+ *
+ * This program is free software: you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by 
+ * the Free Software Foundation, either version 3 of the License, or 
  * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
+ *
+ * You should have received a copy of the GNU General Public License 
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+ *******************************************************************************/
 package evaluation.simulator.plugins.outputStrategy;
 
 import java.security.SecureRandom;
@@ -23,6 +23,8 @@ import java.util.Vector;
 
 
 import evaluation.simulator.Simulator;
+import evaluation.simulator.annotations.plugin.Plugin;
+import evaluation.simulator.annotations.property.IntSimulationProperty;
 import evaluation.simulator.core.event.Event;
 import evaluation.simulator.core.event.EventExecutor;
 import evaluation.simulator.core.message.MixMessage;
@@ -37,27 +39,39 @@ import evaluation.simulator.plugins.mixSendStyle.MixSendStyleImpl;
 //Cottrell 1995 ("Mixmaster & Remailer Attacks")
 //every "outputRate" ms, send x (= "numberOfMessagesInPool" - "minPoolSize") 
 //randomly chosen messages (if x >= 1)
+@Plugin(pluginKey = "COTTRELL_TIMED_POOL", pluginName = "Cottrell Timed Pool")
 public class CottrellTimedPool extends OutputStrategyImpl {
 
 	private SimplexCottrellTimedPool requestBatch;
 	private SimplexCottrellTimedPool replyBatch;
 	private static SecureRandom secureRandom = new SecureRandom();
 	
+	@IntSimulationProperty(
+			name = "Sending Interval (ms)",
+			key = "COTTRELL_TIMED_POOL_SENDING_INTERVAL_IN_MS",
+			min = 0
+	)
+	private int sendingRate;
+	
+	@IntSimulationProperty(
+			name = "Minimum pool size (requests)",
+			key = "COTTRELL_TIMED_POOL_MIN_POOL_SIZE",
+			min = 0
+	)
+	private int poolSize;
 	
 	public CottrellTimedPool(Mix mix, Simulator simulator) {
 		super(mix, simulator);
-		int sendingRate = Simulator.settings.getPropertyAsInt("COTTRELL_TIMED_POOL_SENDING_INTERVAL_IN_MS");
-		int poolSize = Simulator.settings.getPropertyAsInt("COTTRELL_TIMED_POOL_MIN_POOL_SIZE");
+		this.sendingRate = Simulator.settings.getPropertyAsInt("COTTRELL_TIMED_POOL_SENDING_INTERVAL_IN_MS");
+		this.poolSize = Simulator.settings.getPropertyAsInt("COTTRELL_TIMED_POOL_MIN_POOL_SIZE");
 		this.requestBatch = new SimplexCottrellTimedPool(true, sendingRate, poolSize);
 		this.replyBatch = new SimplexCottrellTimedPool(false, sendingRate, poolSize);
 	}
-	
 	
 	@Override
 	public void incomingRequest(MixMessage mixMessage) {
 		requestBatch.addMessage(mixMessage);
 	}
-
 
 	@Override
 	public void incomingReply(MixMessage mixMessage) {

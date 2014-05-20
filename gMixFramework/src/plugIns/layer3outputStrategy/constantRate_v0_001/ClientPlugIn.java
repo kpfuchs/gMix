@@ -1,20 +1,20 @@
-/*
+/*******************************************************************************
  * gMix open source project - https://svs.informatik.uni-hamburg.de/gmix/
- * Copyright (C) 2012  Karl-Peter Fuchs
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * Copyright (C) 2014  SVS
+ *
+ * This program is free software: you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by 
+ * the Free Software Foundation, either version 3 of the License, or 
  * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
+ *
+ * You should have received a copy of the GNU General Public License 
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+ *******************************************************************************/
 package plugIns.layer3outputStrategy.constantRate_v0_001;
 
 import java.util.Vector;
@@ -28,7 +28,9 @@ import framework.core.controller.Implementation;
 import framework.core.interfaces.Layer1NetworkClient;
 import framework.core.interfaces.Layer2RecodingSchemeClient;
 import framework.core.interfaces.Layer3OutputStrategyClient;
+import framework.core.interfaces.Layer4TransportClient;
 import framework.core.logger.OutputCap;
+import framework.core.message.ExternalMessage.DummyStatus;
 import framework.core.message.MixMessage;
 import framework.core.message.Reply;
 import framework.core.message.Request;
@@ -47,17 +49,18 @@ public class ClientPlugIn extends Implementation implements Layer3OutputStrategy
 	private int rate; // in ns
 	private ScheduledThreadPoolExecutor scheduler;
 	private ScheduledFuture<?> currentTimer;
-	private ArrayBlockingQueue<Request> requestQueue;
+	private ArrayBlockingQueue<byte[]> requestQueue;
 	private static OutputCap warning;
-	private Vector<Reply> replyCache;
+	private Vector<byte[]> replyCache;
 	private int availableReplyPayload = 0;
 	private MixList route;
+	private int dstPseudonym = Util.NOT_SET;
 	
 	
 	@Override
 	public void constructor() {
 		this.rate = settings.getPropertyAsInt("CONSTANT_RATE_SEND_RATE");
-		this.requestQueue = new ArrayBlockingQueue<Request>(settings.getPropertyAsInt("CONSTANT_RATE_QUEUE_SIZE"));
+		this.requestQueue = new ArrayBlockingQueue<byte[]>(settings.getPropertyAsInt("CONSTANT_RATE_QUEUE_SIZE"));
 		this.scheduler = new ScheduledThreadPoolExecutor(1);
 		ClientPlugIn.warning = new OutputCap(this.getClass().getCanonicalName() +" cannont send messages as fast as specified (" +rate +")", 2000);
 	}
@@ -66,7 +69,7 @@ public class ClientPlugIn extends Implementation implements Layer3OutputStrategy
 	@Override
 	public void initialize() {
 		if (anonNode.IS_DUPLEX)
-			this.replyCache = new Vector<Reply>();
+			this.replyCache = new Vector<byte[]>();
 	}
 
 	
@@ -80,7 +83,8 @@ public class ClientPlugIn extends Implementation implements Layer3OutputStrategy
 	public void setReferences(
 			Layer1NetworkClient layer1,
 			Layer2RecodingSchemeClient layer2, 
-			Layer3OutputStrategyClient layer3) {
+			Layer3OutputStrategyClient layer3,
+			Layer4TransportClient layer4) {
 		this.layer2 = layer2;
 		this.layer1 = layer1;
 		assert this == layer3;
@@ -124,29 +128,26 @@ public class ClientPlugIn extends Implementation implements Layer3OutputStrategy
 
 	
 	@Override
-	public void sendMessage(Request request) {
-		if (anonNode.ROUTING_MODE == RoutingMode.FREE_ROUTE_SOURCE_ROUTING) {
-			if (!anonNode.IS_CONNECTION_BASED) { // new route for every message
-				if (request.destinationPseudonym == Util.NOT_SET)
-					this.route = anonNode.mixList.getRandomRoute(anonNode.FREE_ROUTE_LENGTH);
-				else
-					this.route = anonNode.mixList.getRandomRoute(anonNode.FREE_ROUTE_LENGTH, request.destinationPseudonym);
-			} 
-			request.destinationPseudonym = this.route.mixIDs[route.mixIDs.length-1];
-			request.nextHopAddress = this.route.mixIDs[0];
-			request.route = this.route.mixIDs;
-		}
-		request = layer2.applyLayeredEncryption(request);
-		forcePutInQueue(request);
+	public void write(byte[] data) {
+		if (data == null || data.length == 0)
+			throw new RuntimeException("write(null) and write(byte[0]) are not allowed"); 
+		forcePutInQueue(data);
 	}
 	
 	
-	private void forcePutInQueue(Request request) {
+	@Override
+	public void write(byte[] data, int destPseudonym) {
+		this.dstPseudonym = destPseudonym;
+		write(data);
+	}
+	
+	
+	private void forcePutInQueue(byte[] data) {
 		try {
-			requestQueue.put(request);
+			requestQueue.put(data);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
-			forcePutInQueue(request);
+			forcePutInQueue(data);
 		}
 	}
 	
@@ -165,64 +166,97 @@ public class ClientPlugIn extends Implementation implements Layer3OutputStrategy
 	}
 	
 	
+	// TODO: might be prone to timing attacks (currently no fixed schedule for sending, but only for creating messages...)
 	private void sendMessage() {
+		Request request = null;
 		if (requestQueue.size() == 0) { // send dummy
-			Request dummy = MixMessage.getInstanceRequest(new byte[0]);
-			layer1.sendMessage(dummy);
+			request = MixMessage.getInstanceRequest(new byte[0]);
+			if (this.dstPseudonym != Util.NOT_SET)
+				request.destinationPseudonym = this.dstPseudonym;
 		} else {
 			try {
-				layer1.sendMessage(requestQueue.take());
+				request = MixMessage.getInstanceRequest(requestQueue.take());
+				if (this.dstPseudonym != Util.NOT_SET)
+					request.destinationPseudonym = this.dstPseudonym;
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 				sendMessage();
 			}
 		}
+		if (anonNode.ROUTING_MODE == RoutingMode.FREE_ROUTE_SOURCE_ROUTING) {
+			if (!anonNode.IS_CONNECTION_BASED) { // new route for every message
+				if (request.destinationPseudonym == Util.NOT_SET)
+					this.route = anonNode.mixList.getRandomRoute(anonNode.FREE_ROUTE_LENGTH);
+				else
+					this.route = anonNode.mixList.getRandomRoute(anonNode.FREE_ROUTE_LENGTH, request.destinationPseudonym);
+			} 
+			request.destinationPseudonym = this.route.mixIDs[route.mixIDs.length-1];
+			request.nextHopAddress = this.route.mixIDs[0];
+			request.route = this.route.mixIDs;
+		}
+		request = layer2.applyLayeredEncryption(request);
+		layer1.sendMessage(request);
 	}
 	
 	
+	
 	@Override
-	public Reply receiveReply() {
+	public byte[] receive() {
 		if (replyCache.size() > 0) {
-			Reply result = replyCache.remove(0);
-			availableReplyPayload -= result.getByteMessage().length;
+			byte[] result = replyCache.remove(0);
+			availableReplyPayload -= result.length;
 			return result;
 		} else {
 			Reply reply = layer1.receiveReply();
-			return layer2.extractPayload(reply);
+			reply = layer2.extractPayload(reply);
+			assert reply.getDummyStatus() != DummyStatus.UNKNOWN;
+			while (reply.getDummyStatus() == DummyStatus.DUMMY) {
+				reply = layer1.receiveReply();
+				reply = layer2.extractPayload(reply);
+			}
+			assert reply.getByteMessage() != null && reply.getByteMessage().length != 0;
+			return reply.getByteMessage();
 		}
 	}
 
 
 	@Override
-	public int getMaxSizeOfNextRequest() {
+	public int getMaxSizeOfNextWrite() {
 		return layer2.getMaxPayloadForNextMessage();
 	}
 
 
 	@Override
-	public int getMaxSizeOfNextReply() {
+	public int getMaxSizeOfNextReceive() {
 		return layer2.getMaxPayloadForNextReply();
 	}
 
 
 	@Override
 	public int availableReplies() {
-		for (int i=0; i<layer1.availableReplies(); i++) {
-			Reply reply = layer1.receiveReply();
-			replyCache.add(layer2.extractPayload(reply));
-			availableReplyPayload += reply.getByteMessage().length;
-		} 
+		tryFillCache();
 		return replyCache.size();
 	}
 
 
 	@Override
-	public int availableReplyPayload() {
-		for (int i=0; i<layer1.availableReplies(); i++) {
-			Reply reply = layer1.receiveReply();
-			replyCache.add(layer2.extractPayload(reply));
-			availableReplyPayload += reply.getByteMessage().length;
-		} 
+	public int availableReplyData() {
+		tryFillCache();
 		return availableReplyPayload;
 	}
+	
+	
+	private void tryFillCache() {
+		for (int i=0; i<layer1.availableReplies(); i++) {
+			Reply reply = layer1.receiveReply();
+			reply = layer2.extractPayload(reply);
+			assert reply.getDummyStatus() != DummyStatus.UNKNOWN;
+			if (reply.getDummyStatus() == DummyStatus.NO_DUMMY) {
+				replyCache.add(reply.getByteMessage());
+				availableReplyPayload += reply.getByteMessage().length;
+				assert reply.getByteMessage() != null && reply.getByteMessage().length != 0;
+			}
+		}
+	}
+	
 }

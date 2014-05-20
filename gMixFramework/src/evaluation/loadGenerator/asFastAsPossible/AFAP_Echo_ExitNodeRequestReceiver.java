@@ -1,24 +1,25 @@
-/*
+/*******************************************************************************
  * gMix open source project - https://svs.informatik.uni-hamburg.de/gmix/
- * Copyright (C) 2012  Karl-Peter Fuchs
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * Copyright (C) 2014  SVS
+ *
+ * This program is free software: you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by 
+ * the Free Software Foundation, either version 3 of the License, or 
  * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
+ *
+ * You should have received a copy of the GNU General Public License 
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+ *******************************************************************************/
 package evaluation.loadGenerator.asFastAsPossible;
 
 import java.io.IOException;
 
+import evaluation.loadGenerator.ExitNodeClientData;
 import evaluation.loadGenerator.ExitNodeRequestReceiver;
 import framework.core.AnonNode;
 import framework.core.config.Settings;
@@ -26,7 +27,7 @@ import framework.core.socket.socketInterfaces.StreamAnonSocketMix;
 import framework.core.userDatabase.User;
 
 
-public class AFAP_Echo_ExitNodeRequestReceiver implements ExitNodeRequestReceiver {
+public class AFAP_Echo_ExitNodeRequestReceiver extends ExitNodeRequestReceiver {
 
 	
 	protected AnonNode anonNode;
@@ -45,7 +46,7 @@ public class AFAP_Echo_ExitNodeRequestReceiver implements ExitNodeRequestReceive
 
 	
 	@Override
-	public void dataReceived(ClientData client, byte[] dataReceived) {
+	public void dataReceived(ExitNodeClientData client, byte[] dataReceived) {
 		if (anonNode.IS_DUPLEX) {
 			try {
 				client.socket.getOutputStream().write(dataReceived);
@@ -56,10 +57,10 @@ public class AFAP_Echo_ExitNodeRequestReceiver implements ExitNodeRequestReceive
 		}
 	}
 
-	
+
 	@Override
-	public ClientData createClientDataInstance(User user,
-			StreamAnonSocketMix socket) {
-		return new ClientData(user, socket);
+	public ExitNodeClientData createClientDataInstance(User user, StreamAnonSocketMix socket, Object callingInstance) {
+		return new ExitNodeClientData(user, socket, callingInstance);
 	}
+
 }

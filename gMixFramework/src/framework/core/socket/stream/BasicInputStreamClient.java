@@ -1,20 +1,20 @@
-/*
+/*******************************************************************************
  * gMix open source project - https://svs.informatik.uni-hamburg.de/gmix/
- * Copyright (C) 2012  Karl-Peter Fuchs
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * Copyright (C) 2014  SVS
+ *
+ * This program is free software: you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by 
+ * the Free Software Foundation, either version 3 of the License, or 
  * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
+ *
+ * You should have received a copy of the GNU General Public License 
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+ *******************************************************************************/
 package framework.core.socket.stream;
 
 import java.io.IOException;
@@ -22,13 +22,13 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 
 import framework.core.AnonNode;
-import framework.core.interfaces.Layer3OutputStrategyClient;
+import framework.core.interfaces.Layer4TransportClient;
 import framework.core.util.Util;
 
 
 public class BasicInputStreamClient extends InputStream {
 
-	private Layer3OutputStrategyClient layer3;
+	private Layer4TransportClient layer4;
 	private boolean isClosed = false;
 	private ByteBuffer remaining = null;
 	
@@ -36,12 +36,12 @@ public class BasicInputStreamClient extends InputStream {
 	// TODO: add limit for read-method (if read(numBytes) is called with numBytes > availableRAM an OutOfMemoryException will occur) 
 	public BasicInputStreamClient(
 			AnonNode owner,
-			Layer3OutputStrategyClient layer3
+			Layer4TransportClient layer4
 			) {
-		this.layer3 = layer3;
+		this.layer4 = layer4;
 		String replyBufferSize = owner.LAYER_4_CLIENT_INPUT_STREAM_REPLY_BUFFER_SIZE;
 		if (replyBufferSize.equalsIgnoreCase("AUTO")) {
-			this.remaining = ByteBuffer.allocate(layer3.getMaxSizeOfNextReply() * 2);
+			this.remaining = ByteBuffer.allocate(layer4.getMaxSizeOfNextReply() * 2);
 			this.remaining.flip();
 		} else {
 			this.remaining = ByteBuffer.allocate(Integer.parseInt(replyBufferSize));
@@ -67,7 +67,8 @@ public class BasicInputStreamClient extends InputStream {
 				result.put(msg);
 			}
 			while (result.hasRemaining()) { // receive as many messages as needed
-				byte[] newData = layer3.receiveReply().getByteMessage();
+				byte[] newData = layer4.receive();
+				assert newData != null && newData.length != 0;
 				if (newData.length > result.remaining()) { // received more data than needed; return result and store rest of data for later use
 					byte[][] chunks = Util.split(result.remaining(), newData);
 					result.put(chunks[0]);
@@ -116,7 +117,7 @@ public class BasicInputStreamClient extends InputStream {
 	
 	@Override
 	public synchronized int available() throws IOException {
-		return remaining.remaining() + layer3.availableReplyPayload();
+		return remaining.remaining() + layer4.availableReplyPayload();
 	}
 	
 	

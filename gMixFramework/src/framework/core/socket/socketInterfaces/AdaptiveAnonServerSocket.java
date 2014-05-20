@@ -1,20 +1,20 @@
-/*
+/*******************************************************************************
  * gMix open source project - https://svs.informatik.uni-hamburg.de/gmix/
- * Copyright (C) 2012  Karl-Peter Fuchs
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * Copyright (C) 2014  SVS
+ *
+ * This program is free software: you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by 
+ * the Free Software Foundation, either version 3 of the License, or 
  * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
+ *
+ * You should have received a copy of the GNU General Public License 
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+ *******************************************************************************/
 package framework.core.socket.socketInterfaces;
 
 import java.util.concurrent.ArrayBlockingQueue;
@@ -22,13 +22,14 @@ import java.util.concurrent.ArrayBlockingQueue;
 import framework.core.AnonNode;
 import framework.core.config.Settings;
 import framework.core.controller.Layer3OutputStrategyMixController;
+import framework.core.controller.Layer4TransportMixController;
 import framework.core.message.Request;
 import framework.core.util.Util;
 
 
 //ServerSocket can be used to accept connections (generate "normal" socket on connection attempt)
 //or to receive datagrams directly
-public abstract class AdaptiveAnonServerSocket implements AnonServerSocket, AnonSocketOptions, ServerSocketAddressData{
+public abstract class AdaptiveAnonServerSocket implements NoneBlockingAnonSocketOptions, AnonServerSocket, AnonSocketOptions, ServerSocketAddressData {
 
 	protected final static int NOT_SET = -1;
 	
@@ -37,7 +38,8 @@ public abstract class AdaptiveAnonServerSocket implements AnonServerSocket, Anon
 	protected byte[] bindPortAsArray = null;
 	
 	protected boolean isDuplex = false;
-	protected CommunicationMode communicationMode = null;
+	protected CommunicationDirection communicationDirection = null;
+	protected IO_Mode ioMode = null;
 	protected boolean isConnectionBased = false;
 	protected boolean isReliable = false;
 	protected boolean isOrderPreserving = false;
@@ -48,21 +50,27 @@ public abstract class AdaptiveAnonServerSocket implements AnonServerSocket, Anon
 	
 	protected ArrayBlockingQueue<Request> receivedRequests = null;
 	protected Layer3OutputStrategyMixController layer3;
+	protected Layer4TransportMixController layer4;
+	
+	protected boolean isBlocking = false;
+	protected IO_EventObserver requestObserver;
 	
 	
 	// try to generate a socket 
 	public AdaptiveAnonServerSocket(	AnonNode owner,
 										int bindPseudonym,
 										int bindPort,
-										CommunicationMode communicationMode,
+										CommunicationDirection communicationMode,
+										IO_Mode ioMode,
+										IO_EventObserver requestObserver,
 										boolean isConnectionBased, 
 										boolean isReliable, 
 										boolean isOrderPreserving, 
 										boolean isFreeRoute
 										) {
-		if (communicationMode == CommunicationMode.DUPLEX && !owner.IS_DUPLEX)
+		if (communicationMode == CommunicationDirection.DUPLEX && !owner.IS_DUPLEX)
 			throw new RuntimeException("the current plug-in config does not suport duplex sockets");
-		if (communicationMode == CommunicationMode.SIMPLEX_SENDER)
+		if (communicationMode == CommunicationDirection.SIMPLEX_SENDER)
 			throw new RuntimeException("a simplex ServerSocket con only receive data"); 
 		if (isConnectionBased && !owner.IS_CONNECTION_BASED)
 			throw new RuntimeException("the current plug-in config does not suport connection-based sockets"); 
@@ -70,45 +78,92 @@ public abstract class AdaptiveAnonServerSocket implements AnonServerSocket, Anon
 			throw new RuntimeException("the current plug-in config does not suport reliable transfer"); 
 		if (isOrderPreserving && !owner.IS_ORDER_PRESERVING)
 			throw new RuntimeException("the current plug-in config does not suport order-preserving transfer"); 
+		if (ioMode == IO_Mode.OBSERVER_PATTERN && requestObserver == null)
+			throw new RuntimeException("setting IO_Mode to OBSERVER_PATTERN requires to bypass a RequestObserver instance to this socket"); 
+		if (ioMode != IO_Mode.OBSERVER_PATTERN && requestObserver != null)
+			throw new RuntimeException("a RequestObserver can only be registered for a socket with IO_Mode OBSERVER_PATTERN.\ncall this constructor with IO_Mode OBSERVER_PATTERN or do not bypass a RequestObserver to prevent this error message"); 
+		
 		this.layer3 = owner.getOutputStrategyLayerControllerMix();
+		this.layer4 = owner.getTransportLayerControllerMix();
 		this.bindPseudonym = bindPseudonym;
 		this.bindPort = bindPort;
 		this.bindPortAsArray = Util.intToByteArray(bindPort);
-		this.communicationMode = communicationMode;
-		if (communicationMode == CommunicationMode.DUPLEX)
+		this.communicationDirection = communicationMode;
+		if (communicationMode == CommunicationDirection.DUPLEX)
 			this.isDuplex = true;
+		this.ioMode = ioMode;
+		if (ioMode != IO_Mode.NONE_BLOCKING)
+			this.isBlocking = true;
 		this.isConnectionBased = isConnectionBased;
 		this.isReliable = isReliable;
 		this.isOrderPreserving = isOrderPreserving;
 		this.isFreeRoute = isFreeRoute;
 		this.owner = owner;
+		
 		this.setting = owner.getSettings();
 		
-		owner.registerServerSocket(this);
-		this.receivedRequests = new ArrayBlockingQueue<Request>(owner.SERVER_SOCKET_QUEUE_SIZE);
-		
+		if (ioMode == IO_Mode.OBSERVER_PATTERN)
+			this.requestObserver = requestObserver;
+		else
+			this.receivedRequests = new ArrayBlockingQueue<Request>(owner.SERVER_SOCKET_QUEUE_SIZE);
 		
 		// TODO: set data type of bindPseudonym to byte[] 
+		owner.registerServerSocket(this);
 	}
 	
+	public AdaptiveAnonServerSocket(	
+			AnonNode owner,
+			int bindPseudonym,
+			int bindPort,
+			CommunicationDirection communicationMode,
+			IO_Mode ioMode,
+			boolean isConnectionBased, 
+			boolean isReliable, 
+			boolean isOrderPreserving, 
+			boolean isFreeRoute
+			) {
+		this(owner, bindPseudonym, bindPort, communicationMode, ioMode, null, isConnectionBased, isReliable, isOrderPreserving, isFreeRoute);
+	}
+
 	
 	public void incomingRequest(Request request) {
-		try {
-			receivedRequests.put(request);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-			incomingRequest(request);
+		if (requestObserver != null) { // notify observer
+			requestObserver.incomingRequest(request);
+		} else { // store for later async read
+			try {
+				receivedRequests.put(request);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+				incomingRequest(request);
+			}
 		}
 	}
 	
 	
-	// may block
+	/**
+	 * blocks until a request is available if isBlocking is set to true (see 
+	 * method booleanSetBlocking(boolean isBlocking)).
+	 * @return
+	 */
 	protected Request getNextRequest() {
-		try {
-			return receivedRequests.take();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-			return getNextRequest();
+		switch (ioMode) {
+			case BLOCKING:
+				try {
+					return receivedRequests.take();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+					return getNextRequest();
+				}
+			case NONE_BLOCKING:
+				return receivedRequests.poll();
+			case OBSERVER_PATTERN:
+				throw new RuntimeException("This method is not available " +
+						"when a RequestObserver is registered.\nSee method " +
+						"registerRequestObserver(RequestObserver " +
+						"requestObserver)");
+			default:
+				throw new RuntimeException("Unknown IO_Mode: " +ioMode); 
+		
 		}
 	}
 	
@@ -141,11 +196,23 @@ public abstract class AdaptiveAnonServerSocket implements AnonServerSocket, Anon
 	public boolean getIsDuplex() {
 		return this.isDuplex;
 	}
+	
+	
+	@Override
+	public boolean getIsBlocking() {
+		return this.isBlocking;
+	}
 
 
 	@Override
-	public CommunicationMode getCommunicationMode() {
-		return this.communicationMode;
+	public CommunicationDirection getCommunicationDirection() {
+		return this.communicationDirection;
+	}
+	
+	
+	@Override
+	public IO_Mode getIO_Mode() {
+		return this.ioMode;
 	}
 
 

@@ -1,20 +1,20 @@
-/*
+/*******************************************************************************
  * gMix open source project - https://svs.informatik.uni-hamburg.de/gmix/
- * Copyright (C) 2012  Karl-Peter Fuchs
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * Copyright (C) 2014  SVS
+ *
+ * This program is free software: you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by 
+ * the Free Software Foundation, either version 3 of the License, or 
  * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
+ *
+ * You should have received a copy of the GNU General Public License 
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+ *******************************************************************************/
 package evaluation.simulator.plugins.trafficSource;
 
 import java.io.BufferedReader;
@@ -23,21 +23,42 @@ import java.nio.channels.Channels;
 import java.util.Vector;
 
 import evaluation.simulator.Simulator;
+import evaluation.simulator.annotations.plugin.Plugin;
+import evaluation.simulator.annotations.property.BoolSimulationProperty;
+import evaluation.simulator.annotations.property.IntSimulationProperty;
+import evaluation.simulator.annotations.property.StringSimulationProperty;
+import evaluation.simulator.annotations.property.requirements.TrafficSourceTraceFileClientLimitRequirement;
 import evaluation.simulator.core.networkComponent.AbstractClient;
 import evaluation.traceParser.engine.dataStructure.Flow;
 import evaluation.traceParser.engine.fileReader.FlowReader;
 
-
+@Plugin(pluginKey = "TRACE_FILE", pluginName = "Tracefile")
 public class TraceFileModel extends TrafficSourceImplementation {
 
 	private TraceReplayClient[] clients;
 	
+	@StringSimulationProperty(
+			name = "Path to trace file",
+			key = "PATH_TO_TRACE",
+			info = "Please provide a relative path")
+	private String pathToTrace;
+	
+	@BoolSimulationProperty(
+			name = "Limit client number",
+			key = "LIMIT_CLIENT_NUMBER")
+	private boolean limitClients;
+	
+	@IntSimulationProperty(
+			name = "Client limit",
+			key = "CLIENT_LIMIT",
+			min = 1,enable_requirements=TrafficSourceTraceFileClientLimitRequirement.class)
+	private int limit;
 	
 	@Override
 	public AbstractClient[] createClientsArray() {
-		String pathToTrace = Simulator.settings.getProperty("PATH_TO_TRACE");
-		boolean limitClients = Simulator.settings.getPropertyAsBoolean("LIMIT_CLIENT_NUMBER");
-		int limit = limitClients ? Simulator.settings.getPropertyAsInt("CLIENT_LIMIT") : 0;
+		this.pathToTrace = Simulator.settings.getProperty("PATH_TO_TRACE");
+		this.limitClients = Simulator.settings.getPropertyAsBoolean("LIMIT_CLIENT_NUMBER");
+		this.limit = limitClients ? Simulator.settings.getPropertyAsInt("CLIENT_LIMIT") : 0;
 		Vector<TraceReplayClient> clients = new Vector<TraceReplayClient>(1000);
 		try {
 			FlowReader flowReader = new FlowReader(pathToTrace, null, false);

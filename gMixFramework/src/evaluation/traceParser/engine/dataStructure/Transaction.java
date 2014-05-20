@@ -1,124 +1,189 @@
-/*
+/*******************************************************************************
  * gMix open source project - https://svs.informatik.uni-hamburg.de/gmix/
- * Copyright (C) 2012  Karl-Peter Fuchs
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * Copyright (C) 2014  SVS
+ *
+ * This program is free software: you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by 
+ * the Free Software Foundation, either version 3 of the License, or 
  * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
+ *
+ * You should have received a copy of the GNU General Public License 
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+ *******************************************************************************/
 package evaluation.traceParser.engine.dataStructure;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Writer;
+import java.security.SecureRandom;
 
+import framework.core.util.FragmentedMessage;
 import framework.core.util.Util;
 
 
 /**
- * A Transaction consists of exactly one request and zero or more 
- * replies. This data structure can be used to replay Transactions in 
- * simulation or emulation setups. It contains data required on client and 
+ * A Transaction consists of exactly one request and zero or more replies (cf. 
+ * [1]). This data structure (class) can be used to replay Transactions in 
+ * simulation or emulation setups. It contains data required on client- and 
  * server-side to determine the size of and delay between requests and replies.
+ * 
+ * supported modes (cf. [1]):
+ * MODE I:   SIMPLEX_OPEN_LOOP (for SIMPLEX simulation scenarios WITH UNbounded 
+ *           communication links (unlimited bandwidth; 0 latency))
+ * MODE II:  SIMPLEX_WITH_FEEDBACK (for SIMPLEX simulations that takes feedback 
+ *           from the communication links into account, e.g. TCP congestion 
+ *           control effects etc. (in fact anything else than unlimited 
+ *           bandwidth and 0 latency))
+ * MODE III: DUPLEX (for DUPLEX simulations that takes feedback 
+ *           from the communication links into account, e.g. TCP congestion 
+ *           control effects etc.)
+ *           
+ * [1] Karl-Peter Fuchs, Dominik Herrmann, and Hannes Federrath: "Generating 
+ * Realistic Application Workloads for Mix-Based Systems for Controllable, 
+ * Repeatable and Usable Experimentation", IFIP SEC 2013
  */
 public class Transaction {
-	// TODO: update comments
 	
-	/** counter for the transactionId variable*/
-	protected static int idCounter = 0;
+	protected static SecureRandom random = new SecureRandom();
 	
-	/** unique id for this transaction */
-	protected int transactionId = Util.NOT_SET;
 	
 	/** 
-	 * client shall start this transaction (i.e. send the request (see below)) 
-	 * after "sendDelay" ms 
+	 * counter for the transactionId variable
 	 */
-	protected int sendDelay = Util.NOT_SET;
-	
-	/** id of the client who shall perform this transaction */
-	//protected int clientId = Util.NOT_SET;
+	protected static int idCounter = 0;
+		
+	/** unique id for this transaction */
+	protected int transactionId = Util.NOT_SET;
 	
 	/** id of the server who shall perform this transaction */
 	protected int serverId = Util.NOT_SET;
 	
 	/** 
+	 * client shall start this transaction (i.e. send the request (see below)) 
+	 * after "sendDelay" ms. 
+	 * Note: this value is referred to as "user think time" in many papers.
+	 * Note: this variable corresponds to "T1-T0" in Fig.5 of [1] (or "T13-T12",
+	 * if we assume that this is the second transaction of Fig.5 in [1])
+	 * 
+	 * Note: this variable is relevant for all modes
+	 * Note: used on client-side only
+	 */ 
+	protected int sendDelay = Util.NOT_SET;
+	
+	/** 
 	 * size of the request (i.e. the message from the client to the server) 
 	 * in byte (0 if server shall send first message)
+	 * 
+	 * Note: this variable corresponds to "A_1" and "A_2" in Fig.3 of [1]
+	 * Note: this variable is relevant for all modes
+	 * Note: used on client-side only
 	 */
 	protected int requestSize = Util.NOT_SET;
 	
 	/** 
 	 * size of all reply messages in total (0 if no message from server to 
 	 * client shall be sent)
+	 * 
+	 * Note: this variable corresponds to "B_1 + B_2" in Fig.3 of [1]
+	 * Note (informational): this variable is the sum of all individual sizes 
+	 * stored in the "distinctReplySizes"-array below
+	 * 
+	 * Note: this variable is relevant for DUPLEX-Mode only
+	 * Note: used on server/mix-side only
 	 */
 	protected int totalReplySize = Util.NOT_SET;
 	
 	/** 
-	 * delta between the p.o.t. (point of time) the last packet of the request 
-	 * left the client and the p.o.t. the last packet of the reply was received 
-	 * by the client in the original trace. use this value ONLY when replaying 
-	 * traffic in a SIMPLEX simulation scenario WITH UNbounded communication 
-	 * links (unlimited bandwidth; 0 latency) to determine the delay till the 
-	 * next transaction. in a duplex simulation, use the "distinctReplyDelays" 
-	 * array below instead.
-	 * note that the value of this variable is NOT necessarily the sum of all 
-	 * fields of "distinctReplyDelays", as distinct reply packets (in a trace 
-	 * file) are interpreted as a single reply (that didn't fit into a single 
-	 * packet) if the delay between two consecutive reply packets is small. if 
-	 * a transaction is built out of many packets this can have a 
-	 * none-neglectable influence on simplex simulations (thats the reason 
-	 * for this variable).
-	 * in ms.
+	 * delta between the p.o.t. (point of time) the first packet of the request  
+	 * left the client and the p.o.t. the last packet of the reply was received  
+	 * by the client in the original trace in ms. 0 if no reply contained.
+	 * 
+	 * Note: this variable corresponds to "T12-T1" in Fig.5 of [1]
+	 * 
+	 * Note: this variable is relevant for SIMPLEX_OPEN_LOOP-Mode only
+	 * 
+	 * Note: used on client-side only
+	 * 
+	 * how to use:
+	 *   1. wait "sendDelay" ms
+	 *   2. send request and at the same (simulation) time wait 
+	 *      "simplexReplyDelay" ms
+	 *   3. load the next transaction and repeat with 1.
 	*/
-	protected int simplexReplyDelay = Util.NOT_SET;
+	protected int simplexReplyDelay = Util.NOT_SET;	
 	
-	/**
-	 * if != null: server shall send multiple replies (message to client), 
-	 * each of size distinctReplySizes[i] bytes and after at least 
-	 * distinctReplyDelays[i] seconds
+	/** 
+	 * array containing the sizes of each reply of this transaction. the size 
+	 * of the first reply is found at index 0 of the array. array is null if 
+	 * this transaction does not contain any replies. 
+	 * 
+	 * see comment for "distinctReplySizes" below on how to use this array
+	 * 
+	 * Note: this array corresponds to "B_1" and B_2" in Fig.3 of [1], i.e., 
+	 * distinctReplySizes[0] = "B_1" and distinctReplySizes[1] = "B_2". 
+	 * 
+	 * Note: this variable is relevant for DUPLEX-Mode only
+	 * Note: used on server/mix-side only
 	 */
 	protected int[] distinctReplySizes = null;
 	
 	/**
-	 * Time deltas between the p.o.t. (point of time) the last packet of the 
-	 * request left the client and the p.o.t. the first packet of the i-th 
-	 * reply (i is the index of this array) was received by the client. use 
-	 * this value when replaying traffic in DUPLEX mode on server-side, to 
-	 * determine the delay till sending the next reply. the delays are 
-	 * supposed to assure that the simulated server doesn't reply faster than 
-	 * the original server did (based on observations extracted from the trace 
-	 * file this transaction was created from or the simulation model used). 
+	 * array containing the delays (in ms) after which each reply of this 
+	 * transaction shall be sent by the last mix (right after the last mix has 
+	 * fully received the request of this transaction). 
+	 * the delays are supposed to assure that the simulated server doesn't 
+	 * reply faster than the original server did (based on observations 
+	 * extracted from the trace file this transaction was created from 
 	 * 
-	 * example of usage:
-	 * scenario: the server just (t_1=1) received a request with the reply 
-	 * delays d_1 = 2, d_2 = 4 and d_3 = 2 ms. 
-	 * He will wait 2 ms before sending the first reply.
-	 * After sending (of the first reply) is finished, he will determine the 
-	 * current time t_2=10 (to determine the time consumption for sending the 
-	 * reply) and check whether t_2 - t_1 is larger than d_2.
-	 * As  t_2 - t_1 = 9 is larger than  d_2 = 4, the server will send the next 
-	 * reply immediately (if t_2 - t_1 was smaller than d_2, the server would 
-	 * wait d_2 - (t_2 - t_1)  ms before sending the next reply).
-	 * After sending of the next reply is finished, the server will again 
-	 * determine the current time t_3=20 and check whether t_3 - t_1 is larger 
-	 * than d_3...
+	 * Note: uses the same index as the "distinctReplySizes"-array above
+	 * Note: distinctReplyDelays[0] corresponds to "T6-T1" in Fig.5 of [1] and 
+	 *       distinctReplyDelays[1] corresponds to "T10-T1" in Fig.5 of [1]
 	 * 
-	 * You may want to think of the distinctReplyDelays as the "minimum 
-	 * server-side delays of a reply from the p.o.t. the server received the 
-	 * request".
+	 * Note: this variable is relevant for DUPLEX-Mode only
+	 * Note: used on server/mix-side only
+	 * 
+	 * how to use:
+	 *      1. wait until the request of this transaction is fully received 
+	 *         at the last mix (= T1)
+	 *      2. schedule each reply of this message for later sending (without 
+	 *         waiting):
+	 *           for (int i=0; i<distinctReplyDelays.length; i++)
+	 *              scheduler.sendReplyIn(distinctReplyDelays[i],
+	 *                                    distinctReplySizes[i]);
 	 */
 	protected int[] distinctReplyDelays = null;
-
+	
+	/**
+	 * array containing the delays (in ms) after which the arrival of replies 
+	 * should be simulated in SIMPLEX_WITH_FEEDBACK-Mode. 
+	 * 
+	 * Note: uses the same index as the "distinctReplySizes"-array above
+	 * Note: distinctReplyDelays[0] corresponds to "T8-T1" in Fig.5 of [1] and 
+	 *       distinctReplyDelays[1] corresponds to "T12-T8" in Fig.5 of [1]
+	 *       
+	 * Note: this variable is relevant for SIMPLEX_WITH_FEEDBACK-Mode only
+	 * Note: used on clinet-side only
+	 * 
+	 * how to use:
+	 *     1. wait "sendDelay" ms
+	 *     2. send request and wait until it is fully sent, i.e., wait until 
+	 *        the write()-method returns (note: we assume a blocking socket 
+	 *        here)
+	 *     3. schedule the arrival of the next reply (not all replies!):
+	 *        scheduler.simulateReplyArrivalIn(distinctSimplexWithFeedbackReplyDelays[0]);
+	 *     4. on arrival of the reply (that was scheduled in 3.): 
+	 *        schedule next reply, i.e. GOTO 3.:
+	 *        (scheduler.simulateReplyArrivalIn(distinctSimplexWithFeedbackReplyDelays[i++]);)
+	 *              
+	 */
+	protected int[] distinctSimplexWithFeedbackReplyDelays = null;
+	
+	
 	/**
 	 * for statistics. set when messages is sent via load generator or 
 	 * simulator; in ms; offset from 1.1.1970 UTC for load generator (use 
@@ -132,58 +197,25 @@ public class Transaction {
 	
 	
 	/**
-	 * A Transaction consists of exactly one request and zero or more 
-	 * replies. This data structure can be used to replay Transactions in 
-	 * simulation or emulation setups. It contains data required on client and 
-	 * server-side to determine the size of and delay between requests and replies.
+	 * See class comment.
 	 */
 	public Transaction() {
 		
 	}
-	
-	
-	/**
-	 * A Transaction consists of exactly one request and zero or more 
-	 * replies. This data structure can be used to replay Transactions in 
-	 * simulation or emulation setups. It contains data required on client and 
-	 * server-side to determine the size of and delay between requests and replies.
-	 */
-	/*public Transaction(	float sendDelay,
-								int clientId,
-								int serverId,
-								int requestSize,
-								float replyDelay,
-								int[] replySizes,
-								float[] replyDelays
-			) {
-		this (	++idCounter,
-				sendDelay,
-				clientId,
-				serverId,
-				requestSize,
-				replySizes,
-				replyDelays
-			);
-	}*/
-	
+
 	
 	/**
-	 * A Transaction consists of exactly one request and zero or more 
-	 * replies. This data structure can be used to replay Transactions in 
-	 * simulation or emulation setups. It contains data required on client and 
-	 * server-side to determine the size of and delay between requests and replies.
+	 * See class comment.
 	 */
 	public Transaction(	int transactionId,
-								int sendDelay,
-								//int clientId,
-								int serverId,
-								int requestSize,
-								int[] replySizes,
-								int[] replyDelays
-								) {
+						int sendDelay,
+						int serverId,
+						int requestSize,
+						int[] replySizes,
+						int[] replyDelays
+						) {
 		this.transactionId = transactionId;
 		this.sendDelay = sendDelay;
-		//this.clientId = clientId;
 		this.serverId = serverId;
 		this.requestSize = requestSize;
 		this.distinctReplySizes = replySizes;
@@ -192,91 +224,15 @@ public class Transaction {
 	
 	
 	/**
-	 * A Transaction consists of exactly one request and zero or more 
-	 * replies. This data structure can be used to replay Transactions in 
-	 * simulation or emulation setups. It contains data required on client and 
-	 * server-side to determine the size of and delay between requests and replies.
-	 */
-	public Transaction(	int sendDelay,
-								//int clientId,
-								int serverId,
-								int requestSize,
-								int replySize,
-								int replyDelay
-								) {
-		this (	++idCounter,
-				sendDelay,
-				//clientId,
-				serverId,
-				requestSize,
-				new int[] {replySize},
-				new int[] {replyDelay}
-			);
-	}
-	
-	
-	/**
-	 * A Transaction consists of exactly one request and zero or more 
-	 * replies. This data structure can be used to replay Transactions in 
-	 * simulation or emulation setups. It contains data required on client and 
-	 * server-side to determine the size of and delay between requests and replies.
-	 */
-	/*public Transaction(	int transactionId,
-								float sendDelay,
-								int clientId,
-								int serverId,
-								int requestSize,
-								int replySize,
-								float replyDelay
-								) {
-		this(	transactionId,
-				sendDelay,
-				clientId,
-				serverId,
-				requestSize,
-				new int[] {replySize},
-				new float[] {replyDelay}
-				);
-	}*/
-	
-	
-	/**
-	 * A Transaction consists of exactly one request and zero or more 
-	 * replies. This data structure can be used to replay Transactions in 
-	 * simulation or emulation setups. It contains data required on client and 
-	 * server-side to determine the size of and delay between requests and replies.
-	 */
-	/*public Transaction(	float sendDelay,
-								int clientId,
-								int serverId,
-								int requestSize
-								) {
-		this (	++idCounter,
-				sendDelay,
-				clientId,
-				serverId,
-				requestSize,
-				null,
-				null
-				);
-	}*/
-	
-	
-	/**
-	 * A Transaction consists of exactly one request and zero or more 
-	 * replies. This data structure can be used to replay Transactions in 
-	 * simulation or emulation setups. It contains data required on client and 
-	 * server-side to determine the size of and delay between requests and replies.
+	 * See class comment.
 	 */
 	public Transaction(	int transactionId,
-								int sendDelay,
-								//int clientId,
-								int serverId,
-								int requestSize
+						int sendDelay,
+						int serverId,
+						int requestSize
 								) {
 		this(	transactionId,
 				sendDelay,
-				//clientId,
 				serverId,
 				requestSize,
 				null,
@@ -286,10 +242,7 @@ public class Transaction {
 	
 	
 	/**
-	 * A Transaction consists of exactly one request and zero or more 
-	 * replies. This data structure can be used to replay Transactions in 
-	 * simulation or emulation setups. It contains data required on client and 
-	 * server-side to determine the size of and delay between requests and replies.
+	 * See class comment.
 	 */
 	public Transaction(String serializedTransaction) {
 		String[] fields = serializedTransaction.split("(,|;|\\s)");
@@ -316,10 +269,7 @@ public class Transaction {
 	
 
 	/**
-	 * A Transaction consists of exactly one request and zero or more 
-	 * replies. This data structure can be used to replay Transactions in 
-	 * simulation or emulation setups. It contains data required on client and 
-	 * server-side to determine the size of and delay between requests and replies.
+	 * See class comment.
 	 */
 	public static Transaction readTransaction(BufferedReader trace) throws IOException {
 		String line = trace.readLine();
@@ -327,33 +277,23 @@ public class Transaction {
 	}
 	
 	
-	/**
-	 * use this method in SIMPLEX mode simulations (i.e. to replay the requests 
-	 * of transactions only).
-	 * this method returns the "totalReplyDelay" of this transaction, i.e. the 
-	 * delta between the p.o.t. (point of time) the last packet of the request 
-	 * left the client and the p.o.t. the last packet of the reply was received 
-	 * by the client. use this value when replaying traffic in SIMPLEX mode to 
-	 * determine the delay till the next transaction. 
+	/** 
+	 * delta between the p.o.t. (point of time) the first packet of the request  
+	 * left the client and the p.o.t. the last packet of the reply was received  
+	 * by the client in the original trace in ms. 0 if no reply contained.
 	 * 
-	 * note that there is no equivalent method for DUPLEX mode as the delay 
-	 * will depend on the (simulated) properties of the reply channel. In 
-	 * duplex mode, use the "distinctReplyDelays" array to delay replies on the 
-	 * server side and wait on client side until all replies are received.
-	 * then start the next transaction after 
-	 * nextTransaction.getSendDelay() ms.
+	 * Note: this variable corresponds to "T12-T1" in Fig.5 of [1]
 	 * 
-	 * example (simplex):
-	 * we want to determine the delay between two transactions 
-	 * ("lastTransaction" and "nextTransaction") in simplex mode (assumption: 
-	 * the "lastTransaction" was just sent and we want to determine the 
-	 * delay till we should sent the "nextTransaction"):
-	 * int delay = lastTransaction.getDelayTillNext() + 
-	 * nextTransaction.getSendDelay();
+	 * Note: this variable is relevant for SIMPLEX_OPEN_LOOP-Mode only
 	 * 
-	 * determine the correct delay between 
-	 * @return
-	 */
+	 * Note: used on client-side only
+	 * 
+	 * how to use:
+	 *   1. wait "sendDelay" ms
+	 *   2. send request and at the same (simulation) time wait 
+	 *      "simplexReplyDelay" ms
+	 *   3. load the next transaction and repeat with 1.
+	*/
 	public int getSimplexReplyDelay() {
 		return simplexReplyDelay;
 	} 
@@ -423,28 +363,20 @@ public class Transaction {
 	}
 	
 	
-	/** 
-	 * client shall start this transaction (i.e. send the request) after 
-	 * "sendDelay" seconds.
-	 */
-	/*public void setSendDelay(int sendDelay) {
-		this.sendDelay = sendDelay;
-	}*/
-	
 	
 	/** 
-	 * client shall start this transaction (i.e. send the request) after 
-	 * "sendDelay" ms.
-	 */
+	 * client shall start this transaction (i.e. send the request (see below)) 
+	 * after RETURN ms. 
+	 * Note: this value is referred to as "user think time" in many papers.
+	 * Note: this variable corresponds to "T1-T0" in Fig.5 of [1] (or "T13-T12",
+	 * if we assume that this is the second transaction of Fig.5 in [1])
+	 * 
+	 * Note: this variable is relevant for all modes
+	 * Note: used on client-side only
+	 */ 
 	public int getSendDelay() {
 		return sendDelay;
 	}
-
-
-	/** id of the client who shall perform this transaction */
-	/*public int getClientId() {
-		return clientId;
-	}*/
 
 
 	/**  id of the server who shall perform this transaction */
@@ -462,6 +394,10 @@ public class Transaction {
 	/** 
 	 * size of the request (i.e. the message from the client to the server) 
 	 * in byte (0 if server shall send first message)
+	 * 
+	 * Note: this variable corresponds to "A_1" and "A_2" in Fig.3 of [1]
+	 * Note: this variable is relevant for all modes
+	 * Note: used on client-side only
 	 */
 	public int getRequestSize() {
 		return requestSize;
@@ -477,6 +413,13 @@ public class Transaction {
 	/** 
 	 * size of all reply messages in total (0 if no message from server to 
 	 * client shall be sent)
+	 * 
+	 * Note: this variable corresponds to "B_1 + B_2" in Fig.3 of [1]
+	 * Note (informational): this variable is the sum of all individual sizes 
+	 * stored in the "distinctReplySizes"-array below
+	 * 
+	 * Note: this variable is relevant for DUPLEX-Mode only
+	 * Note: used on server/mix-side only
 	 */
 	public int getTotalReplySize() {
 		return totalReplySize;
@@ -505,21 +448,24 @@ public class Transaction {
 	}
 	
 	
-	/**
-	 * if != null || : server shall send multiple replies (messages to client), 
-	 * each of size distinctReplySizes[i] bytes and after at least 
-	 * distinctReplyDelays[i] seconds
+	/** 
+	 * array containing the sizes of each reply of this transaction. the size 
+	 * of the first reply is found at index 0 of the array. array is null if 
+	 * this transaction does not contain any replies. 
+	 * 
+	 * see comment for "distinctReplySizes" below on how to use this array
+	 * 
+	 * Note: this array corresponds to "B_1" and B_2" in Fig.3 of [1], i.e., 
+	 * distinctReplySizes[0] = "B_1" and distinctReplySizes[1] = "B_2". 
+	 * 
+	 * Note: this variable is relevant for DUPLEX-Mode only
+	 * Note: used on server/mix-side only
 	 */
 	public int[] getDistinctReplySizes() {
 		return distinctReplySizes;
 	}
 	
 	
-	/**
-	 * if != null: server shall send multiple replies (message to client), 
-	 * each of size distinctReplySizes[i] bytes and after at least 
-	 * distinctReplyDelays[i] seconds
-	 */
 	public void setDistinctReplySizes(int[] distinctReplySizes) {
 		this.distinctReplySizes = distinctReplySizes;
 	}
@@ -531,36 +477,107 @@ public class Transaction {
 	
 	
 	/**
-	 * Time deltas between the p.o.t. (point of time) the last packet of the 
-	 * request left the client and the p.o.t. the first packet of the i-th 
-	 * reply (i is the index of this array) was received by the client. use 
-	 * this value when replaying traffic in DUPLEX mode on server-side, to 
-	 * determine the delay till sending the next reply. the delays are 
-	 * supposed to assure that the simulated server doesn't reply faster than 
-	 * the original server did (based on observations extracted from the trace 
-	 * file this transaction was created from or the simulation model used). 
+	 * array containing the delays (in ms) after which each reply of this 
+	 * transaction shall be sent by the last mix (right after the last mix has 
+	 * fully received the request of this transaction). 
+	 * the delays are supposed to assure that the simulated server doesn't 
+	 * reply faster than the original server did (based on observations 
+	 * extracted from the trace file this transaction was created from 
 	 * 
-	 * example of usage:
-	 * scenario: the server just (t_1=1) received a request with the reply 
-	 * delays d_1 = 2, d_2 = 4 and d_3 = 2 ms. 
-	 * He will wait 2 seconds before sending the first reply.
-	 * After sending (of the first reply) is finished, he will determine the 
-	 * current time t_2=10 (to determine the time consumption for sending the 
-	 * reply) and check whether t_2 - t_1 is larger than d_2.
-	 * As  t_2 - t_1 = 9 is larger than  d_2 = 4, the server will send the next 
-	 * reply immediately (if t_2 - t_1 was smaller than d_2, the server would 
-	 * wait d_2 - (t_2 - t_1) ms before sending the next reply).
-	 * After sending of the next reply is finished, the server will again 
-	 * determine the current time t_3=20 and check whether t_3 - t_1 is larger 
-	 * than d_3...
+	 * Note: uses the same index as the "distinctReplySizes"-array above
+	 * Note: distinctReplyDelays[0] corresponds to "T6-T1" in Fig.5 of [1] and 
+	 *       distinctReplyDelays[1] corresponds to "T10-T1" in Fig.5 of [1]
 	 * 
-	 * You may want to think of the distinctReplyDelays as the "minimum 
-	 * server-side delays of a reply from the p.o.t. the server received the 
-	 * request".
+	 * Note: this variable is relevant for DUPLEX-Mode only
+	 * Note: used on server/mix-side only
+	 * 
+	 * how to use:
+	 *      1. wait until the request of this transaction is fully received 
+	 *         at the last mix (= T1)
+	 *      2. schedule each reply of this message for later sending (without 
+	 *         waiting):
+	 *           for (int i=0; i<distinctReplyDelays.length; i++)
+	 *              scheduler.sendReplyIn(distinctReplyDelays[i],
+	 *                                    distinctReplySizes[i]);
 	 */
 	public int[] getDistinctReplyDelays() {
 		return distinctReplyDelays;
 	}
+	
+	
 
+	//public int[] getDistinctSimplexWithFeedbackReplyDelays() {
+	//	return distinctSimplexWithFeedbackReplyDelays;
+	//}
+	
+	int distinctSimplexWithFeedbackReplyDelayIndex = -1;
+	
+	/**
+	 * returns the delays (in ms) after which the arrival of replies 
+	 * should be simulated in SIMPLEX_WITH_FEEDBACK-Mode. 
+	 * 
+	 * Note: the value returned by this method after the first call corresponds 
+	 *       to "T8-T1" in Fig.5 of [1] and the second to "T12-T8"
+	 *       
+	 * Note: this method is relevant for SIMPLEX_WITH_FEEDBACK-Mode only
+	 * Note: used on clinet-side only
+	 * 
+	 * how to use:
+	 *     1. wait "sendDelay" ms
+	 *     2. send request and wait until it is fully sent, i.e., wait until 
+	 *        the write()-method returns (note: we assume a blocking socket 
+	 *        here)
+	 *     3. schedule the arrival of the next reply (not all replies!):
+	 *        scheduler.simulateReplyArrivalIn(getNextDistinctSimplexWithFeedbackReplyDelay());
+	 *     4. on arrival of the reply (that was scheduled in 3.): 
+	 *        schedule next reply, i.e. GOTO 3.:
+	 *        (scheduler.simulateReplyArrivalIn(getNextDistinctSimplexWithFeedbackReplyDelay());)
+	 *     Use hasMoreDistinctSimplexWithFeedbackReplyDelays() to check, 
+	 *     whether further replies are present.
+	 *              
+	 */
+	public int getNextDistinctSimplexWithFeedbackReplyDelay() {
+		distinctSimplexWithFeedbackReplyDelayIndex++;
+		return distinctSimplexWithFeedbackReplyDelays[distinctSimplexWithFeedbackReplyDelayIndex];
+	}
+	
+	
+	public boolean hasMoreDistinctSimplexWithFeedbackReplyDelays() {
+		if (!containsReplies())
+			return false;
+		return distinctSimplexWithFeedbackReplyDelayIndex < (distinctSimplexWithFeedbackReplyDelays.length - 1);
+	}
+	
+	
+	/**
+	 * (client-side) creates the payload object (request) to be sent via the
+	 * anon socket. the request contains the header data needed by the
+	 * server/last mix to reply to this request (finish the transaction)
+	 */
+	public byte[] createSendableTransaction(int clientId) {
+		short replyFields = (!containsReplies()) ? 0
+				: (short) distinctReplySizes.length;
+		byte[] result = Util.concatArrays(new byte[][] {
+				Util.intToByteArray(transactionId),
+				Util.shortToByteArray(replyFields),
+				Util.longToByteArray(timestampSend),
+				Util.intToByteArray(clientId), Util.intToByteArray(serverId),
+				Util.intToByteArray(requestSize), });
+		for (int i = 0; i < replyFields; i++) {
+			result = Util.concatArrays(result,
+					Util.intToByteArray(distinctReplySizes[i]));
+			result = Util.concatArrays(result,
+					Util.intToByteArray(distinctReplyDelays[i]));
+		}
+		int payloadLength = Math.max(0, requestSize - (result.length + 4)); // additional 4 bytes for the header of "FragmentedMessage"
+		if (payloadLength > 0) {
+			byte[] payload = new byte[payloadLength];
+			synchronized (random) {
+				random.nextBytes(payload);
+			}
+			result = Util.concatArrays(result, payload);
+		}
+		return FragmentedMessage.toSendableMessage(result);
+	}
 	
 }

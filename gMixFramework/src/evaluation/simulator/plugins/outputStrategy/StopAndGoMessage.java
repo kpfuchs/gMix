@@ -1,20 +1,20 @@
-/*
+/*******************************************************************************
  * gMix open source project - https://svs.informatik.uni-hamburg.de/gmix/
- * Copyright (C) 2012  Karl-Peter Fuchs
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * Copyright (C) 2014  SVS
+ *
+ * This program is free software: you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by 
+ * the Free Software Foundation, either version 3 of the License, or 
  * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
+ *
+ * You should have received a copy of the GNU General Public License 
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+ *******************************************************************************/
 package evaluation.simulator.plugins.outputStrategy;
 
 import java.security.SecureRandom;
@@ -23,11 +23,22 @@ import org.apache.commons.math.MathException;
 import org.apache.commons.math.distribution.ExponentialDistributionImpl;
 
 import evaluation.simulator.Simulator;
+import evaluation.simulator.annotations.plugin.Plugin;
+import evaluation.simulator.annotations.property.DoubleSimulationProperty;
+import evaluation.simulator.annotations.property.FloatSimulationProperty;
+import evaluation.simulator.annotations.property.IntSimulationProperty;
+import evaluation.simulator.annotations.property.requirements.SgMixMaxClientMixDelayRequirement;
+import evaluation.simulator.annotations.property.requirements.SgMixMaxInterMixDelayRequirement;
+import evaluation.simulator.annotations.property.requirements.SgMixMinClientMixDelayRequirement;
+import evaluation.simulator.annotations.property.requirements.SgMixMinInterMixDelayRequirement;
 import evaluation.simulator.core.message.BasicMixMessage;
 import evaluation.simulator.core.networkComponent.AbstractClient;
 import evaluation.simulator.core.networkComponent.NetworkNode;
 
-
+// This is an example of how to manually cap a plugin
+// by providing the pluginLayerKay. If the pluginLayer
+// is not present, the SimPropRegistry tries to find a superclass!
+@Plugin(pluginKey = "STOP_AND_GO", pluginName="Stop And Go", pluginLayerKey = "OUTPUT_STRATEGY")
 public class StopAndGoMessage extends BasicMixMessage {
 
 	private long[] tsMin; // 0: first mix; 1: second mix...
@@ -41,6 +52,37 @@ public class StopAndGoMessage extends BasicMixMessage {
 	private int identifier;
 	private static int idCounter = 0;
 	
+	@DoubleSimulationProperty ( name = "Security parameter mu", 
+			key = "SGMIX_SECURITY_PARAMETER_MU")
+	private double securityParameterMu;
+	
+	@IntSimulationProperty( name = "Minimum inter mix delay (ms)", 
+			key = "SGMIX_MIN_INTER_MIX_DELAY",
+			min = 0, value_requirements = SgMixMinInterMixDelayRequirement.class)
+	private int minInterMixDelay;
+	
+	@IntSimulationProperty( name = "Maximum inter mix delay (ms)", 
+			key = "SGMIX_MAX_INTER_MIX_DELAY",
+			min = 0, value_requirements = SgMixMaxInterMixDelayRequirement.class)
+	private int maxInterMixDelay;
+	
+	@IntSimulationProperty( name = "Minimum client mix delay (ms)", 
+			key = "SGMIX_MIN_CLIENT_MIX_DELAY",
+			value_requirements=SgMixMinClientMixDelayRequirement.class,
+			min = 0)
+	private int minClientMixDelay;
+	
+	@IntSimulationProperty( name = "Maximum client mix delay (ms)", 
+			key = "SGMIX_MAX_CLIENT_MIX_DELAY",
+			value_requirements=SgMixMaxClientMixDelayRequirement.class,
+			min = 0)
+	private int maxClientMixDelay;
+	
+	@IntSimulationProperty( name = "Maximum clock deviation (ms)", 
+			key = "SGMIX_MAX_CLOCK_DEVITION",
+			min = 0)
+	private int maxClockDeviation;
+	
 	
 	public StopAndGoMessage(boolean isRequest, NetworkNode source,
 			NetworkNode destination, AbstractClient owner, long creationTime,
@@ -51,7 +93,7 @@ public class StopAndGoMessage extends BasicMixMessage {
 		this.identifier = idCounter++;
 		
 		// generate delays
-		double securityParameterMu = Simulator.settings.getPropertyAsDouble("SGMIX_SECURITY_PARAMETER_MU");
+		securityParameterMu = Simulator.settings.getPropertyAsDouble("SGMIX_SECURITY_PARAMETER_MU");
 		Simulator simulator = Simulator.getSimulator();
 		int numberOfMixes = simulator.getMixes().size();
 		this.delay = new int[numberOfMixes];
@@ -72,11 +114,11 @@ public class StopAndGoMessage extends BasicMixMessage {
 		
 		if (useTimeStamps) {
 			
-			int minInterMixDelay = Simulator.settings.getPropertyAsInt("SGMIX_MIN_INTER_MIX_DELAY");
-			int maxInterMixDelay = Simulator.settings.getPropertyAsInt("SGMIX_MAX_INTER_MIX_DELAY");
-			int minClientMixDelay = Simulator.settings.getPropertyAsInt("SGMIX_MIN_CLIENT_MIX_DELAY");
-			int maxClientMixDelay = Simulator.settings.getPropertyAsInt("SGMIX_MAX_CLIENT_MIX_DELAY");
-			int maxClockDeviation = Simulator.settings.getPropertyAsInt("SGMIX_MAX_CLOCK_DEVITION");
+			minInterMixDelay = Simulator.settings.getPropertyAsInt("SGMIX_MIN_INTER_MIX_DELAY");
+			maxInterMixDelay = Simulator.settings.getPropertyAsInt("SGMIX_MAX_INTER_MIX_DELAY");
+			minClientMixDelay = Simulator.settings.getPropertyAsInt("SGMIX_MIN_CLIENT_MIX_DELAY");
+			maxClientMixDelay = Simulator.settings.getPropertyAsInt("SGMIX_MAX_CLIENT_MIX_DELAY");
+			maxClockDeviation = Simulator.settings.getPropertyAsInt("SGMIX_MAX_CLOCK_DEVITION");
 			
 			tsMin = new long[numberOfMixes];
 			tsMax = new long[numberOfMixes];

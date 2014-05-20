@@ -1,31 +1,30 @@
-/*
+/*******************************************************************************
  * gMix open source project - https://svs.informatik.uni-hamburg.de/gmix/
- * Copyright (C) 2012  Karl-Peter Fuchs
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * Copyright (C) 2014  SVS
+ *
+ * This program is free software: you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by 
+ * the Free Software Foundation, either version 3 of the License, or 
  * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
+ *
+ * You should have received a copy of the GNU General Public License 
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+ *******************************************************************************/
 package framework.core.socket.datagram;
 
 import java.util.Arrays;
 
 import framework.core.AnonNode;
-import framework.core.message.MixMessage;
-import framework.core.message.Reply;
 import framework.core.message.Request;
 import framework.core.socket.socketInterfaces.AdaptiveAnonServerSocket;
 import framework.core.socket.socketInterfaces.AnonMessage;
 import framework.core.socket.socketInterfaces.DatagramAnonServerSocket;
+import framework.core.socket.socketInterfaces.IO_EventObserver;
 import framework.core.util.Util;
 
 
@@ -36,25 +35,51 @@ public class DatagramAnonServerSocketImpl extends AdaptiveAnonServerSocket imple
 			AnonNode owner,
 			int bindPseudonym,
 			int bindPort,
-			CommunicationMode communicationMode,
+			CommunicationDirection communicationMode,
+			IO_Mode ioMode,
+			IO_EventObserver requestObserver,
 			boolean isReliable, 
 			boolean isOrderPreserving, 
 			boolean isFreeRoute) {
 		super(	owner, 
 				bindPseudonym, 
 				bindPort, 
-				communicationMode, 
+				communicationMode,
+				ioMode,
+				requestObserver,
 				false,
 				isReliable, 
 				isOrderPreserving, 
 				isFreeRoute
 				);
-		if (communicationMode == CommunicationMode.DUPLEX && !owner.IS_DUPLEX)
+		if (communicationMode == CommunicationDirection.DUPLEX && !owner.IS_DUPLEX)
 			throw new RuntimeException("the current plug-in config does not suport duplex sockets");
-		if (communicationMode == CommunicationMode.SIMPLEX_SENDER)
+		if (communicationMode == CommunicationDirection.SIMPLEX_SENDER)
 			throw new RuntimeException("this is a simplex socket (server backend); the server backend can only be \"CommunicationMode.SIMPLEX_RECEIVER\"");
 	}
 
+	
+	public DatagramAnonServerSocketImpl(
+			AnonNode owner,
+			int bindPseudonym,
+			int bindPort,
+			CommunicationDirection communicationMode,
+			IO_Mode ioMode,
+			boolean isReliable, 
+			boolean isOrderPreserving, 
+			boolean isFreeRoute) {
+		this(	owner, 
+				bindPseudonym, 
+				bindPort, 
+				communicationMode,
+				ioMode,
+				null,
+				isReliable, 
+				isOrderPreserving, 
+				isFreeRoute
+				);
+	}
+	
 	
 	@Override
 	public AnonMessage receiveMessage() {
@@ -82,19 +107,23 @@ public class DatagramAnonServerSocketImpl extends AdaptiveAnonServerSocket imple
 		if (message.getByteMessage().length > getMaxSizeForNextMessageSend())
 			throw new RuntimeException("the bypassed message is too large; use \"message.getMaxReplySize()\" to get the maximum size"); 
 		byte[] payload;
-		if (isFreeRoute)
+		if (isFreeRoute) {
 			payload = Util.concatArrays(new byte[][] {
-				Util.shortToByteArray(bindPort),
+				//Util.shortToByteArray(bindPort), // TODO: add support for multiple services (requires l4-plugin-support...)
 				Util.intToByteArray(message.getSourcePseudonym()),
 				message.getByteMessage()
 			});
-		else
-			payload = Util.concatArrays(new byte[][] {
-					Util.shortToByteArray(bindPort),
-					message.getByteMessage()
-				});
-		Reply reply = MixMessage.getInstanceReply(payload, message.getUser());
-		owner.putInReplyInputQueue(reply);
+		} else {
+			//Util.shortToByteArray(bindPort), // TODO: add support for multiple services (requires l4-plugin-support...)
+			//payload = Util.concatArrays(new byte[][] {
+			//		Util.shortToByteArray(bindPort),
+			//		message.getByteMessage()
+			//	});
+			payload = message.getByteMessage();
+		}
+		//Reply reply = MixMessage.getInstanceReply(payload, message.getUser());
+		//reply.isFirstReplyHop = true;
+		layer4.write(message.getUser(), payload);
 	}
 	
 	
@@ -102,16 +131,21 @@ public class DatagramAnonServerSocketImpl extends AdaptiveAnonServerSocket imple
 	public int getMaxSizeForNextMessageSend() {
 		if (!isDuplex)
 			throw new RuntimeException("this socket is simplex only"); 
-		if (isFreeRoute)
-			return layer3.getMaxSizeOfNextReply() - 6; // -2 for port; -4 for pseudonym; see sendMessage()
-		else
-			return layer3.getMaxSizeOfNextReply() - 2; // -2 for port; see sendMessage()
+		if (isFreeRoute) {
+			// TODO: add support for multiple services (requires l4-plugin-support...)
+			//return layer4.getMaxSizeOfNextWrite() - 6; // -2 for port; -4 for pseudonym; see sendMessage()
+			return layer4.getMaxSizeOfNextWrite() - 4; // -4 for pseudonym; see sendMessage()
+		} else {
+			return layer4.getMaxSizeOfNextWrite();
+			// TODO: add support for multiple services (requires l4-plugin-support...)
+			//return layer4.getMaxSizeOfNextWrite() - 2; // -2 for port; see sendMessage()
+		}
 	}
 
 	
 	@Override
 	public int getMaxSizeForNextMessageReceive() {
-		int maxSize = layer3.getMaxSizeOfNextRequest() -2; // -2 for port
+		int maxSize = layer4.getMaxSizeOfNextRead() -2; // -2 for port
 		if (isDuplex)
 			maxSize -= 4; // pseudonym
 		return maxSize;

@@ -42,18 +42,38 @@ TOLERANCE = 2500
 # ------------------------------------------------------------------------------
 # settings for APPLICATION_LEVEL load generation:
 #
-AL-MODE = AFAP
+AL-MODE = RaFM
 #	possible values:
-#		- TRACE_FILE: the load generator will replay traffic from a trace file 
-#		  (see property "TRACE_FILE_NAME" below)
+#		- RaFM: Replay and Feedback Model (trace-based replay; cf. [1] and 
+#         see options below)
 #		- AFAP: the simulated clients will send (A)s (F)ast (A)s (P)ossible
 #		  ("greedy source model"; see options below)
+#       - TRACE_FILE: the load generator will replay traffic from a trace file 
+#		  (see property "TRACE_FILE_NAME" below)
 #		- CONSTANT_RATE: the simulated clients will send at constant rate
 #		  (see options below)
 #		- POISSON: the simulated clients will send mix packets poisson 
 #		  distributed (see options below)
+#   [1] Karl-Peter Fuchs, Dominik Herrmann, and Hannes Federrath: "Generating 
+#   Realistic Application Workloads for Mix-Based Systems for Controllable, 
+#   Repeatable and Usable Experimentation", IFIP SEC 2013
 #
-# ---TRACE_FILE-options:
+#
+# ---RaFM-options:
+AL-RaFM-LIMIT_NUMBER_OF_CLIENTS = TRUE
+AL-RaFM-CLIENT_LIMIT = 10
+AL-RaFM-NUMBER_OF_SCHEDULER_THREADS = 4
+#   Note: the RaFM scheduler will use simplex or duplex mode as set in 
+#   generalConfig.txt and "simplex" corresponds to "SIMPLEX_WITH_FEEDBACK" in 
+#   [1] ("SIMPLEX_OPEN_LOOP" mode is not available, since this is a load 
+#   generator that suffers from tcp feedback, i.e. "SIMPLEX_OPEN_LOOP" is only 
+#   applicable for the discrete event simulator in package 
+#   "evaluation.simulator")
+AL-RaFM_TraceFile-NAME = ./inputOutput/global/traces/auck8/auck8_5min_500user_dpe.gmf
+#	trace file must be in folder "./inputOutput/global/traces/" or a sub-folder
+AL-RaFM_DIPLAY_DEBUG_INFO = FALSE
+#
+#---AL-TRACE_FILE-options:
 AL-TRACE_FILE-NAME = mixed/trace.dat
 #	trace file must be in folder "./inputOutput/loadGenerator/" or a sub-folder
 #

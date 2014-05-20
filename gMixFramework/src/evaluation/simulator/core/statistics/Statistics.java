@@ -1,20 +1,20 @@
-/*
+/*******************************************************************************
  * gMix open source project - https://svs.informatik.uni-hamburg.de/gmix/
- * Copyright (C) 2012  Karl-Peter Fuchs
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * Copyright (C) 2014  SVS
+ *
+ * This program is free software: you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by 
+ * the Free Software Foundation, either version 3 of the License, or 
  * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
+ *
+ * You should have received a copy of the GNU General Public License 
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+ *******************************************************************************/
 package evaluation.simulator.core.statistics;
 
 import gnu.trove.TDoubleArrayList;
@@ -22,6 +22,8 @@ import gnu.trove.TDoubleArrayList;
 import java.math.BigDecimal;
 
 import evaluation.simulator.Simulator;
+import evaluation.simulator.annotations.property.IntSimulationProperty;
+import evaluation.simulator.annotations.property.requirements.SimulationEndSimulationTimeEndRequirement;
 import evaluation.simulator.core.event.Event;
 import evaluation.simulator.core.event.EventExecutor;
 import evaluation.simulator.core.networkComponent.Identifiable;
@@ -41,6 +43,13 @@ public class Statistics implements EventExecutor {
 	private static boolean recordStatistics = false;
 	private static Simulator simulator;
 	
+	@IntSimulationProperty( name = "Simulation time limit (ms)",
+			key = "SIMULATION_TIME_LIMIT_IN_MS",
+			inject = "4:SIMULATION,Simulation",
+			min = 0,
+			isStatic = true,
+			enable_requirements = SimulationEndSimulationTimeEndRequirement.class)
+	private static int recordStatisticsEnd;
 	
 	public Statistics(Identifiable owner) { // is "owner" still needed?
 		//this.owner = owner;
@@ -50,10 +59,10 @@ public class Statistics implements EventExecutor {
 		recordedBooleanValues = new int[StatisticsType.values().length][];
 	}
 	
-	
 	// dummy constructor used for scheduling start and end of statistics recording (see below)
 	private Statistics(int i) {}
 	
+	// DESIRED_EVALUATIONS
 	
 	public static void setSimulator(Simulator simulator) {
 		Statistics.simulator = simulator;
@@ -67,7 +76,7 @@ public class Statistics implements EventExecutor {
 		}
 		// set fixed end (if specified)
 		if (Simulator.settings.getProperty("SIMULATION_END").equals("SIMULATION_TIME_END")) {
-			int recordStatisticsEnd = Simulator.settings.getPropertyAsInt("SIMULATION_TIME_LIMIT_IN_MS");
+			recordStatisticsEnd = Simulator.settings.getPropertyAsInt("SIMULATION_TIME_LIMIT_IN_MS");
 			simulator.scheduleEvent(new Event(s, recordStatisticsEnd, StatisticsEvent.STOP_RECORDING), s);
 		}
 	}

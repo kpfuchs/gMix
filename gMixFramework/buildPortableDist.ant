@@ -1,7 +1,7 @@
 <!--
 /*
  * gMix open source project - https://svs.informatik.uni-hamburg.de/gmix/
- * Copyright (C) 2012  Karl-Peter Fuchs
+ * Copyright (C) 2014 SVS
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -51,7 +51,7 @@
 	<target name="compile" depends="retrieve">
 		<mkdir dir="${build.dir}/classes"/>
 		<javac includeantruntime="false" srcdir="${src.dir}" destdir="${build.dir}/classes" classpathref="build.path"/>
-		<!-- <javac source="1.6" target="1.6" includeantruntime="false" srcdir="${src.dir}" destdir="${build.dir}/classes" classpathref="build.path"/> -->
+		<javac source="1.7" target="1.7" includeantruntime="false" srcdir="${src.dir}" destdir="${build.dir}/classes" classpathref="build.path"/>
 	</target>
 
 	

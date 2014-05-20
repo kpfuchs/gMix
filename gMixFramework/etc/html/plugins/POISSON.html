@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<title> GSim Helpdesk </title>
+<link rel="stylesheet" type="text/css" href="style.css"/>
+</head>
+<body>
+<h2>Poisson</h2>
+In probability theory and statistics, the Poisson distribution , named after French mathematician Siméon Denis Poisson, is a discrete probability distribution that expresses the probability of a given number of events occurring in a fixed interval of time and/or space if these events occur with a known average rate and independently of the time since the last event. The Poisson distribution can also be used for the number of events in other specified intervals such as distance, area or volume.<br />
+This network model ngelect all latencies caused by clients, mixes, proxies and links. This means none of the components simulates the processing time of messages. Furthermore the capacity of the link will not be considered.<br />
+Here the Poisson distribution describes the behaviour of the Load Generator defining the timing of package arrival.
+<br />
+<h3>Plugin key:</h3> <b>POISSON</b>
+<h3>Properties:</h3>
+<ul>
+  <li>Average requests per second:
+    <ul>
+      <li>Key: POISSON_AVERAGE_REQUESTS_PER_SECOND_AND_CLIENT</li>
+      <li>Type: Double</li>
+      <li>Description:<br/>Expectation value.</li>
+    </ul>
+  </li>
+  <li>Number of clients:
+    <ul>
+      <li>Key: POISSON_NUMBER_OF_CLIENTS_TO_SIMULATE</li>
+      <li>Type: Integer</li>
+      <li>Description:<br/>The number of clients sending data.</li>
+    </ul>
+  </li>
+  <li>Request Size:
+    <ul>
+      <li>Key: POISSON_REQUEST_SIZE</li>
+      <li>Type: Integer</li>
+      <li>Description:<br/>Sets the batch size.</li>
+    </ul>
+  </li>
+  <li>Reply Size:
+    <ul>
+      <li>Key: POISSON_REPLY_SIZE</li>
+      <li>Type: Integer</li>
+      <li>Description:<br/>Sets the batch size.</li>
+    </ul>
+  </li>
+  <li>Resolve Time:
+    <ul>
+      <li>Key: POISSON_RESOLVE_TIME</li>
+      <li>Type: Integer</li>
+      <li>Description:<br/>Resolve Time in ms.</li>
+    </ul>
+  </li>
+</ul>
+</body>
+</html>

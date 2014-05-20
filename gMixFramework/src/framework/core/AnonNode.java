@@ -1,20 +1,20 @@
-/*
+/*******************************************************************************
  * gMix open source project - https://svs.informatik.uni-hamburg.de/gmix/
- * Copyright (C) 2012  Karl-Peter Fuchs
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * Copyright (C) 2014  SVS
+ *
+ * This program is free software: you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by 
+ * the Free Software Foundation, either version 3 of the License, or 
  * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
+ *
+ * You should have received a copy of the GNU General Public License 
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+ *******************************************************************************/
 package framework.core;
 
 import java.net.InetAddress;
@@ -45,6 +45,7 @@ import framework.core.launcher.ToolName;
 import framework.core.message.MixMessage;
 import framework.core.message.Reply;
 import framework.core.message.Request;
+import framework.core.message.ExternalMessage.DummyStatus;
 import framework.core.routing.MixList;
 import framework.core.routing.RoutingMode;
 import framework.core.socket.connectedDatagram.ConnectedDatagramAnonServerSocketImpl;
@@ -57,11 +58,14 @@ import framework.core.socket.socketInterfaces.ConnectedDatagramAnonServerSocket;
 import framework.core.socket.socketInterfaces.ConnectedDatagramAnonSocket;
 import framework.core.socket.socketInterfaces.DatagramAnonServerSocket;
 import framework.core.socket.socketInterfaces.DatagramAnonSocket;
+import framework.core.socket.socketInterfaces.IO_EventObserver;
 import framework.core.socket.socketInterfaces.StreamAnonServerSocket;
 import framework.core.socket.socketInterfaces.StreamAnonSocket;
-import framework.core.socket.socketInterfaces.AnonSocketOptions.CommunicationMode;
+import framework.core.socket.socketInterfaces.AnonSocketOptions.CommunicationDirection;
+import framework.core.socket.socketInterfaces.NoneBlockingAnonSocketOptions.IO_Mode;
 import framework.core.socket.stream.StreamAnonServerSocketImpl;
 import framework.core.socket.stream.StreamAnonSocketClientImpl;
+import framework.core.userDatabase.User;
 import framework.core.userDatabase.UserDatabase;
 import framework.core.util.Util;
 import framework.infoService.InfoServiceClient;
@@ -124,7 +128,7 @@ public class AnonNode extends GMixTool {
 	
 	// other
 	private Vector<Controller> components = new Vector<Controller>(); // instantiated controllers
-	private HashMap<Integer, AdaptiveAnonServerSocket> sockets;
+	private HashMap<Integer, AdaptiveAnonServerSocket> sockets; // TODO: maybe we should only use the hashmap, if at least two server sockets are opened (hash overhead for each message)
 	private ArrayBlockingQueue<Request[]> requestInputQueue;
 	private ArrayBlockingQueue<Request[]> requestOutputQueue;
 	private ArrayBlockingQueue<Reply[]> replyInputQueue;
@@ -251,7 +255,7 @@ public class AnonNode extends GMixTool {
 		this.LAYER_4_CLIENT_INPUT_STREAM_REPLY_BUFFER_SIZE = settings.getProperty("GLOBAL_LAYER_4_CLIENT_INPUT_STREAM_REPLY_BUFFER_SIZE");
 		this.LAYER_4_MIX_INPUT_STREAM_REQUEST_BUFFER_SIZE = settings.getProperty("GLOBAL_LAYER_4_MIX_INPUT_STREAM_REQUEST_BUFFER_SIZE");
 
-		this.DEBUG_MODE_ON = infoService.getIsDuplexModeOn();
+		this.DEBUG_MODE_ON = infoService.getIsDebugModeOn();
 		this.NUMBER_OF_MIXES = infoService.getNumberOfMixes();
 		this.FREE_ROUTE_LENGTH = settings.getPropertyAsInt("GLOBAL_FREE_ROUTE_LENGTH");
 		if (ROUTING_MODE != RoutingMode.CASCADE && FREE_ROUTE_LENGTH > NUMBER_OF_MIXES)
@@ -326,7 +330,25 @@ public class AnonNode extends GMixTool {
 	
 	public StreamAnonServerSocket createStreamAnonServerSocket(
 			int bindPort,
-			CommunicationMode communicationMode,
+			CommunicationDirection communicationMode,
+			IO_Mode ioMode,
+			boolean isFreeRoute
+			) {
+		
+		return createStreamAnonServerSocket(
+				bindPort,
+				communicationMode,
+				ioMode,
+				null,
+				isFreeRoute
+				);
+	}
+	
+	public StreamAnonServerSocket createStreamAnonServerSocket(
+			int bindPort,
+			CommunicationDirection communicationMode,
+			IO_Mode ioMode,
+			IO_EventObserver requestObserver,
 			boolean isFreeRoute
 			) {
 		
@@ -340,6 +362,8 @@ public class AnonNode extends GMixTool {
 				PUBLIC_PSEUDONYM, 
 				bindPort,
 				communicationMode,
+				ioMode,
+				requestObserver,
 				isFreeRoute
 				);
 		
@@ -348,7 +372,30 @@ public class AnonNode extends GMixTool {
 	
 	public DatagramAnonServerSocket createDatagramServerSocket(
 			int bindPort, 
-			CommunicationMode communicationMode,
+			CommunicationDirection communicationMode,
+			IO_Mode ioMode,
+			boolean isReliable, 
+			boolean isOrderPreserving, 
+			boolean isFreeRoute
+			) {
+		
+		return createDatagramServerSocket(
+				bindPort,
+				communicationMode,
+				ioMode,
+				null,
+				isReliable,
+				isOrderPreserving,
+				isFreeRoute
+				);
+	}
+
+	
+	public DatagramAnonServerSocket createDatagramServerSocket(
+			int bindPort, 
+			CommunicationDirection communicationMode,
+			IO_Mode ioMode,
+			IO_EventObserver requestObserver,
 			boolean isReliable, 
 			boolean isOrderPreserving, 
 			boolean isFreeRoute
@@ -364,16 +411,41 @@ public class AnonNode extends GMixTool {
 				PUBLIC_PSEUDONYM,
 				bindPort,
 				communicationMode,
+				ioMode,
+				requestObserver,
 				isReliable,
 				isOrderPreserving,
 				isFreeRoute
 				);
 	}
 
-
+	
 	public ConnectedDatagramAnonServerSocket createConnectedDatagramServerSocket(
 			int bindPort, 
-			CommunicationMode communicationMode,
+			CommunicationDirection communicationMode,
+			IO_Mode ioMode,
+			boolean isReliable, 
+			boolean isOrderPreserving, 
+			boolean isFreeRoute
+			) {
+		
+		return createConnectedDatagramServerSocket(	
+				bindPort,
+				communicationMode,
+				ioMode,
+				null,
+				isReliable,
+				isOrderPreserving,
+				isFreeRoute
+				);
+	}
+	
+	
+	public ConnectedDatagramAnonServerSocket createConnectedDatagramServerSocket(
+			int bindPort, 
+			CommunicationDirection communicationMode,
+			IO_Mode ioMode,
+			IO_EventObserver requestObserver,
 			boolean isReliable, 
 			boolean isOrderPreserving, 
 			boolean isFreeRoute
@@ -389,6 +461,8 @@ public class AnonNode extends GMixTool {
 				PUBLIC_PSEUDONYM, 
 				bindPort,
 				communicationMode,
+				ioMode,
+				requestObserver,
 				isReliable,
 				isOrderPreserving,
 				isFreeRoute
@@ -417,7 +491,7 @@ public class AnonNode extends GMixTool {
 	
 	
 	public DatagramAnonSocket createDatagramSocket(
-			CommunicationMode communicationMode,
+			CommunicationDirection communicationMode,
 			boolean isReliable, 
 			boolean isOrderPreserving, 
 			boolean isFreeRoute
@@ -435,7 +509,7 @@ public class AnonNode extends GMixTool {
 
 	
 	public StreamAnonSocket createStreamSocket(
-			CommunicationMode communicationMode,
+			CommunicationDirection communicationMode,
 			boolean isFreeRoute
 			) {
 		if (!IS_CLIENT)
@@ -449,7 +523,7 @@ public class AnonNode extends GMixTool {
 	
 	
 	public ConnectedDatagramAnonSocket createConnectedDatagramSocket(
-			CommunicationMode communicationMode,
+			CommunicationDirection communicationMode,
 			boolean isReliable, 
 			boolean isOrderPreserving, 
 			boolean isFreeRoute
@@ -466,53 +540,53 @@ public class AnonNode extends GMixTool {
 	
 	// called by layer 3 (output strategy) mix plug-ins
 	public void putOutRequest(Request request) {
-		if (!isFinalHop(request)) { // put request in output queue, from where it will be sent to the next hop (via layer 1)
+		if (!request.isFinalHop(this)) { // put request in output queue, from where it will be sent to the next hop (via layer 1)
 			putInRequestOutputQueue(request);
-		} else { // final hop: find desired socket and forward request to it
-			if (DISPLAY_ROUTE_INFO && ROUTING_MODE != RoutingMode.CASCADE)
-				System.out.println("" +this +": i'm the final hop");
-			AdaptiveAnonServerSocket destSocket = null;
-			int dstPort = 0;
-			if (request.getByteMessage().length != 0) {// if not a dummy
-				dstPort = Util.byteArrayToShort(Arrays.copyOf(request.getByteMessage(), 2)); // get desired socket
-				request.setByteMessage(Arrays.copyOfRange(request.getByteMessage(), 2, request.getByteMessage().length));
-				destSocket = sockets.get(dstPort);
-				if (destSocket == null) {
-					System.err.println("received message for unknown port: " +dstPort);
-					return;
-				} else {
-					destSocket.incomingRequest(request);
-				}
-			}
-			if (this.RECORD_STATISTICS_ON) {
-				StatisticsRecorder.addMessageDwellTimeRecord(request);
-				StatisticsRecorder.addRequestThroughputRecord(request.getByteMessage().length, request.getOwner());
-			}
+		} else { // final hop: forward to layer 4 (note: layer 4 will call forwardToLayer5() later)
+			assert request.getDummyStatus() != DummyStatus.UNKNOWN;
+			if (request.getDummyStatus() == DummyStatus.NO_DUMMY) {
+				if (DISPLAY_ROUTE_INFO && ROUTING_MODE != RoutingMode.CASCADE)
+					System.out.println("" +this +": i'm the final hop");
+				transportLayerMix.forwardRequest(request);
+				// TODO: log goodput, dummy-overhead and packet-padding-overhead separately
+			} else {
+				// we do not forward dummies to layer 4...
+			} 
 		}
 	}
 	
 	
+	// called by layer 4 (transport) mix plug-ins
+	public void forwardToLayer5(Request request) {	
+		// find desired socket and forward request to it
+		AdaptiveAnonServerSocket destSocket = null;
+		int dstPort = 0;
+		assert request.getDummyStatus() != DummyStatus.UNKNOWN;
+		if (request.getDummyStatus() == DummyStatus.NO_DUMMY) {
+			dstPort = Util.byteArrayToShort(Arrays.copyOf(request.getByteMessage(), 2)); // get desired socket
+			request.setByteMessage(Arrays.copyOfRange(request.getByteMessage(), 2, request.getByteMessage().length));
+			destSocket = sockets.get(dstPort);
+			if (destSocket == null) {
+				System.err.println("received message for unknown port: " +dstPort);
+				return;
+			} else {
+				destSocket.incomingRequest(request);
+			}
+		} // TODO: log goodput, dummy-overhead and packet-padding-overhead separately 
+		if (this.RECORD_STATISTICS_ON) {
+			StatisticsRecorder.addMessageDwellTimeRecord(request);
+			StatisticsRecorder.addRequestThroughputRecord(request.getByteMessage().length, request.getOwner());
+		}
+	}
+	
+	
+	// called by layer 3 (output strategy) mix plug-ins
 	public void putOutRequests(Request[] requests) {
-		if (ROUTING_MODE == RoutingMode.CASCADE) {
-			if (!IS_LAST_MIX) // put data in request output queue, from where it will be forwarded to the next mix via the layer 1 plug-in
-				putInRequestOutputQueue(requests);
-			else // forward data to the responsive socket
-				for (Request request:requests)
-					putOutRequest(request);	
+		if (ROUTING_MODE == RoutingMode.CASCADE && !IS_LAST_MIX) { // put data in request output queue, from where it will be forwarded to the next mix via the layer 1 plug-in
+			putInRequestOutputQueue(requests);
 		} else {
 			for (Request request:requests)
 				putOutRequest(request);
-		}
-	}
-	
-	
-	private boolean isFinalHop(Request request) {
-		if (ROUTING_MODE == RoutingMode.FREE_ROUTE_DYNAMIC_ROUTING) {
-			return request.nextHopAddress == MixMessage.NONE ? true : false; 
-		} else if (ROUTING_MODE == RoutingMode.FREE_ROUTE_SOURCE_ROUTING) {
-			return request.nextHopAddress == MixMessage.NONE ? true : false; 
-		} else { // fixed route
-			return this.IS_LAST_MIX;
 		}
 	}
 	
@@ -657,6 +731,11 @@ public class AnonNode extends GMixTool {
 	}
 	
 	
+	public void forwardToLayer2(Reply reply) {	
+		putInReplyInputQueue(reply);
+	}
+	
+	
 	public void putInReplyInputQueue(Reply reply) {
 		assert reply != null;
 		try {
@@ -667,6 +746,11 @@ public class AnonNode extends GMixTool {
 		}
 		if (this.IS_LAST_MIX && this.RECORD_STATISTICS_ON)
 			StatisticsRecorder.addReplyThroughputRecord(reply.getByteMessage().length, reply.getOwner());
+	}
+	
+	
+	public void forwardToLayer2(Reply[] replies) {	
+		putInReplyInputQueue(replies);
 	}
 	
 	
@@ -729,6 +813,11 @@ public class AnonNode extends GMixTool {
 				putInReplyOutputQueue(replies);
 			}
 		}
+	}
+	
+	
+	public void write(User user, byte[] data) {
+		outputStrategyLayerMix.write(user, data);
 	}
 	
 

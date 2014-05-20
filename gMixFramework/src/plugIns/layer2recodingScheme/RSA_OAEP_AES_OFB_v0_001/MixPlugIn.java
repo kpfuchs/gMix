@@ -1,27 +1,26 @@
-/*
+/*******************************************************************************
  * gMix open source project - https://svs.informatik.uni-hamburg.de/gmix/
- * Copyright (C) 2012  Karl-Peter Fuchs
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * Copyright (C) 2014  SVS
+ *
+ * This program is free software: you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by 
+ * the Free Software Foundation, either version 3 of the License, or 
  * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
+ *
+ * You should have received a copy of the GNU General Public License 
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+ *******************************************************************************/
 package plugIns.layer2recodingScheme.RSA_OAEP_AES_OFB_v0_001;
 
 import java.util.Arrays;
 
 import framework.core.controller.Implementation;
 import framework.core.interfaces.Layer2RecodingSchemeMix;
-import framework.core.message.MixMessage;
 import framework.core.message.Reply;
 import framework.core.message.Request;
 import framework.core.userDatabase.User;
@@ -32,14 +31,14 @@ public class MixPlugIn extends Implementation implements Layer2RecodingSchemeMix
 	private RSA_OAEP_AES_OFB_Config config;
 	private RequestThread[] requestThreads;
 	private ReplyThread[] replyThreads;
-	private RSA_OAEP_AES_OFB messageCreator;
+	//private RSA_OAEP_AES_OFB messageCreator;
 	
 	
 	@Override
 	public void constructor() {
 		
 		this.config = new RSA_OAEP_AES_OFB_Config(anonNode, false);
-		this.messageCreator = new RSA_OAEP_AES_OFB(anonNode, config);
+		//this.messageCreator = new RSA_OAEP_AES_OFB(anonNode, config);
 		this.requestThreads = new RequestThread[config.NUMBER_OF_THREADS];
 		if (anonNode.IS_DUPLEX)
 			replyThreads = new ReplyThread[config.NUMBER_OF_THREADS];
@@ -97,12 +96,14 @@ public class MixPlugIn extends Implementation implements Layer2RecodingSchemeMix
 	
 	@Override
 	public Request generateDummy(User user) {
-		if (anonNode.IS_LAST_MIX)
+		throw new RuntimeException("not supported");
+		/*if (anonNode.IS_LAST_MIX)
 			return null;
 		Request request = MixMessage.getInstanceRequest(new byte[0]);
 		request.setOwner(user);
+		request.setDummyStatus(DummyStatus.DUMMY);
 		request = messageCreator.applyLayeredEncryption(request);
-		return request;
+		return request;*/
 	}
 	
 

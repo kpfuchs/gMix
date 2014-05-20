@@ -1,20 +1,20 @@
-/*
+/*******************************************************************************
  * gMix open source project - https://svs.informatik.uni-hamburg.de/gmix/
- * Copyright (C) 2012  Karl-Peter Fuchs
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * Copyright (C) 2014  SVS
+ *
+ * This program is free software: you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by 
+ * the Free Software Foundation, either version 3 of the License, or 
  * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
+ *
+ * You should have received a copy of the GNU General Public License 
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+ *******************************************************************************/
 package framework.core.socket.datagram;
 
 import java.util.Arrays;
@@ -22,9 +22,6 @@ import java.util.HashMap;
 import java.util.Random;
 
 import framework.core.AnonNode;
-import framework.core.message.MixMessage;
-import framework.core.message.Reply;
-import framework.core.message.Request;
 import framework.core.routing.RoutingMode;
 import framework.core.socket.socketInterfaces.AdaptiveAnonSocket;
 import framework.core.socket.socketInterfaces.AnonMessage;
@@ -39,7 +36,7 @@ public class DatagramAnonSocketClientImpl extends AdaptiveAnonSocket implements 
 	
 	public DatagramAnonSocketClientImpl(
 			AnonNode owner,
-			CommunicationMode communicationMode,
+			CommunicationDirection communicationMode,
 			boolean isReliable, 
 			boolean isOrderPreserving, 
 			boolean isFreeRoute
@@ -54,7 +51,7 @@ public class DatagramAnonSocketClientImpl extends AdaptiveAnonSocket implements 
 		if (isDuplex)
 			this.pseudonymToDestAddress = new HashMap<Integer, Integer>(100);
 		if (owner.ROUTING_MODE == RoutingMode.CASCADE)
-			layer1.connect();
+			layer4.connect();
 	}
 
 	
@@ -63,8 +60,8 @@ public class DatagramAnonSocketClientImpl extends AdaptiveAnonSocket implements 
 		if (isFreeRoute)
 			throw new RuntimeException("no destination address specified; use \"sendMessage(destinationPseudonym, destPort, payload\" instead"); 
 		payload = Util.concatArrays(Util.shortToByteArray(destPort), payload); // add destination port (= which layer 5 service/ServerSocket shall be addressed)
-		Request request = MixMessage.getInstanceRequest(payload);
-		layer3.sendMessage(request);
+		//Request request = MixMessage.getInstanceRequest(payload);
+		layer4.write(payload);
 	}
 
 
@@ -78,9 +75,9 @@ public class DatagramAnonSocketClientImpl extends AdaptiveAnonSocket implements 
 			payload = Util.concatArrays(Util.intToByteArray(endToEndPseudonym), payload);
 		}
 		payload = Util.concatArrays(Util.shortToByteArray(destinationPort), payload); // add destination port (= which layer 5 service/ServerSocket shall be addressed)
-		Request request = MixMessage.getInstanceRequest(payload);
-		request.destinationPseudonym = destinationPseudonym;
-		layer3.sendMessage(request);
+		//Request request = MixMessage.getInstanceRequest(payload);
+		//request.destinationPseudonym = destinationPseudonym;
+		layer4.write(payload, destinationPseudonym);
 	}
 
 
@@ -89,12 +86,14 @@ public class DatagramAnonSocketClientImpl extends AdaptiveAnonSocket implements 
 		if (!isDuplex)
 			throw new RuntimeException("this is a simplex socket"); 
 		
-		Reply reply = layer3.receiveReply();
-		AnonMessage result = new AnonMessage(reply.getByteMessage());
+		byte[] reply = layer4.receive();
+		assert reply != null && reply.length != 0;
+		AnonMessage result = new AnonMessage(reply);
 		
-		int sourcePort = Util.byteArrayToShort(Arrays.copyOf(reply.getByteMessage(), 2));
-		result.setByteMessage(Arrays.copyOfRange(reply.getByteMessage(), 2, reply.getByteMessage().length));
-		result.setSourcePort(sourcePort);
+		// TODO: add support for multiple services (requires l4-plugin-support...)
+		//int sourcePort = Util.byteArrayToShort(Arrays.copyOf(reply, 2));
+		//result.setByteMessage(Arrays.copyOfRange(reply, 2, reply.length));
+		//result.setSourcePort(sourcePort); 
 				
 		if (isFreeRoute) {
 			int endToEndPseudonym = Util.byteArrayToInt(Arrays.copyOf(result.getByteMessage(), 4));
@@ -113,9 +112,9 @@ public class DatagramAnonSocketClientImpl extends AdaptiveAnonSocket implements 
 	@Override
 	public int getMaxSizeForNextMessageSend() {
 		if (isFreeRoute)
-			return layer3.getMaxSizeOfNextRequest() -6; // -2 for port; -4 for pseudonym; see sendMessage()
+			return layer4.getMaxSizeOfNextWrite() -6; // -2 for port; -4 for pseudonym; see sendMessage()
 		else
-			return layer3.getMaxSizeOfNextRequest() -2; // -2 for port; see sendMessage()
+			return layer4.getMaxSizeOfNextWrite() -2; // -2 for port; see sendMessage()
 	}
 
 	
@@ -123,10 +122,15 @@ public class DatagramAnonSocketClientImpl extends AdaptiveAnonSocket implements 
 	public int getMaxSizeForNextMessageReceive() {
 		if (!isDuplex)
 			throw new RuntimeException("this socket is simplex only"); 
-		int maxSize = layer3.getMaxSizeOfNextReply() -2; // -2 for port
+		// TODO: add support for multiple services (requires l4-plugin-support...)
+		//int maxSize = layer4.getMaxSizeOfNextReply() -2; // -2 for port
+		//if (isFreeRoute)
+		//	maxSize -= 4; // pseudonym
+		//return maxSize;
 		if (isFreeRoute)
-			maxSize -= 4; // pseudonym
-		return maxSize;
+			return layer4.getMaxSizeOfNextReply() - 4;
+		else
+			return layer4.getMaxSizeOfNextReply();
 	}
 
 
@@ -138,7 +142,7 @@ public class DatagramAnonSocketClientImpl extends AdaptiveAnonSocket implements 
 
 	@Override
 	public int availableReplies() {
-		return layer3.availableReplies();
+		return layer4.availableReplies();
 	}
 	
 }

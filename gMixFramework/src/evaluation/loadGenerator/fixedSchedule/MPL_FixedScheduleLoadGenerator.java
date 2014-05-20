@@ -1,20 +1,20 @@
-/*
+/*******************************************************************************
  * gMix open source project - https://svs.informatik.uni-hamburg.de/gmix/
- * Copyright (C) 2012  Karl-Peter Fuchs
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * Copyright (C) 2014  SVS
+ *
+ * This program is free software: you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by 
+ * the Free Software Foundation, either version 3 of the License, or 
  * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
+ *
+ * You should have received a copy of the GNU General Public License 
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+ *******************************************************************************/
 package evaluation.loadGenerator.fixedSchedule;
 
 import evaluation.loadGenerator.ClientTrafficScheduleWriter;
@@ -44,7 +44,7 @@ public class MPL_FixedScheduleLoadGenerator extends FixedScheduleLoadGenerator {
 	// TODO: use more than one scheduler (distribute events round robin-like to schedulers unless two or more events belong to the same client-socket; in that case, schedule all for the same scheduler as sending through a single socket cant be parallelized)
 	public MPL_FixedScheduleLoadGenerator(LoadGenerator owner) {
 		super(owner);
-		this.scheduler = new ThreadPoolScheduler<MPL_ClientWrapper>(settings.getPropertyAsInt("TOLERANCE")); // TODO: offer further schedulers
+		this.scheduler = new ThreadPoolScheduler<MPL_ClientWrapper>(settings); // TODO: offer further schedulers
 		this.scheduleWriterThread = new ScheduleWriterThread();
 		
 		// create suiting ClientTrafficScheduleWriter:

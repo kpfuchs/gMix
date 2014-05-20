@@ -1,40 +1,48 @@
-/*
+/*******************************************************************************
  * gMix open source project - https://svs.informatik.uni-hamburg.de/gmix/
- * Copyright (C) 2012  Karl-Peter Fuchs
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * Copyright (C) 2014  SVS
+ *
+ * This program is free software: you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by 
+ * the Free Software Foundation, either version 3 of the License, or 
  * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
+ *
+ * You should have received a copy of the GNU General Public License 
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+ *******************************************************************************/
 package evaluation.loadGenerator.scheduler;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import framework.core.config.Settings;
 
-public class ThreadPoolScheduler<E> implements Scheduler<E> {
+
+public class ThreadPoolScheduler<E> extends Scheduler<E> {
 
 	private ScheduledThreadPoolExecutor scheduler;
 	private final static long INIT_TIME = System.nanoTime();
 	private long latestExecutionScheduled = Long.MIN_VALUE;
 	private QueueEntry lastEntry = null;
-	private long tolerance; // in nanosec
 	
 	
 	// @tolerance in microsec (uses microsec as nanosec would imply a higher accuracy than available)
-	public ThreadPoolScheduler(long tolerance) {
-		this.tolerance = TimeUnit.MICROSECONDS.toNanos(tolerance);
-		this.scheduler = new ScheduledThreadPoolExecutor(4); // TODO: dynamic
+	public ThreadPoolScheduler(Settings settings) {
+		super(settings);
+		this.scheduler = new ScheduledThreadPoolExecutor(4);
+	}
+	
+	
+	// @tolerance in microsec (uses microsec as nanosec would imply a higher accuracy than available)
+	public ThreadPoolScheduler(Settings settings, int numberOfThreads) {
+		super(settings);
+		this.scheduler = new ScheduledThreadPoolExecutor(numberOfThreads);
 	}
 
 
@@ -102,23 +110,12 @@ public class ThreadPoolScheduler<E> implements Scheduler<E> {
 
 		@Override
 		public E call() throws Exception {
-			warnIfDelayed(now() - this.executionTime, this);
+			warnIfDelayed(now() - this.executionTime);
 			if (this.notifyTarget != null)
 				this.notifyTarget.execute(this.attachment);
 			this.scheduleTarget.execute(this.attachment);
 			return this.attachment;
 		}
-	}
-	
-	
-	private void warnIfDelayed(long unintendedDelay, QueueEntry task) {
-		if (unintendedDelay > tolerance)
-			System.err.println(
-					"warning: schedule executor more than " 
-					+((float)tolerance/1000000f) +"ms behind schedule (" 
-					+((float)unintendedDelay/1000000f) +"ms) for " 
-					+task.attachment
-				); 
 	}
 	
 }

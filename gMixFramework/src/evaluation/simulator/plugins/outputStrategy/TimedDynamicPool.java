@@ -1,26 +1,29 @@
-/*
+/*******************************************************************************
  * gMix open source project - https://svs.informatik.uni-hamburg.de/gmix/
- * Copyright (C) 2012  Karl-Peter Fuchs
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * Copyright (C) 2014  SVS
+ *
+ * This program is free software: you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by 
+ * the Free Software Foundation, either version 3 of the License, or 
  * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
+ *
+ * You should have received a copy of the GNU General Public License 
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+ *******************************************************************************/
 package evaluation.simulator.plugins.outputStrategy;
 
 import java.security.SecureRandom;
 import java.util.Vector;
 
 import evaluation.simulator.Simulator;
+import evaluation.simulator.annotations.plugin.Plugin;
+import evaluation.simulator.annotations.property.DoubleSimulationProperty;
+import evaluation.simulator.annotations.property.IntSimulationProperty;
 import evaluation.simulator.core.event.Event;
 import evaluation.simulator.core.event.EventExecutor;
 import evaluation.simulator.core.message.MixMessage;
@@ -40,34 +43,47 @@ import evaluation.simulator.plugins.mixSendStyle.MixSendStyleImpl;
 //in the mix (m >=n). If n = 1, this is the mix that has been used in the 
 //Mixmaster remailer system for years."
 // implemented as described in "Generalising Mixes" (Diaz)
+@Plugin(pluginKey = "TIMED_DYNAMIC_POOL", pluginName="Timed Dynamic Pool")
 public class TimedDynamicPool extends OutputStrategyImpl {
 
 	private SimplexTimedDynamicPool requestPool;
 	private SimplexTimedDynamicPool replyPool;
 	private static SecureRandom secureRandom = new SecureRandom();
 	
+	@IntSimulationProperty( name = "Send rate (ms)",
+			key = "TIMED_DYNAMIC_POOL_SEND_INTERVAL_IN_MS",
+			min = 0)
+	private int sendingRate;
+	
+	@IntSimulationProperty( name = "Minimum messages in pool (requests)",
+			key = "TIMED_DYNAMIC_POOL_MIN_MESSAGES_IN_POOL",
+			min = 0)
+	private int minMessages;
+	
+	@DoubleSimulationProperty( name = "Fraction",
+			key = "TIMED_DYNAMIC_POOL_FRACTION",
+			min = 0,
+			max = 1)
+	private double fraction;
 	
 	public TimedDynamicPool(Mix mix, Simulator simulator) {
 		super(mix, simulator);
-		int sendingRate = Simulator.settings.getPropertyAsInt("TIMED_DYNAMIC_POOL_SEND_INTERVAL_IN_MS");
-		int minMessages = Simulator.settings.getPropertyAsInt("TIMED_DYNAMIC_POOL_MIN_MESSAGES_IN_POOL");
-		double fraction = Simulator.settings.getPropertyAsDouble("TIMED_DYNAMIC_POOL_FRACTION");
-		this.requestPool = new SimplexTimedDynamicPool(true, sendingRate, minMessages, fraction);
-		this.replyPool = new SimplexTimedDynamicPool(false, sendingRate, minMessages, fraction);
+		this.sendingRate = Simulator.settings.getPropertyAsInt("TIMED_DYNAMIC_POOL_SEND_INTERVAL_IN_MS");
+		this.minMessages = Simulator.settings.getPropertyAsInt("TIMED_DYNAMIC_POOL_MIN_MESSAGES_IN_POOL");
+		this.fraction = Simulator.settings.getPropertyAsDouble("TIMED_DYNAMIC_POOL_FRACTION");
+		this.requestPool = new SimplexTimedDynamicPool(true, this.sendingRate, this.minMessages, this.fraction);
+		this.replyPool = new SimplexTimedDynamicPool(false, this.sendingRate, this.minMessages, this.fraction);
 	}
-	
 
 	@Override
 	public void incomingRequest(MixMessage mixMessage) {
 		requestPool.addMessage(mixMessage);
 	}
 
-
 	@Override
 	public void incomingReply(MixMessage mixMessage) {
 		replyPool.addMessage(mixMessage);
 	}
-	
 	
 	public class SimplexTimedDynamicPool implements EventExecutor {
 
@@ -77,7 +93,6 @@ public class TimedDynamicPool extends OutputStrategyImpl {
 		private int sendingRate;
 		private double minMessages;
 		private double fraction;
-		
 		
 		public SimplexTimedDynamicPool(boolean isRequestPool, int sendingRate, int minMessages, double fraction) {
 			

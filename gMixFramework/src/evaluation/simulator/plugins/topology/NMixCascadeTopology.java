@@ -1,33 +1,35 @@
-/*
+/*******************************************************************************
  * gMix open source project - https://svs.informatik.uni-hamburg.de/gmix/
- * Copyright (C) 2013  Karl-Peter Fuchs
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * Copyright (C) 2014  SVS
+ *
+ * This program is free software: you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by 
+ * the Free Software Foundation, either version 3 of the License, or 
  * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
+ *
+ * You should have received a copy of the GNU General Public License 
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+ *******************************************************************************/
 package evaluation.simulator.plugins.topology;
 
 import java.util.HashMap;
 
 import evaluation.simulator.Simulator;
+import evaluation.simulator.annotations.plugin.Plugin;
+import evaluation.simulator.annotations.property.IntSimulationProperty;
 import evaluation.simulator.core.networkComponent.AbstractClient;
 import evaluation.simulator.core.networkComponent.DistantProxy;
 import evaluation.simulator.core.networkComponent.Mix;
 import evaluation.simulator.core.networkComponent.NetworkConnection;
-import evaluation.simulator.pluginRegistry.DelayBox.TypeOfNode;
 import evaluation.simulator.pluginRegistry.DelayBox;
+import evaluation.simulator.pluginRegistry.DelayBox.TypeOfNode;
 
-
+@Plugin( pluginKey = "NMIX", visible = false )
 public class NMixCascadeTopology extends TopologyScript {
 	
 	private int numberOfMixes;
@@ -55,7 +57,7 @@ public class NMixCascadeTopology extends TopologyScript {
 			boolean isLast = (i == numberOfMixes);
 			Mix mix = new Mix("Mix"+i, Simulator.getSimulator(), isFirst, isLast);
 			mix.setDelayBox(DelayBox.getInstance(TypeOfNode.MIX));
-			mixes.put("Mix:Mix1", mix);
+			mixes.put("Mix:Mix"+i, mix);
 		}
 		// connect mixes:
 		for (int i=1; i<=numberOfMixes; i++) {

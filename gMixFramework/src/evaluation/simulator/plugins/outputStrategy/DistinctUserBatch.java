@@ -1,20 +1,20 @@
-/*
+/*******************************************************************************
  * gMix open source project - https://svs.informatik.uni-hamburg.de/gmix/
- * Copyright (C) 2012  Karl-Peter Fuchs
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * Copyright (C) 2014  SVS
+ *
+ * This program is free software: you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by 
+ * the Free Software Foundation, either version 3 of the License, or 
  * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
+ *
+ * You should have received a copy of the GNU General Public License 
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+ *******************************************************************************/
 package evaluation.simulator.plugins.outputStrategy;
 
 import java.util.HashMap;
@@ -22,6 +22,8 @@ import java.util.Map;
 import java.util.Vector;
 
 import evaluation.simulator.Simulator;
+import evaluation.simulator.annotations.plugin.Plugin;
+import evaluation.simulator.annotations.property.IntSimulationProperty;
 import evaluation.simulator.core.event.Event;
 import evaluation.simulator.core.event.EventExecutor;
 import evaluation.simulator.core.message.MessageFragment;
@@ -41,6 +43,7 @@ import evaluation.simulator.plugins.mixSendStyle.ReplyReceiver;
 // output strategy, that collects messages until "batchSize" messages are reached
 // when "batchSize" messages are reached, all messages are sent (in random order)
 // accepts only one message per participant for each batch
+@Plugin(pluginKey = "DISTINCT_USER_BATCH", pluginName = "Distinct User Batch")
 public class DistinctUserBatch extends OutputStrategyImpl implements EventExecutor {
 	
 	private boolean setupComplete;
@@ -49,6 +52,12 @@ public class DistinctUserBatch extends OutputStrategyImpl implements EventExecut
 	private MixMessage[] collectedReplies;
 	private int requestCounter = 0;
 	private int replyCounter = 0;
+	
+	@IntSimulationProperty(
+		name = "Maximum reply delay (ms)",
+		key = "MAX_REPLY_DELAY_DISTINCT_USER_BATCH",
+		min = 0
+	)
 	private int timeout;
 	private Event timeoutEvent = null;
 	private Map<String, Vector<TransportMessage>> clientReplyWaitingQueues;

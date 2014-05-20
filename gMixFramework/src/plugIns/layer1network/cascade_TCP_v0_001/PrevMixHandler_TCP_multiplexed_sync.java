@@ -1,20 +1,20 @@
-/*
+/*******************************************************************************
  * gMix open source project - https://svs.informatik.uni-hamburg.de/gmix/
- * Copyright (C) 2012  Karl-Peter Fuchs
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * Copyright (C) 2014  SVS
+ *
+ * This program is free software: you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by 
+ * the Free Software Foundation, either version 3 of the License, or 
  * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
+ *
+ * You should have received a copy of the GNU General Public License 
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+ *******************************************************************************/
 package plugIns.layer1network.cascade_TCP_v0_001;
 
 
@@ -108,7 +108,7 @@ public class PrevMixHandler_TCP_multiplexed_sync extends SubImplementation imple
 					}
 					byte[] message = Util.forceRead(previousMixInputStream, messageLength);
 					Request request = MixMessage.getInstanceRequest(message, user);
-					//System.out.println(mix +" received this message (ciphertext): " +Util.md5(request.getByteMessage())); // TODO
+					//System.out.println(this +" received this message (ciphertext): " +Util.md5(request.getByteMessage())); // TODO
 					anonNode.putInRequestInputQueue(request);			
 				} catch (IOException e) { // connection is lost
 					System.out.println(anonNode +" connection to previous mix lost"); 
@@ -179,7 +179,8 @@ public class PrevMixHandler_TCP_multiplexed_sync extends SubImplementation imple
 							continue;
 						}	
 						//System.out.println("id: " +id +", len: " +replies[i].getByteMessage().length); 
-						assert replies[i].getByteMessage().length > 0;
+						//assert replies[i].getByteMessage().length > 0;
+						assert replies[i].getByteMessage().length > 0: replies[i].getDummyStatus();
 						previousMixOutputStream.write(Util.intToByteArray(id));
 						previousMixOutputStream.write(Util.intToByteArray(replies[i].getByteMessage().length));
 						previousMixOutputStream.write(replies[i].getByteMessage());

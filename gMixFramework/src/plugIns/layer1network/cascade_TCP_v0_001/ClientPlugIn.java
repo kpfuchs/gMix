@@ -1,20 +1,20 @@
-/*
+/*******************************************************************************
  * gMix open source project - https://svs.informatik.uni-hamburg.de/gmix/
- * Copyright (C) 2012  Karl-Peter Fuchs
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * Copyright (C) 2014  SVS
+ *
+ * This program is free software: you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by 
+ * the Free Software Foundation, either version 3 of the License, or 
  * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
+ *
+ * You should have received a copy of the GNU General Public License 
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+ *******************************************************************************/
 package plugIns.layer1network.cascade_TCP_v0_001;
 
 import java.io.BufferedInputStream;
@@ -29,6 +29,7 @@ import framework.core.controller.Implementation;
 import framework.core.interfaces.Layer1NetworkClient;
 import framework.core.interfaces.Layer2RecodingSchemeClient;
 import framework.core.interfaces.Layer3OutputStrategyClient;
+import framework.core.interfaces.Layer4TransportClient;
 import framework.core.message.MixMessage;
 import framework.core.message.Reply;
 import framework.core.message.Request;
@@ -69,11 +70,11 @@ public class ClientPlugIn extends Implementation implements Layer1NetworkClient 
 
 	
 	@Override
-	public void setReferences(
-			Layer1NetworkClient layer1,
-			Layer2RecodingSchemeClient layer2, 
-			Layer3OutputStrategyClient layer3) {
+	public void setReferences(Layer1NetworkClient layer1,
+			Layer2RecodingSchemeClient layer2,
+			Layer3OutputStrategyClient layer3, Layer4TransportClient layer4) {
 		assert layer1 == this;
+		
 	}
 	
 	
@@ -93,7 +94,6 @@ public class ClientPlugIn extends Implementation implements Layer1NetworkClient 
 			try {Thread.sleep(5000);} catch (InterruptedException e1) {e1.printStackTrace();}
 			connect();
 		}
-		
 	}
 	
 	
@@ -152,6 +152,7 @@ public class ClientPlugIn extends Implementation implements Layer1NetworkClient 
 			}
 			if (mixInputStream.available() >= replyLength) {
 				byte[] message = Util.forceRead(mixInputStream, replyLength);
+				//System.out.println("cl received rep (l0-try): " +Util.toHex(message)); // TODO: remove
 				//System.out.println("habe empfangen auf layer 0 (" +anonNode.toString() +"): " +Util.md5(message));
 				replyLength = Util.NOT_SET;
 				return MixMessage.getInstanceReply(message);
@@ -173,6 +174,7 @@ public class ClientPlugIn extends Implementation implements Layer1NetworkClient 
 				assert (replyLength + 4) < replyBufferSize;
 			}
 			byte[] message = Util.forceRead(mixInputStream, replyLength);
+			//System.out.println("cl received rep (l0): " +Util.toHex(message)); // TODO: remove
 			//System.out.println("habe empfangen auf layer 0 (" +anonNode.toString() +"): " +Util.md5(message));
 			replyLength = Util.NOT_SET; 
 			return MixMessage.getInstanceReply(message);

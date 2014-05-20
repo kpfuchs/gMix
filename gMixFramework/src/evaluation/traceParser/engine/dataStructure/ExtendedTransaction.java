@@ -1,20 +1,20 @@
-/*
+/*******************************************************************************
  * gMix open source project - https://svs.informatik.uni-hamburg.de/gmix/
- * Copyright (C) 2012  Karl-Peter Fuchs
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * Copyright (C) 2014  SVS
+ *
+ * This program is free software: you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by 
+ * the Free Software Foundation, either version 3 of the License, or 
  * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
+ *
+ * You should have received a copy of the GNU General Public License 
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+ *******************************************************************************/
 package evaluation.traceParser.engine.dataStructure;
 
 import java.io.IOException;
@@ -139,9 +139,15 @@ public class ExtendedTransaction extends Transaction {
 			assert endsOfReplies[endsOfReplies.length-1] >= endOfRequest;
 			//System.out.println(endsOfReplies[endsOfReplies.length-1] + " - " +endOfRequest); 
 			super.distinctReplyDelays = new int[startsOfReplies.length];
-			super.distinctReplyDelays[0] = (int)(startsOfReplies[0] - startOfRequest); // time delta between the start of sending the first request (= timestamp first request packet) and the the start of the first reply reached the client (timestamp of first reply packet)
-			for (int i=1; i<super.distinctReplyDelays.length; i++)
-				super.distinctReplyDelays[i] = (int)(startsOfReplies[i] - endsOfReplies[i-1]); // time delta between the ith reply is fully received (= timestamp of last reply packet for reply i)  and the the start of the i-1th reply reached the client (timestamp of first i-1 reply packet)
+			super.distinctSimplexWithFeedbackReplyDelays = new int[startsOfReplies.length];
+			//super.distinctReplyDelays[0] = (int)(startsOfReplies[0] - startOfRequest); // time delta between the start of sending the first request (= timestamp first request packet) and the the start of the first reply reached the client (timestamp of first reply packet)
+			//for (int i=1; i<super.distinctReplyDelays.length; i++)
+			//	super.distinctReplyDelays[i] = (int)(startsOfReplies[i] - endsOfReplies[i-1]); // time delta between the ith reply is fully received (= timestamp of last reply packet for reply i)  and the the start of the i-1th reply reached the client (timestamp of first i-1 reply packet)
+			for (int i=0; i<super.distinctReplyDelays.length; i++) {
+				super.distinctReplyDelays[i] = (int)(startsOfReplies[i] - startOfRequest);
+				long last = (i == 0) ? startOfRequest : endsOfReplies[i-1];
+				super.distinctSimplexWithFeedbackReplyDelays[i] = (int)(endsOfReplies[i] - last);
+			}
 		}
 	}
 	

@@ -1,20 +1,20 @@
-/*
+/*******************************************************************************
  * gMix open source project - https://svs.informatik.uni-hamburg.de/gmix/
- * Copyright (C) 2012  Karl-Peter Fuchs
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
+ * Copyright (C) 2014  SVS
+ *
+ * This program is free software: you can redistribute it and/or modify 
+ * it under the terms of the GNU General Public License as published by 
+ * the Free Software Foundation, either version 3 of the License, or 
  * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  
+ * This program is distributed in the hope that it will be useful, 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the 
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
+ *
+ * You should have received a copy of the GNU General Public License 
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+ *******************************************************************************/
 package plugIns.layer1network.cascade_TCP_v0_001;
 
 import java.io.BufferedInputStream;
@@ -86,6 +86,7 @@ public class NextMixHandler_TCP_multiplexed_sync extends SubImplementation imple
 	public void begin() {
 		this.requestThread.setPriority(Thread.MAX_PRIORITY);
 		this.replyThread.setPriority(Thread.MAX_PRIORITY);
+		this.requestThread.connectToNextMix();
 		this.requestThread.start();
 		this.replyThread.start();
 	}
@@ -119,7 +120,6 @@ public class NextMixHandler_TCP_multiplexed_sync extends SubImplementation imple
 		
 		@Override
 		public void run() {
-			connectToNextMix();
 			while (true) {
 				Request[] requests = anonNode.getFromRequestOutputQueue();
 				for (int i=0; i<requests.length; i++) {
@@ -185,7 +185,7 @@ public class NextMixHandler_TCP_multiplexed_sync extends SubImplementation imple
 					int channelIdentifier = Util.forceReadInt(nextMixInputStream);
 					int messageLength = Util.forceReadInt(nextMixInputStream);
 					if (messageLength < 1) {
-						System.out.println(anonNode +" wrong size for reply message received"); 
+						System.out.println(anonNode +" wrong size for reply message received: " +messageLength); 
 						nextMixSocket.close();
 						continue;
 					}
