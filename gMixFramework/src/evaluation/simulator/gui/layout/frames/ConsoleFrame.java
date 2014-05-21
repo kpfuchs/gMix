@@ -81,7 +81,7 @@ public class ConsoleFrame extends JFrame {
 		this.setBounds(this.consoleFrameXPos, this.consoleFrameYPos, this.consoleFrameWidth, this.consoleFrameHeight);
 	}
 
-	private void safeProperties() {
+	private void saveProperties() {
 		UserConfigService.setCONSOLEFRAME_HEIGHT(this.getHeight());
 		UserConfigService.setCONSOLEFRAME_WIDTH(this.getWidth());
 		UserConfigService.setCONSOLEFRAME_XPOS(this.getX());
@@ -106,18 +106,18 @@ public class ConsoleFrame extends JFrame {
 
 			@Override
 			public void windowClosed(WindowEvent arg0) {
-				ConsoleFrame.this.safeProperties();
+				ConsoleFrame.this.saveProperties();
 			}
 
 			@Override
 			public void windowClosing(WindowEvent arg0) {
-				ConsoleFrame.this.safeProperties();
+				ConsoleFrame.this.saveProperties();
 				// GuiService.getInstance().toggleConsole();
 			}
 
 			@Override
 			public void windowDeactivated(WindowEvent arg0) {
-				ConsoleFrame.this.safeProperties();
+				ConsoleFrame.this.saveProperties();
 			}
 
 			@Override

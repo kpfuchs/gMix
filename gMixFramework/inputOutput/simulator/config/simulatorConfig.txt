@@ -3,7 +3,7 @@
 #
 # Experiment definition file for the Discrete-event Mix Simulator of the gMix 
 # open source project - https://svs.informatik.uni-hamburg.de/gmix/
-# Copyright (C) 2013 SVS
+# Copyright (C) 2014 SVS
 #
 # This program is distributed in the hope that it will be useful, but WITHOUT 
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS 
@@ -19,30 +19,28 @@
 # ./inputOutput/simulator/experimentDefinitions/. Specify the name of the EDF,
 # i.e., which experiment shall be performed when the simulator is run the next 
 # time here:
-# example: EXPERIMENTS_TO_PERFORM = exampleExperiment.txt
+# example: EXPERIMENTS_TO_PERFORM = example_plotType_lineChart.cfg
 EXPERIMENTS_TO_PERFORM = example_plotType_lineChart.cfg
-#EXPERIMENTS_TO_PERFORM = example_outputStrategy_DLPA.txt
-#EXPERIMENTS_TO_PERFORM = example_plotType_cumulativeFraction.txt
-#EXPERIMENTS_TO_PERFORM = example_plotType_histogram.txt
-#EXPERIMENTS_TO_PERFORM = exampleExperiment.txt
-#EXPERIMENTS_TO_PERFORM = example_outputStrategy_batch.txt
-#EXPERIMENTS_TO_PERFORM = example_outputStrategy_pool.txt
-#EXPERIMENTS_TO_PERFORM = example_outputStrategy_batchWithTimeout.txt
-#EXPERIMENTS_TO_PERFORM = example_outputStrategy_binomialPool.txt
-#EXPERIMENTS_TO_PERFORM = example_outputStrategy_cottrellRandomDelay.txt
-#EXPERIMENTS_TO_PERFORM = example_outputStrategy_cottrellTimedPool.txt
-#EXPERIMENTS_TO_PERFORM = example_outputStrategy_stopAndGo.txt
-#EXPERIMENTS_TO_PERFORM = example_outputStrategy_DLPA.txt
-#EXPERIMENTS_TO_PERFORM = example_outputStrategy_synchronous.txt
-#EXPERIMENTS_TO_PERFORM = example_outputStrategy_thresholdAndTimedBatch.txt
-#EXPERIMENTS_TO_PERFORM = example_outputStrategy_thresholdOrTimedBatch.txt
-#EXPERIMENTS_TO_PERFORM = example_outputStrategy_thresholdPool.txt
-#EXPERIMENTS_TO_PERFORM = example_outputStrategy_timedBatch.txt
-#EXPERIMENTS_TO_PERFORM = example_outputStrategy_timedDynamicPool.txt
+#EXPERIMENTS_TO_PERFORM = example_outputStrategy_batch.cfg
+#EXPERIMENTS_TO_PERFORM = example_outputStrategy_batchWithTimeout.cfg
+#EXPERIMENTS_TO_PERFORM = example_outputStrategy_binominalPool.cfg
+#EXPERIMENTS_TO_PERFORM = example_outputStrategy_cottrellRandomDelay.cfg
+#EXPERIMENTS_TO_PERFORM = example_outputStrategy_cottrellTimedPool.cfg
+#EXPERIMENTS_TO_PERFORM = example_outputStrategy_pool.cfg
+#EXPERIMENTS_TO_PERFORM = example_outputStrategy_stopAndGo.cfg
+#EXPERIMENTS_TO_PERFORM = example_outputStrategy_synchronous.cfg
+#EXPERIMENTS_TO_PERFORM = example_outputStrategy_thresholdAndTimedBatch.cfg
+#EXPERIMENTS_TO_PERFORM = example_outputStrategy_thresholdOrTimedBatch.cfg
+#EXPERIMENTS_TO_PERFORM = example_outputStrategy_thresholdPool.cfg
+#EXPERIMENTS_TO_PERFORM = example_outputStrategy_timedBatch.cfg
+#EXPERIMENTS_TO_PERFORM = example_outputStrategy_timedDynamicPool.cfg
+#EXPERIMENTS_TO_PERFORM = example_plotType_cumulativeFraction.cfg
+#EXPERIMENTS_TO_PERFORM = example_plotType_histogram.cfg
+#EXPERIMENTS_TO_PERFORM = example_plotType_lineChart.cfg
 #
 #
 # GNUPLOT_FOLDER
-GNUPLOT_FOLDER = /opt/local/bin/
+GNUPLOT_FOLDER = 
 #
 #
 # DEBUG_OUTPUT
