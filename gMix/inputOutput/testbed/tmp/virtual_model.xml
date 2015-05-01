@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<model>
+  <emulators>
+    <emul hostname="unemu" int_idx="0" netdev="bge0">
+      <host hostname="unhost1" netdev="eth1">
+        <subnet int_emul="0" int_nodes="1" vbcst="10.0.0.3" vmask="255.255.255.252" vnet="10.0.0.0/30">
+          <virtnode int_idx="3" int_vn="2" role="virtnode" vip="10.0.0.1" />
+        </subnet>
+      </host>
+      <host hostname="unhost2" netdev="eth1">
+        <subnet int_emul="0" int_nodes="1" vbcst="10.0.0.7" vmask="255.255.255.252" vnet="10.0.0.4/30">
+          <virtnode int_idx="2" int_vn="1" role="virtnode" vip="10.0.0.5" />
+        </subnet>
+      </host>
+      <host hostname="unhost3" netdev="eth1">
+        <subnet int_emul="0" int_nodes="1" vbcst="10.0.0.11" vmask="255.255.255.252" vnet="10.0.0.8/30">
+          <virtnode int_idx="1" int_vn="0" role="virtnode" vip="10.0.0.9" />
+        </subnet>
+      </host>
+    </emul>
+  </emulators>
+  <hops>
+    <hop int_dst="0" int_emul="0" int_idx="4" int_src="3" specs="client-stub-down" />
+    <hop int_dst="0" int_emul="0" int_idx="2" int_src="2" specs="client-stub-down" />
+    <hop int_dst="3" int_emul="0" int_idx="5" int_src="0" specs="client-stub-up" />
+    <hop int_dst="2" int_emul="0" int_idx="3" int_src="0" specs="client-stub-up" />
+    <hop int_dst="1" int_emul="0" int_idx="1" int_src="0" specs="client-stub-up" />
+    <hop int_dst="0" int_emul="0" int_idx="0" int_src="1" specs="client-stub-down" />
+  </hops>
+  <specs xmloutbug="workaround">
+    <client-stub-down dbl_kbps="102400" dbl_plr="0" int_delayms="0" int_qlen="10" />
+    <client-stub-up dbl_kbps="102400" dbl_plr="0" int_delayms="0" int_qlen="10" />
+  </specs>
+</model>

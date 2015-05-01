@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!--
+/*
+ * gMix open source project - https://svs.informatik.uni-hamburg.de/gmix/
+ * Copyright (C) 2014 SVS
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */    
+-->
+<ivy-module version="2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:noNamespaceSchemaLocation="http://ant.apache.org/ivy/schemas/ivy.xsd">
+    <info
+        organisation=""
+        module="gMix"
+        status="integration">
+	</info>
+	<configurations>
+	    <conf name="build" description="Libraries needed for compilation"/>
+	    <conf name="runtime" extends="build" description="Libraries that need to be included with project jar" />
+	</configurations>
+	<dependencies>
+		<dependency org="org.slf4j" name="slf4j-api" rev="1.6.4"/>
+		<dependency org="org.bouncycastle" name="bcprov-jdk16" rev="1.46"/>
+		<dependency org="org.apache.commons" name="commons-math" rev="2.2"/>
+		<dependency org="javax.mail" name="mail" rev="1.4.5"/>
+		<dependency org="org.apache.mina" name="mina-core" rev="2.0.4"/>
+		<dependency org="io.netty" name="netty" rev="3.5.8.Final"/>
+		<dependency org="org.glassfish.grizzly" name="grizzly-framework" rev="2.3-rc4"/>
+		<dependency org="org.jooq" name="joou" rev="0.9.1"/>
+				<!-- Unfortunately the current version of JDom has some dependency-errors. This is the workaround. -->
+		<dependency org="jaxen" name="jaxen" rev="1.1.4"/>
+		<dependency org="net.sourceforge.cobertura" name="cobertura" rev="1.9.4.1"/>
+        <dependency org="com.google.code.findbugs" name="findbugs" rev="2.0.1"/>
+		<dependency org="org.jdom" name="jdom" rev="2.0.2">
+		  <exclude module="jaxen"/>
+		  <exclude name="maven-cobertura-plugin" />
+		  <exclude name="maven-findbugs-plugin" />
+		</dependency>
+        <dependency org="com.google.guava" name="guava" rev="12.0" />
+		<dependency org="net.sf.trove4j" name="trove4j" rev="2.0.2"/>
+		<dependency org="com.jamesmurty.utils" name="java-xmlbuilder" rev="0.3" />
+		<dependency org="org.apache.commons" name="commons-lang3" rev="3.2.1"/>
+		<dependency org="org.apache.airavata" name="levenshtein-distance-service" rev="0.2-incubating" />
+		<dependency org="org.reflections" name="reflections" rev="0.9.9-RC1" />
+		<dependency org="org.jfree" name="jfreechart" rev="1.0.14"/>
+		<dependency org="org.xhtmlrenderer" name="core-renderer" rev="R8pre2"/>
+		<dependency org="com.google.classpath-explorer" name="classpath-explorer" rev="1.0"/>
+		<dependency org="commons-configuration" name="commons-configuration" rev="1.10"/>
+		<dependency org="batik" name="batik-swing" rev="1.6-1"/>
+		<dependency	org="com.jtattoo" name="JTattoo" rev="1.6.9"/>
+		<dependency org="log4j" name="log4j" rev="1.2.17"/>
+		<dependency org="com.miglayout" name="miglayout-swing" rev="4.2"/>
+		<dependency org="batik" name="batik-transcoder" rev="1.6-1"/> 
+		<dependency org="c3p0" name="c3p0" rev="0.9.1.1"/>
+		<dependency org="commons-cli" name="commons-cli" rev="1.2"/>
+		<dependency org="org.apache.commons" name="commons-lang3" rev="3.3.1"/>
+		<dependency org="org.apache.commons" name="commons-math3" rev="3.1.1"/>
+		<dependency org="org.quartz-scheduler" name="quartz" rev="2.1.7"/>
+		<dependency org="dnsjava" name="dnsjava" rev="2.1.6"/>
+		<dependency org="org.apache.commons" name="commons-compress" rev="1.5"/>
+		<dependency org="org.apache.httpcomponents" name="httpcore" rev="4.3"/>
+		
+		<!-- Added by Stefan Rode for gmixTest project. -->
+		<dependency org="com.jcraft" name="jsch" rev="0.1.51"/>
+		<dependency org="com.healthmarketscience.rmiio" name="rmiio" rev="2.0.4"/>
+		<dependency org="org.json" name="json" rev="20140107" />
+		<dependency org="net.lingala.zip4j" name="zip4j" rev="1.3.2" />
+		
+		<!--<dependency org="org.abstractj.kalium" name="kalium" rev="0.2.0" />-->
+	
+	</dependencies>
+</ivy-module>

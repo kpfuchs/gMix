@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<experiment type="modelnet" source="gMixFramework.zip">
+	<modelnetConfig>
+		<emulatornodes>
+			<node idx="0" hostname="mnemu" />
+		</emulatornodes>
+		<virtualTopology path="virtual_topology3.xml" />
+	</modelnetConfig>	
+	<testnodes>
+		<node idx="0" hostname="mnhost1" />
+		<node idx="1" hostname="mnhost2" />
+		<node idx="2" hostname="mnhost3" />
+	</testnodes>
+	<applications>
+		<app idx="0" classpath="gMixFramework.jar" className="">
+			<environmentVariables></environmentVariables>
+			<vmArgs></vmArgs>
+			<appArgs>
+				<arg name="-noGUI" value="" />
+				<arg name="-TOOL" value="infoService" />
+				<arg name="-OVERWRITE" value="GLOBAL_INFO_SERVICE_PORT=22002,GLOBAL_DEBUG_MODE_ON=TRUE,GLOBAL_IS_DUPLEX=FALSE,GLOBAL_NUMBER_OF_MIXES=3" />
+			</appArgs>
+		</app>
+		<app idx="1" classpath="gMixFramework.jar" className="">
+			<environmentVariables></environmentVariables>
+			<vmArgs></vmArgs>
+			<appArgs></appArgs>
+		</app>
+		<app idx="2" classpath="gMixFramework.jar" className="">
+			<environmentVariables></environmentVariables>
+			<vmArgs></vmArgs>
+			<appArgs>
+				<arg name="-noGUI" value="" />
+				<arg name="-TOOL" value="loadGenerator" />
+				<arg name="-OVERWRITE" value="GLOBAL_INFO_SERVICE_PORT=22002" />
+			</appArgs>
+		</app>
+	</applications>
+	<variableParams>
+		<param name="BATCH_SIZE">
+			10,20,50,80,100
+		</param>
+	</variableParams>
+	<runConfig executionTime="60000" terminationEvents="END_OF_TRACEFILE_REACHED">
+		<run nodeIdx="0" appIdx="0"></run>
+		<run nodeIdx="1" appIdx="1">
+			<appArgs>
+				<arg name="-noGUI" value="" />
+				<arg name="-TOOL" value="mix" />
+				<arg name="-OVERWRITE" value="GLOBAL_INFO_SERVICE_PORT=22002" />
+			</appArgs>
+		</run>
+		<run nodeIdx="1" appIdx="1">
+			<appArgs>
+				<arg name="-noGUI" value="" />
+				<arg name="-TOOL" value="mix" />
+				<arg name="-OVERWRITE" value="GLOBAL_INFO_SERVICE_PORT=22002" />
+			</appArgs>
+		</run>
+		<run nodeIdx="2" appIdx="1">
+			<appArgs>
+				<arg name="-noGUI" value="" />
+				<arg name="-TOOL" value="mix" />
+				<arg name="-OVERWRITE" value="GLOBAL_INFO_SERVICE_PORT=22002" />
+			</appArgs>
+		</run>
+		<run nodeIdx="2" appIdx="2"></run>
+	</runConfig>
+	<evalMetrics>
+		<metric name="TB_AVG_THROUGHPUT_SEND_AND_RECEIVE" />
+		<metric name="TB_AVG_THROUGHPUT_SEND" />
+		<metric name="TB_AVG_THROUGHPUT_RECEIVE" />
+	</evalMetrics>
+</experiment>

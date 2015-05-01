@@ -1,0 +1,52 @@
+### Settings for SOCKS plug-in
+# global capabilities
+TOPOLOGY_CLIENT = 
+TOPOLOGY_MIX = 
+DUPLEX_CLIENT = TRUE
+DUPLEX_MIX = TRUE
+#
+# compatible plug-ins (see plugIns.layerX.*)
+COMPATIBLE_CLIENT_PLUG_INS = 
+COMPATIBLE_MIX_PLUG_INS = 
+#
+# static function requirements (see staticFunctions.layerX.*)
+SAME_LAYER_REQUIREMENTS = statisticsRecorder_v0_001
+LAYER_1_CLIENT_REQUIREMENTS = 
+LAYER_2_CLIENT_REQUIREMENTS = 
+LAYER_3_CLIENT_REQUIREMENTS = 
+LAYER_4_CLIENT_REQUIREMENTS = 
+LAYER_5_CLIENT_REQUIREMENTS = 
+LAYER_1_MIX_REQUIREMENTS = 
+LAYER_2_MIX_REQUIREMENTS = 
+LAYER_3_MIX_REQUIREMENTS = 
+LAYER_4_MIX_REQUIREMENTS = 
+LAYER_5_MIX_REQUIREMENTS = 
+#
+# static function capabilities (see staticFunctions.capabilities.*)
+CAPABILITIES_CLIENT = 
+CAPABILITIES_MIX = 
+#
+#
+# parameters:
+#
+# IP address of the ServerSocket on the client that will accept SOCKS connections from user applications (e.g. web browsers) 
+SOCKS_LISTENING_IP_ADDRESS = localhost
+#
+# Port of the ServerSocket on the client that will accept SOCKS connections from user applications (e.g. web browsers)
+SOCKS_LISTENING_PORT = 22322
+#
+# Port of the mix. The mix will wait for BIND Connections on this port (from Webservers); SocksHandler will add a random int between 10 and 10000. Necessary for more than one Client.
+SOCKS_LISTENING_PORT_MIX = 22324
+#
+# Port of the mix.The mix will wait for datagrams on this port (from Webservers); SocksHandler will add a random int between 10 and 10000. Necessary for more than one Client.
+SOCKS_LISTENING_PORT_MIX_UDP = 22318
+#
+# Defines how much bytes the Multiplexer can read from a user application
+SOCKS_BUFFER_SIZE = 4096
+#
+# If true, skips the roundtrip between client and proxy for Socks5 version identifier/method selection message
+SOCKS_SKIP_ROUNDTRIP = TRUE
+#
+#
+SOCKS_DEBUG = FALSE
+SOCKS_TALK_A_LOT = FALSE

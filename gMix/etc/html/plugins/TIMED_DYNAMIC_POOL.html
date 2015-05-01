@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<title> GSim Helpdesk </title>
+<link rel="stylesheet" type="text/css" href="style.css"/>
+</head>
+<body>
+<h2>Timed Dynamic Pool</h2>
+Output strategy used in Mixminion according to Mixminion spec v1.31 2007/04/21 (last checked on 31.08.2012). Note that the actual Mixminion implementation (31.08.2012) is slightly different. A Java port of the actual (29.08.2012) Mixminion implementation can be found below. Also note that the plug-ins "Timed Cottrell Pool", "Timed Dynamic Pool" and "Mixminion Pool" are basically the same thing, implemented slightly different.
+<br />
+<h3>Plugin key:</h3> <b>TIMED_DYNAMIC_POOL</b>
+<h3>Properties:</h3>
+<ul>
+  <li>Send rate (ms):
+    <ul>
+      <li>Key: TIMED_DYNAMIC_POOL_SEND_INTERVAL_IN_MS</li>
+      <li>Type: Integer</li>
+      <li>Min: 0</li>
+    </ul>
+  </li>
+  <br/>
+  <li>Minimum messages in pool (requests):
+    <ul>
+      <li>Key: TIMED_DYNAMIC_POOL_MIN_MESSAGES_IN_POOL</li>
+      <li>Type: Integer</li>
+      <li>Min: 0</li>      
+    </ul>
+  </li>
+  <br/>
+  <li>Fraction:
+    <ul>
+      <li>Key: TIMED_DYNAMIC_POOL_FRACTION</li>
+      <li>Type: Double</li>
+      <li>Min: 0</li>
+      <li>Max: 1</li>    
+    </ul>
+  </li>
+</ul>
+</body>
+</html>

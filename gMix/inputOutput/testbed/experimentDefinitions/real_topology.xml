@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="ISO-8859-1"?> 
+<hardware> 
+<emul hostname="mnemu"/> 
+<host hostname="mnhost1"/> 
+<host hostname="mnhost2"/>
+<host hostname="mnhost3"/> 
+</hardware>

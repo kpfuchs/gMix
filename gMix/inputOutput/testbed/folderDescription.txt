@@ -1,0 +1,1 @@
+This folder ("./testbed/") contains configuration files for the automated test environment.

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<experiment type="real">
+	<applications>
+		<app idx="0" classpath="test.jar" className="test.HelloWorld">
+			<environmentVariables></environmentVariables>
+			<vmArgs></vmArgs>
+			<appArgs>
+				<arg name="-noGUI" value="" />
+				<arg name="-TOOL" value="mix" />
+			</appArgs>
+		</app>
+	</applications>
+	<variableParams>
+		<param name="param1">
+			0.1,0.2,0.3
+		</param>
+		<param name="param2">
+			20,10,5
+		</param>
+	</variableParams>
+	<runConfig executionTime="10000">
+		<run nodeIdx="2" appIdx="0">
+			<environmentVariables></environmentVariables>
+			<vmArgs></vmArgs>
+			<appArgs>
+				<arg name="-OVERWRITE" value="'GLOBAL_LOCAL_MODE_ON=FALSE,GLOBAL_INFO_SERVICE_ADDRESS=10.1.1.11,GLOBAL_INFO_SERVICE_PORT=22002,GLOBAL_DEBUG_MODE_ON=FALSE,GLOBAL_IS_DUPLEX=FALSE,GLOBAL_NUMBER_OF_MIXES=1'" />
+			</appArgs>
+		</run>
+	</runConfig>
+</experiment>

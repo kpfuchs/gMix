@@ -1,0 +1,50 @@
+# Die Anleitung wurde unter Debian Wheezy 32bit getestet
+
+
+1. authd installieren
+
+2. gexecd installieren
+
+3. libxerces 2.1 installieren
+
+
+apt-get install openssl libboost-graph-dev libxml-simple-perl libxerces-c-dev iperf zip unzip make
+
+
+wget https://github.com/srode/gMixTest/raw/master/modelnet/modelnet-0.99_modified.zip
+
+
+unzip modelnet-0.99_modified.zip
+
+cd modelnet-0.99
+
+mkdir linux
+
+cd linux
+
+
+modelnet kompilieren
+--------------------
+
+
+chmod +x ../configure
+
+../configure
+
+
+make
+
+make install
+
+
+
+# damit man jetzt direkt ohne ModelNets vnrunhost Skript die virtuellen Rechner erreichen kann
+# muss man noch environment variablen setzen
+
+export VN=0
+export SRCIP=10.0.0.1
+
+
+# falls noch nicht exportiert
+
+export LD_PRELOAD=/usr/local/lib/libipaddr.so

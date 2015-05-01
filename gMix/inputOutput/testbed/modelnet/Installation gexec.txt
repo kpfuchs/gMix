@@ -1,0 +1,35 @@
+# Jetzt entweder gexec von der offiziellen Seite runterladen oder die modifizierte version nehmen.
+# Bei der modifizierten Version direkt beim Punkt "Kompilieren" weiter machen
+
+
+wget https://github.com/srode/gMixTest/raw/master/modelnet/gexec-0.3.7_modified.zip
+
+unzip gexec-0.3.7_modified.zip
+
+cd gexec-0.3.7/
+
+
+
+kompilieren
+-----------
+
+mkdir linux
+
+cd linux/
+
+chmod +x ../configure
+
+../configure
+
+make
+
+make install
+
+
+# Fehlermeldung "reguläre Datei „/etc/xinetd.d/gexec“ kann nicht angelegt werden"  ignorieren
+
+
+starten
+-------
+
+gexecd -d &

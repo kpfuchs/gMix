@@ -1,0 +1,10 @@
+#!/bin/bash
+
+grepCount=`ps -ef | grep "java -jar gMixFramework.jar -TOOL=testbedNode" | wc -l`
+
+if [ $grepCount -lt 2 ] 
+then
+  cd /root/gmixTest/framework/
+  java -jar gMixFramework.jar -TOOL=testbedNode >> /var/log/gmixTest.log 2>&1 &
+  echo "Started DiscoveryNode"
+fi

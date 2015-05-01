@@ -1,0 +1,27 @@
+#!/bin/bash
+
+ROUTE="/sbin/route"
+IP="/sbin/ip"
+IFCONFIG="/sbin/ifconfig"
+IP_SHOW_CMD="$IP route show"
+
+echo "Shutdown Modelnet created network interfaces."
+
+$IFCONFIG | grep "eth0:" | while read line; do
+ $IFCONFIG "${line%% *}" down; 
+done
+
+echo "Done"
+
+echo "Remove Modelnet created network routes."
+
+$IP_SHOW_CMD | grep "^10" | while read line; do
+ NET_MATCH=`echo $line | egrep -o "[[:digit:]]{1,3}\.[[:digit:]]{1,3}\.[[:digit:]]{1,3}\.[[:digit:]]{1,3}/[[:digit:]]{1,2}"`
+ IS_MODELNET_NET=$?
+
+ if [ $IS_MODELNET_NET -eq 0 ]; then
+  $ROUTE del -net $NET_MATCH
+ fi
+done
+
+echo "Done"

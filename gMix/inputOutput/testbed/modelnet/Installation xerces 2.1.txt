@@ -1,0 +1,31 @@
+apt-get install autoconf g++
+
+
+
+wget https://github.com/srode/gMixTest/raw/master/modelnet/xerces-c-src2_1_0_modified.zip
+
+unzip xerces-c-src2_1_0_modified.zip
+
+export XERCESCROOT=/root/xerces-c-src2_1_0
+
+cd $XERCESCROOT/src/xercesc
+
+
+xerces kompilieren
+------------------
+
+autoconf
+
+chmod +x runConfigure
+
+./runConfigure -plinux -cgcc -xg++ -minmem -nsocket -tnative -rpthread
+
+
+cp -r $XERCESCROOT/src/xercesc /usr/include/xercesc2.1
+
+make
+
+
+cp $XERCESCROOT/lib/libxerces-c.so.21.0 /usr/lib/i386-linux-gnu/
+
+ln -s /usr/lib/i386-linux-gnu/libxerces-c.so.21.0 /usr/lib/i386-linux-gnu/libxerces2-c.so

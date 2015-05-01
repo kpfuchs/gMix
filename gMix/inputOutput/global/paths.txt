@@ -1,0 +1,36 @@
+#-------------------------------------------------------------------------------
+# file paths:
+#-------------------------------------------------------------------------------
+#
+# global log:
+GL_OUTPUT_PATH = ./log/
+#
+# general config (mix/client etc.)
+ANON_NODE_CONFIG_FILE_PATH = ./inputOutput/anonNode/
+#
+LAYER_1_PLUG-IN_MIX_PATH = ./src/userGeneratedContent/testbedPlugIns/layerPlugIns/layer1network/
+LAYER_1_PLUG-IN_CLIENT_PATH = ./src/userGeneratedContent/testbedPlugIns/layerPlugIns/layer1network/
+LAYER_2_PLUG-IN_MIX_PATH = ./src/userGeneratedContent/testbedPlugIns/layerPlugIns/layer2recodingScheme/
+LAYER_2_PLUG-IN_CLIENT_PATH = ./src/userGeneratedContent/testbedPlugIns/layerPlugIns/layer2recodingScheme/
+LAYER_3_PLUG-IN_MIX_PATH = ./src/userGeneratedContent/testbedPlugIns/layerPlugIns/layer3outputStrategy/
+LAYER_3_PLUG-IN_CLIENT_PATH = ./src/userGeneratedContent/testbedPlugIns/layerPlugIns/layer3outputStrategy/
+LAYER_4_PLUG-IN_MIX_PATH = ./src/userGeneratedContent/testbedPlugIns/layerPlugIns/layer4transport/
+LAYER_4_PLUG-IN_CLIENT_PATH = ./src/userGeneratedContent/testbedPlugIns/layerPlugIns/layer4transport/
+LAYER_5_PLUG-IN_MIX_PATH = ./src/userGeneratedContent/testbedPlugIns/layerPlugIns/layer5application/
+LAYER_5_PLUG-IN_CLIENT_PATH = ./src/userGeneratedContent/testbedPlugIns/layerPlugIns/layer5application/
+DYNAMIC_ROUTING_PLUG-IN_PATH = ./src/userGeneratedContent/testbedPlugIns/routingPlugIns/dynamicRouting/
+SOURCE_ROUTING_PLUG-IN_PATH = ./src/userGeneratedContent/testbedPlugIns/routingPlugIns/sourceRouting/
+GLOBAL_ROUTING_PLUG-IN_PATH = ./src/userGeneratedContent/testbedPlugIns/routingPlugIns/globalRouting/
+#
+# loadGenerator
+LG_PROPERTY_FILE_PATH = ./inputOutput/loadGenerator/loadGeneratorConfig.txt
+LG_TRACE_FILE_PATH = ./inputOutput/loadGenerator/traceFiles/
+#
+# simulator:
+SIM_PROPERTY_FILE_PATH = ./inputOutput/simulator/config/simulatorConfig.txt
+SIM_OUTPUT_FOLDER_PATH = ./inputOutput/simulator/output/
+SIM_PLOTSCRIPT_FOLDER_PATH = ./inputOutput/simulator/plotscripts/
+SIM_EXPERIMENT_DEFINITION_FOLDER_PATH = ./inputOutput/simulator/experimentDefinitions/
+SIM_ETC_FOLDER_PATH = ./inputOutput/simulator/etc/
+#
+#-------------------------------------------------------------------------------

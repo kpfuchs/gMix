@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<experiment type="real" source="gMixFramework.zip">	
+	<testnodes>
+		<node idx="0" hostname="unhost1" />
+		<node idx="1" hostname="unhost2" />
+		<node idx="2" hostname="unhost3" />
+	</testnodes>
+	<applications>
+		<app idx="0" classpath="gMixFramework.jar" className="">
+			<environmentVariables></environmentVariables>
+			<vmArgs></vmArgs>
+			<appArgs>
+				<arg name="-noGUI" value="" />
+				<arg name="-TOOL" value="infoService" />
+				<arg name="-CONFIGFILE" value="singleSphinxNode.txt" />
+				<arg name="-OVERWRITE" value="GLOBAL_INFO_SERVICE_PORT=22002,GLOBAL_DEBUG_MODE_ON=TRUE" />
+			</appArgs>
+		</app>
+		<app idx="1" classpath="gMixFramework.jar" className="">
+			<environmentVariables></environmentVariables>
+			<vmArgs></vmArgs>
+			<appArgs>
+				<arg name="-noGUI" value="" />
+				<arg name="-TOOL" value="mix" />
+				<arg name="-CONFIGFILE" value="singleSphinxNode.txt" />
+				<arg name="-OVERWRITE" value="GLOBAL_INFO_SERVICE_PORT=22002" />
+			</appArgs>
+		</app>
+		<app idx="2" classpath="gMixFramework.jar" className="">
+			<environmentVariables></environmentVariables>
+			<vmArgs></vmArgs>
+			<appArgs>
+				<arg name="-noGUI" value="" />
+				<arg name="-TOOL" value="loadGenerator" />
+				<arg name="-CONFIGFILE" value="singleSphinxNode.txt" />
+				<arg name="-OVERWRITE" value="GLOBAL_INFO_SERVICE_PORT=22002" />
+			</appArgs>
+		</app>
+	</applications>
+	<variableParams>
+		<param name="GLOBAL_MAX_PAYLOAD">
+			399,527,655,783,911,1039,1167,1295,1423
+		</param>
+	</variableParams>
+	<runConfig executionTime="120000" terminationEvents="END_OF_TRACEFILE_REACHED">
+		<run nodeIdx="0" appIdx="0"></run>
+		<run nodeIdx="1" appIdx="1"></run>
+		<run nodeIdx="2" appIdx="1"></run>
+		<run nodeIdx="2" appIdx="2"></run>
+	</runConfig>
+	<evalMetrics>
+		<metric name="TB_MIN_THROUGHPUT_SEND" />
+		<metric name="TB_MAX_THROUGHPUT_SEND" />
+		<metric name="TB_AVG_THROUGHPUT_SEND" />		
+		<metric name="TB_MIN_THROUGHPUT_RECEIVE" />
+		<metric name="TB_MAX_THROUGHPUT_RECEIVE" />
+		<metric name="TB_AVG_THROUGHPUT_RECEIVE" />		
+		<metric name="TB_MIN_THROUGHPUT_SEND_AND_RECEIVE" />
+		<metric name="TB_MAX_THROUGHPUT_SEND_AND_RECEIVE" />
+		<metric name="TB_AVG_THROUGHPUT_SEND_AND_RECEIVE" />
+	</evalMetrics>
+</experiment>

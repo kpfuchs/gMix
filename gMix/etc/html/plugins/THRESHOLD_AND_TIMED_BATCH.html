@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<title> GSim Helpdesk </title>
+<link rel="stylesheet" type="text/css" href="style.css"/>
+</head>
+<body>
+<h2>Threshold And Timed Batch</h2>
+Forwards all messages every "output interval" ms, if at least x messages are batched.
+<br />
+<h3>Plugin key:</h3> <b>THRESHOLD_AND_TIMED_BATCH</b>
+<h3>Properties:</h3>
+<ul>
+  <li>Sending Rate (ms):
+    <ul>
+      <li>Key: THRESHOLD_AND_TIMED_BATCH_SENDING_RATE_IN_MS</li>
+      <li>Type: Integer</li>
+      <li>Min: 0</li>      
+    </ul>
+  </li>
+  <br/>
+  <li>"Batch Size (requests):
+    <ul>
+      <li>Key: THRESHOLD_AND_TIMED_BATCH_BATCH_SIZE</li>
+      <li>Type: Integer</li>
+      <li>Min: 1</li>
+     </ul>
+  </li>
+</ul>
+</body>
+</html>

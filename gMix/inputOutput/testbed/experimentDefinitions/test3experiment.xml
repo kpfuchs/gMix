@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<experiment type="modelnet" source="gMixFramework.zip">
+	<emulatornodes>
+		<node idx="0" hostname="mnemu" />
+	</emulatornodes>
+	<testnodes>
+		<node idx="0" hostname="mnhost1" />
+		<node idx="1" hostname="mnhost2" />
+		<node idx="2" hostname="mnhost3" />
+	</testnodes>
+	<applications>
+		<app idx="0" classpath="gMixFramework.jar" className="">
+			<environmentVariables></environmentVariables>
+			<vmArgs></vmArgs>
+			<appArgs>
+				<arg name="-noGUI" value="" />
+				<arg name="-TOOL" value="infoService" />
+				<arg name="-OVERWRITE" value="GLOBAL_INFO_SERVICE_PORT=22002,GLOBAL_DEBUG_MODE_ON=TRUE,GLOBAL_IS_DUPLEX=FALSE,GLOBAL_NUMBER_OF_MIXES=1" />
+			</appArgs>
+		</app>
+		<app idx="1" classpath="gMixFramework.jar" className="">
+			<environmentVariables></environmentVariables>
+			<vmArgs></vmArgs>
+			<appArgs>
+				<arg name="-noGUI" value="" />
+				<arg name="-TOOL" value="mix" />
+				<arg name="-OVERWRITE" value="GLOBAL_INFO_SERVICE_PORT=22002" />
+			</appArgs>
+		</app>
+		<app idx="2" classpath="gMixFramework.jar" className="">
+			<environmentVariables></environmentVariables>
+			<vmArgs></vmArgs>
+			<appArgs>
+				<arg name="-noGUI" value="" />
+				<arg name="-TOOL" value="loadGenerator" />
+				<arg name="-OVERWRITE" value="GLOBAL_INFO_SERVICE_PORT=22002" />
+			</appArgs>
+		</app>
+	</applications>
+	<variableParams>
+		<param name="BATCH_SIZE">
+			50,100,200
+		</param>
+	</variableParams>
+	<runConfig executionTime="60000">
+		<run nodeIdx="0" appIdx="0"></run>
+		<run nodeIdx="1" appIdx="1"></run>
+		<run nodeIdx="2" appIdx="2"></run>
+	</runConfig>
+	<evalMetrics>
+		<metric name="THROUGHPUT_REQUEST_AVG" />
+		<metric name="THROUGHPUT_REQUEST_MIN" />
+		<metric name="THROUGHPUT_REQUEST_MAX" />
+		<metric name="THROUGHPUT_REPLY_AVG" />
+		<metric name="THROUGHPUT_REPLY_MIN" />
+		<metric name="THROUGHPUT_REPLY_MAX" />
+		<metric name="THROUGHPUT_REQUEST_AND_REPLY_AVG" />
+		<metric name="THROUGHPUT_REQUEST_AND_REPLY_MIN" />
+		<metric name="THROUGHPUT_REQUEST_AND_REPLY_MAX" />
+	</evalMetrics>
+</experiment>

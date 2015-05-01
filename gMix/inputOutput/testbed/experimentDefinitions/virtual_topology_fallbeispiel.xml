@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="ISO-8859-1"?> 
+  <topology> 
+    <vertices> 
+      <vertex int_idx="0" role="gateway" />  
+      <vertex int_idx="1" role="virtnode" int_vn="0" /> 
+      <vertex int_idx="2" role="virtnode" int_vn="1" /> 
+      <vertex int_idx="3" role="virtnode" int_vn="2" />
+    </vertices> 
+    <edges> 
+      <edge int_dst="0" int_src="1" int_idx="0" specs="client-stub-down" /> 
+      <edge int_dst="1" int_src="0" int_idx="1" specs="client-stub-up" /> 
+      <edge int_dst="0" int_src="2" int_idx="2" specs="client-stub-down" /> 
+      <edge int_dst="2" int_src="0" int_idx="3" specs="client-stub-up" /> 
+      <edge int_dst="0" int_src="3" int_idx="4" specs="client-stub-down" /> 
+      <edge int_dst="3" int_src="0" int_idx="5" specs="client-stub-up" />
+    </edges> 
+    <specs > 
+      <client-stub-down dbl_plr="0" dbl_kbps="102400" int_delayms="0" int_qlen="10" />
+	  <client-stub-up dbl_plr="0" dbl_kbps="102400" int_delayms="0" int_qlen="10" />
+    </specs> 
+  </topology>

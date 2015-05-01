@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<allpairs>
+  <path int_vndst="1" int_vnsrc="0" hops="0 3 " />
+  <path int_vndst="2" int_vnsrc="0" hops="0 5 " />
+  <path int_vndst="0" int_vnsrc="1" hops="2 1 " />
+  <path int_vndst="2" int_vnsrc="1" hops="2 5 " />
+  <path int_vndst="0" int_vnsrc="2" hops="4 1 " />
+  <path int_vndst="1" int_vnsrc="2" hops="4 3 " />
+</allpairs>

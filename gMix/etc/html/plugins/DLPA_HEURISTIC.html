@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<title> GSim Helpdesk </title>
+<link rel="stylesheet" type="text/css" href="style.css"/>
+</head>
+<body>
+<h2>DLPA Heuristic I</h2>
+"DLP Heuristic Algorithm
+Parameters: Packet arrival time tij for all flows fi element F
+Utility threshold U.
+Output: A sending schedule with utility of at least U<br/>  
+ * 01: Put new packet Pij into a FIFO queue for the flow fi<br/>  
+ * 02: Repeat step 01 until there is a packet P has been in the queue for Delta time units:<br/>  
+ * 03: if more than U*|F| queues are non-empty<br/>  
+ * 04:		Add a new token and send one packet for each flow immediately<br/>  
+ * 05: else<br/>  
+ * 06: 		Drop the packet P.<br/>  
+ * 07: endif<br/>  
+ * 08: Go to step 01 until no more packet arrives."<br/>  
+<br />
+<h3>Plugin key:</h3> <b>DLPA_HEURISTIC</b>
+<h3>Properties:</h3>
+<ul>
+  <li>Maximum request delay (ms):
+    <ul>
+      <li>Key: MAX_DLPAI_REQUEST_DELAY</li>
+      <li>Type: Integer</li>
+      <li>Min: 0</li>      
+    </ul>
+  </li>
+  <br/>  
+  <li>Maximum reply delay (ms):
+    <ul>
+      <li>Key: MAX_DLPAI_REPLY_DELAY</li>
+      <li>Type: Integer</li>
+      <li>Min: 0</li>      
+    </ul>
+  </li>
+  <br/>  
+  <li>Request utility threshold (requests):
+    <ul>
+      <li>Key: REQUEST_UTILITY_THRESHOLD_I</li>
+      <li>Type: Double</li>
+      <li>Min: 0</li>      
+    </ul>
+  </li>
+  <br/>  
+  <li>Reply utility threshold (requests):
+    <ul>
+      <li>Key: REPLY_UTILITY_THRESHOLD_I</li>
+      <li>Type: Double</li>
+      <li>Min: 0</li>      
+    </ul>
+  </li>
+</ul>
+</body>
+</html>

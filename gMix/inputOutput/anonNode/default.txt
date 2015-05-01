@@ -1,0 +1,2 @@
+# if user does not provide a config file (e.g. as command line parameter), the following config is used
+DEFAULT_CONFIG = defaultConfig.txt

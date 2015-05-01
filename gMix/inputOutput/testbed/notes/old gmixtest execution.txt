@@ -1,0 +1,3 @@
+java -Dgmixtest.configFile="/root/gmixTest/config/testnode.properties" -cp /root/gmixTest/framework/gmix.jar discovery.DiscoveryNode
+
+java -Dgmixtest.configFile="/root/gmixTest/config/testnode.properties" -cp /root/gmixTest/framework/gmix.jar deploy.discovery.DiscoveryNode

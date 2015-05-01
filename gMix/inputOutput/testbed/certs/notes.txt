@@ -1,0 +1,72 @@
+coordinator keystore
+--------------------
+
+pass: 123456789
+
+
+
+create keystore with self-signed certificate:
+
+keytool -genkey -keyalg RSA -alias coordinator -keystore keystore.jks -storepass "123456789" -validity 730 -keysize 4096
+
+
+export self signed-certificate from keystore:
+
+keytool -export -alias coordinator -keystore keystore.jks -rfc -file coordinator.cer
+
+
+
+
+
+testnode keystore
+--------------------
+
+pass: 123456789
+
+
+
+create keystore with self-signed certificate:
+
+keytool -genkey -keyalg RSA -alias testnode -keystore keystore.jks -storepass "123456789" -validity 730 -keysize 4096
+
+
+export self signed-certificate from keystore:
+
+keytool -export -alias testnode -keystore keystore.jks -rfc -file testnode.cer
+
+
+
+
+
+registry keystore
+--------------------
+
+pass: 123456789
+
+
+
+create keystore with self-signed certificate:
+
+keytool -genkey -keyalg RSA -alias registry -keystore keystore.jks -storepass "123456789" -validity 730 -keysize 4096
+
+
+export self signed-certificate from keystore:
+
+keytool -export -alias registry -keystore keystore.jks -rfc -file registry.cer
+
+
+
+
+now create truststores and import certificates
+----------------------------------------------
+
+keytool -import -alias testnodecert -file testnode\testnode.cer -keystore coordinator\truststore -storepass "123456789"
+keytool -import -alias registrycert -file registry\registry.cer -keystore coordinator\truststore -storepass "123456789"
+
+keytool -import -alias coordinatorcert -file coordinator\coordinator.cer -keystore testnode\truststore -storepass "123456789"
+keytool -import -alias registrycert -file registry\registry.cer -keystore testnode\truststore -storepass "123456789"
+
+keytool -import -alias coordinatorcert -file coordinator\coordinator.cer -keystore registry\truststore -storepass "123456789"
+keytool -import -alias testnodecert -file testnode\testnode.cer -keystore registry\truststore -storepass "123456789"
+# if the proxy registry is used
+keytool -import -alias registrycert -file registry\registry.cer -keystore registry\truststore -storepass "123456789"

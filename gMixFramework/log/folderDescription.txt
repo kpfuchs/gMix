@@ -1,2 +1,0 @@
-In this folder ("./log/"), a log file is created each time the framework is 
-run (console "out" and "err" streams are mirrored to a file).

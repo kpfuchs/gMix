@@ -1,0 +1,147 @@
+
+cd quelle aus /etc/apt/sources.list auskommentieren
+
+
+apt-get install openssl libboost-graph-dev libxml-simple-perl libxerces-c-dev iperf zip unzip make autoconf g++ sudo
+
+
+### xerces installieren
+
+wget https://github.com/srode/gMixTest/raw/master/modelnet/xerces-c-src2_1_0_modified.zip
+
+unzip xerces-c-src2_1_0_modified.zip
+
+export XERCESCROOT=/root/xerces-c-src2_1_0
+
+cd $XERCESCROOT/src/xercesc
+
+
+# kompilieren
+
+autoconf
+
+chmod +x runConfigure
+
+./runConfigure -plinux -cgcc -xg++ -minmem -nsocket -tnative -rpthread
+
+
+cp -r $XERCESCROOT/src/xercesc /usr/include/xercesc2.1
+
+make
+
+
+# verschieben
+
+cp $XERCESCROOT/lib/libxerces-c.so.21.0 /usr/lib/i386-linux-gnu/
+
+ln -s /usr/lib/i386-linux-gnu/libxerces-c.so.21.0 /usr/lib/i386-linux-gnu/libxerces2-c.so
+ln -s /usr/lib/i386-linux-gnu/libxerces-c.so.21.0 /usr/lib/i386-linux-gnu/libxerces-c.so.21
+
+cd ~
+
+### xerces installieren ende
+
+
+### modelnet installieren
+
+wget https://github.com/srode/gMixTest/raw/master/modelnet/modelnet-0.99_modified.zip
+
+
+unzip modelnet-0.99_modified.zip
+
+cd modelnet-0.99
+
+rm -r linux
+
+mkdir linux
+
+cd linux
+
+
+modelnet kompilieren
+--------------------
+
+
+chmod +x ../configure
+
+../configure
+
+make
+
+make install
+
+cd ~
+
+### modelnet installieren ende
+
+
+### libheap-perl 0.80 installieren
+
+wget https://github.com/srode/gMixTest/raw/master/modelnet/Heap-0.80.tar.gz
+
+tar -xf Heap-0.80.tar.gz
+
+cd Heap-0.80
+
+perl Makefile.PL
+
+make
+
+make install
+
+cd ~
+
+### libheap-perl 0.80 installieren ende
+
+
+### libgraph-perl 0.20105 installieren
+
+wget https://github.com/srode/gMixTest/raw/master/modelnet/Graph-0.20105.tar.gz
+
+tar -xf Graph-0.20105.tar.gz
+
+cd Graph-0.20105
+
+perl Makefile.PL
+
+make
+
+make install
+
+cd ~
+
+### libgraph-perl 0.20105 installieren ende
+
+
+
+
+
+### testbed installieren
+
+mkdir /root/gmixTest
+
+mkdir /root/gmixTest/framework
+
+cd /root/gmixTest/framework
+
+unzip gMixFramework.zip
+
+
+cron Installieren
+-----------------
+
+!!! falls der project root des gMix-Frameworks unter /root/gmixTest/framework liegt
+
+chmod +x /root/gmixTest/framework/inputOutput/testbed/scripts/NodeStarter
+
+
+in crontab /etc/crontab folgendes eintragen:
+
+* * * * *   root    /root/gmixTest/framework/inputOutput/testbed/scripts/NodeStarter
+
+
+### testbed installieren ende
+
+
+
+Java installieren siehe extra Anleitung

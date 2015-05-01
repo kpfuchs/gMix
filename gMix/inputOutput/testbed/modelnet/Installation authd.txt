@@ -1,0 +1,61 @@
+# zur /etc/apt/sources.list folgendes hinzufügen
+
+deb http://issg.cs.duke.edu/modelnet/debian stable main
+deb-src http://issg.cs.duke.edu/modelnet/debian stable main
+
+
+apt-get update
+
+apt-get install libssl-dev libe
+
+
+wget https://github.com/srode/gMixTest/raw/master/modelnet/authd-0.2.3_modified.zip
+
+unzip authd-0.2.3_modified.zip
+
+cd authd-0.2.3/
+
+
+
+
+kompilieren
+-----------
+
+mkdir linux
+
+cd linux/
+
+chmod +x ../configure
+
+../configure
+
+# warnung "configure: WARNING: `missing' script is too old or missing" ignorieren
+
+make
+
+make install
+
+
+
+
+
+key-pair erzeugen
+-----------------
+
+openssl genrsa -out auth_priv.pem
+
+chmod 600 auth_priv.pem
+
+openssl rsa -in auth_priv.pem -pubout -out auth_pub.pem
+
+
+cp auth_priv.pem /etc/
+
+cp auth_pub.pem /etc/
+
+
+
+starten
+-------
+
+authd -d

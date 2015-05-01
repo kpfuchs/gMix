@@ -1,0 +1,5 @@
+This folder ("./lib/") contains 3rd party libraries (jar files) needed by the 
+framework components. Note that this folder can be empty if an IDE with Apache 
+Ivy support is used (see "./ivy.xml").
+The ant script "./lib/build.xml" can be used to download all required libraries 
+if NO IDE or an IDE WITHOUT Ivy support is used.

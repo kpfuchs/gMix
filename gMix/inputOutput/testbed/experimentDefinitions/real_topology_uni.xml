@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="ISO-8859-1"?> 
+<hardware> 
+<emul hostname="unemu" netdev="bge0"/> 
+<host hostname="unhost1" netdev="eth1"/> 
+<host hostname="unhost2" netdev="eth1"/>
+<host hostname="unhost3" netdev="eth1"/> 
+</hardware>
