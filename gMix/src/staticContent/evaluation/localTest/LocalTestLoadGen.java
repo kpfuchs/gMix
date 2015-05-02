@@ -118,7 +118,7 @@ public class LocalTestLoadGen extends GMixTool implements EipEventListener {
 	 * @param args Not used.
 	 */
 	public static void main(String[] args) {
-		CommandLineParameters params = new CommandLineParameters(args);
+		CommandLineParameters params = new CommandLineParameters(args, ToolName.LOADGEN_DEMO, "localLoadgenTest.txt");
 		params.gMixTool = ToolName.LOADGEN_DEMO;
 		new LocalTestLoadGen(params);
 	}

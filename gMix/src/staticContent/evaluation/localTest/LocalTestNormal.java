@@ -117,7 +117,7 @@ public class LocalTestNormal extends GMixTool implements EipEventListener {
 	 * @param args Not used.
 	 */
 	public static void main(String[] args) {
-		CommandLineParameters params = new CommandLineParameters(args);
+		CommandLineParameters params = new CommandLineParameters(args, ToolName.LOCAL_TEST_SOCKS_NO_DELAY, "localSocksTest-NoDelay.txt");
 		params.gMixTool = ToolName.LOADGEN_DEMO;
 		new LocalTestNormal(params);
 	}
